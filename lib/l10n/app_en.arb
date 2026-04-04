@@ -1,0 +1,424 @@
+{
+  "@@locale": "en",
+  "appName": "Point",
+  "tagline": "Count, earn, save",
+  "enterPhone": "Enter your phone number",
+  "sendOtp": "Send verification code",
+  "loginAsStaff": "Log in as staff",
+  "otpSentTo": "Enter the code sent to {phone}",
+  "@otpSentTo": {
+    "placeholders": {
+      "phone": {"type": "String"}
+    }
+  },
+  "resendOtp": "Didn't receive it? Resend",
+  "resendIn": "Resend in {seconds} seconds",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "welcomeUser": "Welcome, {name}",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "subscriptionBalance": "Subscription balance",
+  "cashbackBalance": "Cashback",
+  "showQrToStaff": "Show this QR or give your phone number to staff",
+  "qrRefreshIn": "Refreshes in: {seconds} seconds",
+  "@qrRefreshIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "orTellPhone": "Or tell staff your phone number:",
+  "myWallet": "My wallet",
+  "usedFirst": "Used first when paying",
+  "cashbackRate": "20% cashback on every purchase",
+  "totalBalance": "Total: {amount} SAR",
+  "@totalBalance": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "transactionHistory": "Transaction history",
+  "recentTransactionsTitle": "Recent transactions",
+  "recentSubscriptionsTitle": "Recent subscriptions",
+  "filterAll": "All",
+  "filterPurchase": "Purchase",
+  "filterRedemption": "Redemption",
+  "filterSubscription": "Subscription",
+  "filterBonus": "Rewards",
+  "noTransactions": "No transactions yet",
+  "nothingToShow": "Nothing to show",
+  "subscriptionScreenSubtitle": "Choose the subscription plan that fits you",
+  "walletSubscriptionHelp": "Used first when paying",
+  "walletCashbackHelp": "20% from every purchase",
+  "rechargeWallet": "Top up wallet",
+  "rechargeTagline": "Pay less, get more credit",
+  "pay": "Pay {amount} SAR",
+  "@pay": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "get": "Get {amount} SAR credit",
+  "@get": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "mostPopular": "Most popular",
+  "howToBuy": "How to buy?",
+  "howToBuyStep1": "Tell staff which plan you want",
+  "howToBuyStep2": "Pay cash to staff",
+  "howToBuyStep3": "Staff will add credit to your wallet instantly",
+  "profile": "Profile",
+  "referralCode": "Your referral code",
+  "referralShare": "Join me on Point and get 5 SAR! Use my code: {code}",
+  "@referralShare": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "referredCount": "Referrals: {count} people",
+  "@referredCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "logout": "Log out",
+  "enterPin": "Enter PIN",
+  "wrongPin": "Wrong PIN",
+  "lockedOut": "Locked. Try again in {minutes} minutes",
+  "@lockedOut": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "scanQr": "Point the camera at the customer QR",
+  "enterPhone2": "Enter phone number",
+  "qrExpired": "QR expired — ask the customer to refresh it",
+  "invalidQr": "Invalid QR",
+  "recordPurchase": "Record purchase",
+  "redeemBalance": "Redeem balance",
+  "addSubscription": "Add subscription",
+  "addsCashback": "Adds 20% cashback",
+  "deductsFromWallet": "Deducts from customer wallet",
+  "rechargeWithCash": "Top up wallet with cash",
+  "visitNumber": "Visit #{count}",
+  "@visitNumber": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "cashPaid": "Cash paid",
+  "cashbackAdded": "Cashback added",
+  "balanceAfter": "Balance after transaction",
+  "amountRedeemed": "Amount redeemed",
+  "fromSubscription": "From subscription balance",
+  "fromCashback": "From cashback",
+  "remainingBalance": "Remaining balance",
+  "confirmOperation": "Confirm transaction",
+  "cancel": "Cancel",
+  "operationSuccess": "Success!",
+  "smsSent": "SMS sent to customer",
+  "returningIn": "Returning to camera in: {seconds}",
+  "@returningIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "undoOperation": "Undo transaction",
+  "undoAvailable": "Available for: {seconds} seconds",
+  "@undoAvailable": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "cashbackPreview": "Customer earns: {amount} SAR cashback",
+  "@cashbackPreview": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "insufficientBalance": "Insufficient balance",
+  "available": "Available: {amount} SAR",
+  "@available": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "confirmCashReceived": "Confirm you received cash before adding subscription",
+  "offlineBanner": "You are offline",
+  "pendingTransactions": "{count} pending transactions",
+  "@pendingTransactions": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "dashboard": "Dashboard",
+  "today": "Today",
+  "thisWeek": "This week",
+  "thisMonth": "This month",
+  "custom": "Custom",
+  "revenue": "Revenue",
+  "transactions": "Transactions",
+  "newCustomers": "New customers",
+  "cashbackIssued": "Cashback issued",
+  "subscriptionsSold": "Subscriptions sold",
+  "fraudAlerts": "Fraud alerts",
+  "topCustomers": "Top customers",
+  "staffActivity": "Staff activity",
+  "exportCsv": "Export CSV",
+  "adjustBalance": "Adjust balance",
+  "blockCustomer": "Block customer",
+  "unblockCustomer": "Unblock customer",
+  "inviteStaff": "Invite new staff",
+  "deactivateStaff": "Deactivate account",
+  "markReviewed": "Mark reviewed",
+  "reverseTransaction": "Reverse transaction",
+  "bronze": "Bronze",
+  "silver": "Silver",
+  "gold": "Gold",
+  "sarSuffix": " SAR",
+  "language": "Language",
+  "arabic": "Arabic",
+  "english": "English",
+  "bengali": "Bengali",
+  "enterName": "Enter your name",
+  "name": "Name",
+  "idLabel": "ID",
+  "birthday": "Birthday",
+  "notifications": "Notifications",
+  "enableNotifications": "Enable notifications",
+  "next": "Next",
+  "confirm": "Confirm",
+  "search": "Search",
+  "loading": "Loading…",
+  "error": "Something went wrong",
+  "retry": "Retry",
+  "save": "Save",
+  "close": "Close",
+  "yes": "Yes",
+  "no": "No",
+  "dailyLimitExceeded": "Daily transaction limit exceeded",
+  "customerCardTitle": "Customer card",
+  "customerInformation": "Customer information",
+  "totalSpentLabel": "Total spent",
+  "streakLabel": "Streak",
+  "registeredOn": "Registered on",
+  "blockedBadge": "Blocked",
+  "customerNotFound": "Customer not found",
+  "operationFailed": "Operation failed — try again",
+  "sessionExpired": "Session expired — sign in again",
+  "statTotalCustomers": "Total customers",
+  "statStaffMembers": "Staff",
+  "statTodayTransactionsCount": "Today's transactions",
+  "statTodaySalesLabel": "Today's sales",
+  "statTodayCashbackLabel": "Today's cashback",
+  "currencyDisplay": "SAR",
+  "customersTitle": "Customers",
+  "navHome": "Home",
+  "navPlans": "Plans",
+  "tabScanner": "Scanner",
+  "tabStore": "Store",
+  "roleManager": "Manager",
+  "roleStaffMember": "Staff",
+  "roleOwnerLabel": "Owner",
+  "mainBranch": "Main branch",
+  "mobilePhone": "Mobile number",
+  "branchLabel": "Branch",
+  "roleField": "Role",
+  "statusField": "Status",
+  "statusActive": "Active",
+  "statusInactive": "Inactive",
+  "staffCreatedOtpSent": "Staff created — OTP sent to phone",
+  "pendingOfflineTooltip": "Pending offline",
+  "phoneLabelShort": "Phone",
+  "share": "Share",
+  "loadMore": "Load more",
+  "visits": "Visits",
+  "lastVisit": "Last visit",
+  "accountSettingsSubtitle": "Account & settings",
+  "sectionInformation": "Information",
+  "sectionPreferences": "Preferences",
+  "tapToEditName": "Tap to edit your name",
+  "contactUsTitle": "Contact us",
+  "contactUsSubtitle": "Branch info and phone numbers",
+  "branchesEmpty": "No branches available",
+  "addressLabel": "Address",
+  "whatsappLabel": "WhatsApp",
+  "callAction": "Call",
+  "whatsappAction": "WhatsApp",
+  "teamSectionTitle": "Our team",
+  "nameRequired": "Please enter your name",
+  "youEarned": "You earned {amount}",
+  "@youEarned": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "registerYourName": "Your name",
+  "registerFullNameHint": "Full name",
+  "welcomeDialogTitle": "Welcome! 🌟",
+  "welcomeDialogBody": "We're glad you joined Point.\nEvery point means more savings 💙",
+  "welcomeGiftBadge": "Welcome gift",
+  "welcomeGiftAmount": "10.00 SAR",
+  "welcomeGiftCaption": "Free cashback in your wallet",
+  "welcomeGetStarted": "Get started 🚀",
+  "homeBalanceReady": "Your balance is ready",
+  "homeLoadErrorMessage": "Something went wrong, try again",
+  "loadingTakingLong": "Loading is taking longer than usual",
+  "addToWalletPrefix": "Add to",
+  "addToGoogleWallet": "Add to Google Wallet",
+  "addToAppleWallet": "Add to Apple Wallet",
+  "errorWithMessage": "Error: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {"type": "String"}
+    }
+  },
+  "unknownError": "Unknown",
+  "subscriptionShort": "Subscription",
+  "planLabelPremium": "Premium",
+  "planLabelDiamond": "Diamond",
+  "planPayHeader": "Pay",
+  "planGetHeader": "Get",
+  "savePercentLabel": "Save {percent}",
+  "@savePercentLabel": {
+    "placeholders": {
+      "percent": {"type": "String"}
+    }
+  },
+  "txTypeCashbackEarnedShort": "Cashback",
+  "txTypeAdjustment": "Adjustment",
+  "signInWithBiometrics": "Sign in with biometrics / Face ID",
+  "biometricLoginTitle": "Biometric sign-in",
+  "statusOn": "Enabled",
+  "statusOff": "Disabled",
+  "searchHint": "Search…",
+  "fraudFlagSelfTx": "Staff credited own phone",
+  "fraudFlagVelocity": "Rapid repeated transactions",
+  "fraudFlagLarge": "Large amount for review",
+  "fraudFlagDevice": "Suspicious device",
+  "filterDormant": "Dormant (30d)",
+  "reasonRequired": "Reason (required)",
+  "staffListTitle": "Staff",
+  "currentSubscriptionBalancePrefix": "Current subscription balance:",
+  "totalColon": "Total:",
+  "walletHowItWorks": "How it works",
+  "walletStepPayCash": "Pay with cash",
+  "walletStepCashback": "Get 20% cashback",
+  "walletStepUseNext": "Use it on your next visit",
+  "actionDeactivate": "Deactivate",
+  "actionActivate": "Activate",
+  "cashbackEarnedSuffix": "cashback",
+  "staffSearchByPhone": "Search by phone",
+  "staffScanCustomerQr": "Scan the customer's QR code",
+  "staffFindCustomer": "Find a customer",
+  "staffEnterNineDigits": "Enter 9 digits",
+  "staffNoCustomerForPhone": "No customer with this number",
+  "staffPickCustomer": "Choose a customer:",
+  "staffOfflineTxSaved": "No connection — transaction saved and will be sent automatically",
+  "staffAmountSar": "{amount} SAR",
+  "@staffAmountSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSaudiRiyal": "Saudi Riyal",
+  "staffAvailableSar": "Available: {amount} SAR",
+  "@staffAvailableSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffCashbackPreviewPlus": "✨ Cashback: +{amount} SAR",
+  "@staffCashbackPreviewPlus": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchAmountPaid": "Amount paid: {amount}",
+  "@staffSummaryPurchAmountPaid": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAdded": "Cashback added: +{amount}",
+  "@staffSummaryPurchCbAdded": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAfter": "Cashback balance after: {amount}",
+  "@staffSummaryPurchCbAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemAmount": "Amount redeemed: {amount}",
+  "@staffSummaryRedeemAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromSub": "From subscription balance: {amount}",
+  "@staffSummaryRedeemFromSub": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromCb": "From cashback: {amount}",
+  "@staffSummaryRedeemFromCb": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemWalletAfter": "Wallet balance after: {amount}",
+  "@staffSummaryRedeemWalletAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSubscriptionBalanceLine": "Current subscription balance: {amount}",
+  "@staffSubscriptionBalanceLine": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerPaysCash": "Customer pays: {amount} cash",
+  "@staffPlanCustomerPaysCash": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerGetsCredit": "Gets: {amount} credit",
+  "@staffPlanCustomerGetsCredit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffConfirmAddSubscription": "Confirm add subscription",
+  "staffTransactionCompleted": "Transaction completed successfully!",
+  "staffUndoDialogTitle": "Undo this transaction?",
+  "staffUndoDialogBody": "The transaction will be reversed for the customer.",
+  "staffConfirmUndo": "Confirm undo",
+  "staffTransactionUndone": "Transaction undone",
+  "staffUndoShort": "Undo",
+  "staffSuccCustomer": "Customer",
+  "staffSuccAmountPaid": "Amount paid",
+  "staffSuccCashbackAdded": "Cashback added",
+  "staffSuccCashbackNow": "Cashback balance now",
+  "staffSuccAmountRedeemed": "Amount redeemed",
+  "staffSuccFromSubscription": "From subscription",
+  "staffSuccFromCashback": "From cashback",
+  "staffSuccSubAfter": "Subscription balance after",
+  "staffSuccCashbackAfter": "Cashback after",
+  "staffSuccPaidCash": "Paid in cash",
+  "staffSuccCreditAdded": "Credit added",
+  "staffSuccSubNow": "Subscription balance now"
+}

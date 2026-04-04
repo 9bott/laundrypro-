@@ -1,0 +1,21 @@
+{
+  "formatVersion": 1,
+  "passTypeIdentifier": "",
+  "serialNumber": "",
+  "teamIdentifier": "",
+  "organizationName": "Your App Name",
+  "description": "Loyalty Card",
+  "logoText": "Your App Name",
+  "foregroundColor": "rgb(30, 41, 59)",
+  "backgroundColor": "rgb(240, 244, 248)",
+  "labelColor": "rgb(100, 116, 139)",
+  "storeCard": {
+    "primaryFields": [
+      { "key": "name", "label": "NAME", "value": "" }
+    ],
+    "secondaryFields": [
+      { "key": "points", "label": "POINTS", "value": "" }
+    ]
+  }
+}
+

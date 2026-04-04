@@ -1,0 +1,65 @@
+# LaundryPro — Supabase local / linked project config.
+# Docs: https://supabase.com/docs/guides/cli/config
+
+project_id = "laundrypro"
+
+[api]
+enabled = true
+
+[db]
+major_version = 15
+
+[studio]
+enabled = true
+
+# Edge Functions — JWT verification per route.
+# Cron: hosted Supabase uses pg_cron + pg_net (see `cron_scheduled_notifications.sql` in this folder).
+# Schedule equivalent to 09:00 Asia/Riyadh = 06:00 UTC daily: `0 6 * * *`
+
+[functions.add-purchase]
+verify_jwt = true
+
+[functions.redeem-balance]
+verify_jwt = true
+
+[functions.add-subscription]
+verify_jwt = true
+
+[functions.get-customer-by-qr]
+verify_jwt = true
+
+[functions.undo-transaction]
+verify_jwt = true
+
+[functions.owner-customer-adjust-balance]
+verify_jwt = true
+
+[functions.owner-customer-set-blocked]
+verify_jwt = true
+
+[functions.owner-staff-set-active]
+verify_jwt = true
+
+[functions.owner-fraud-resolve]
+verify_jwt = true
+
+[functions.owner-invite-staff]
+verify_jwt = true
+
+[functions.generate-qr-token]
+verify_jwt = true
+
+[functions.get-owner-dashboard]
+verify_jwt = true
+
+[functions.send-notification]
+verify_jwt = false
+
+[functions.scheduled-notifications]
+verify_jwt = false
+
+[functions.generate-wallet-pass]
+verify_jwt = false
+
+[functions.firebase-auth]
+verify_jwt = false

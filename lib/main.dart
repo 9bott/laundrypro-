@@ -1,0 +1,92 @@
+import 'dart:async';
+import 'dart:io' show Platform;
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+
+import 'app.dart';
+import 'firebase_options.dart';
+import 'core/config/env.dart';
+import 'core/services/notification_service.dart';
+import 'core/services/supabase_service.dart';
+import 'core/utils/offline_queue.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+    }
+  } catch (e) {
+    debugPrint('[Firebase] skipped: $e');
+  }
+
+  // Android Phone Auth: do not force the web reCAPTCHA flow; use Play Integrity /
+  // device verification when the release cert is registered in Firebase Console.
+  // Also add the release SHA-256 fingerprint there (see android/firebase_release_sha256.txt).
+  if (!kIsWeb && Platform.isAndroid) {
+    try {
+      await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: false);
+    } catch (e) {
+      debugPrint('[Firebase Auth] setSettings: $e');
+    }
+  }
+
+  await Hive.initFlutter();
+  await OfflineQueue.init();
+
+  if (Env.hasSupabase) {
+    final url = Env.supabaseUrl.trim();
+    final key = Env.supabaseAnonKey.trim();
+    debugPrint('[Supabase] hasSupabase=true url="$url" keyLen=${key.length}');
+    await SupabaseService.init(
+      url: url,
+      anonKey: key,
+    );
+  } else {
+    debugPrint('[Supabase] hasSupabase=false SUPABASE_URL/SUPABASE_ANON_KEY missing');
+  }
+
+  try {
+    await NotificationService.initialize();
+  } catch (e) {
+    debugPrint('[Firebase] skipped: $e');
+  }
+
+  try {
+    await _precacheSplashLogoAsset();
+  } catch (e) {
+    debugPrint('[Splash] logo precache skipped: $e');
+  }
+
+  runApp(const ProviderScope(child: LaundryProApp()));
+}
+
+Future<void> _precacheSplashLogoAsset() async {
+  const provider = AssetImage('assets/images/app_logo.png');
+  final stream = provider.resolve(ImageConfiguration.empty);
+  final completer = Completer<void>();
+  late final ImageStreamListener listener;
+  listener = ImageStreamListener(
+    (ImageInfo image, bool synchronousCall) {
+      if (!completer.isCompleted) completer.complete();
+    },
+    onError: (Object exception, StackTrace? stackTrace) {
+      if (!completer.isCompleted) {
+        completer.completeError(exception, stackTrace);
+      }
+    },
+  );
+  stream.addListener(listener);
+  try {
+    await completer.future;
+  } finally {
+    stream.removeListener(listener);
+  }
+}

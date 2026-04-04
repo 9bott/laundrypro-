@@ -1,0 +1,40 @@
+# Dart / Flutter
+.dart_tool/
+.packages
+build/
+*.iml
+.idea/
+*.lock.historical
+
+# Secrets & local config
+.env
+*.env.local
+
+# Environment (Flutter uses dart-define; keep examples)
+!.env.example
+
+# Firebase
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+google-services.json
+GoogleService-Info.plist
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Android signing
+android/key.properties
+*.keystore
+*.jks
+
+# Supabase local
+.supabase/
+supabase/.env
+supabase/.branches
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+coverage/
+assets/wallet-service.json

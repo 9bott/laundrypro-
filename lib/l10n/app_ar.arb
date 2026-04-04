@@ -1,0 +1,424 @@
+{
+  "@@locale": "ar",
+  "appName": "Point",
+  "tagline": "احسب، اكسب، وفّر",
+  "enterPhone": "أدخل رقم هاتفك",
+  "sendOtp": "إرسال رمز التحقق",
+  "loginAsStaff": "تسجيل الدخول كموظف",
+  "otpSentTo": "أدخل الرمز المُرسل إلى {phone}",
+  "@otpSentTo": {
+    "placeholders": {
+      "phone": {"type": "String"}
+    }
+  },
+  "resendOtp": "لم تصلك الرسالة؟ إعادة الإرسال",
+  "resendIn": "إعادة الإرسال خلال {seconds} ثانية",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "welcomeUser": "مرحباً، {name}",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "subscriptionBalance": "رصيد الاشتراك",
+  "cashbackBalance": "الكاش باك",
+  "showQrToStaff": "أرِ الموظف هذا الرمز أو أعطه رقم جوالك",
+  "qrRefreshIn": "يتجدد خلال: {seconds} ثانية",
+  "@qrRefreshIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "orTellPhone": "أو أخبر الموظف برقم هاتفك:",
+  "myWallet": "محفظتي",
+  "usedFirst": "يُستخدم أولاً عند الدفع",
+  "cashbackRate": "20% من كل عملية شراء",
+  "totalBalance": "الإجمالي: {amount} ريال",
+  "@totalBalance": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "transactionHistory": "سجل المعاملات",
+  "recentTransactionsTitle": "آخر العمليات",
+  "recentSubscriptionsTitle": "آخر الاشتراكات",
+  "filterAll": "الكل",
+  "filterPurchase": "شراء",
+  "filterRedemption": "استرداد",
+  "filterSubscription": "اشتراك",
+  "filterBonus": "مكافآت",
+  "noTransactions": "لا توجد معاملات بعد",
+  "nothingToShow": "لا توجد بيانات",
+  "subscriptionScreenSubtitle": "اختر باقة الاشتراك المناسبة لك",
+  "walletSubscriptionHelp": "يُستخدم أولاً عند الدفع",
+  "walletCashbackHelp": "٢٠٪ من كل عملية شراء",
+  "rechargeWallet": "شحن المحفظة",
+  "rechargeTagline": "ادفع أقل، واحصل على أكثر",
+  "pay": "ادفع {amount} ريال",
+  "@pay": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "get": "احصل على {amount} ريال",
+  "@get": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "mostPopular": "الأكثر طلباً",
+  "howToBuy": "كيف تشتري؟",
+  "howToBuyStep1": "أخبر الموظف بالخطة التي تريدها",
+  "howToBuyStep2": "ادفع المبلغ نقداً للموظف",
+  "howToBuyStep3": "سيضيف الموظف الرصيد لمحفظتك فوراً",
+  "profile": "الملف الشخصي",
+  "referralCode": "رمز الإحالة الخاص بك",
+  "referralShare": "انضم إلي في تطبيق Point واحصل على 5 ريال هدية! استخدم كودي: {code}",
+  "@referralShare": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "referredCount": "المُحالون: {count} شخص",
+  "@referredCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "logout": "تسجيل الخروج",
+  "enterPin": "أدخل رقم PIN",
+  "wrongPin": "PIN غير صحيح",
+  "lockedOut": "تم القفل. حاول بعد {minutes} دقيقة",
+  "@lockedOut": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "scanQr": "وجّه الكاميرا نحو QR العميل",
+  "enterPhone2": "أدخل رقم الهاتف",
+  "qrExpired": "QR منتهي الصلاحية، اطلب من العميل تحديثه",
+  "invalidQr": "QR غير صحيح",
+  "recordPurchase": "تسجيل شراء",
+  "redeemBalance": "استرداد الرصيد",
+  "addSubscription": "إضافة اشتراك",
+  "addsCashback": "يضيف كاش باك 20%",
+  "deductsFromWallet": "يخصم من محفظة العميل",
+  "rechargeWithCash": "شحن المحفظة بالكاش",
+  "visitNumber": "الزيارة رقم {count}",
+  "@visitNumber": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "cashPaid": "المبلغ المدفوع",
+  "cashbackAdded": "الكاش باك المضاف",
+  "balanceAfter": "الرصيد بعد العملية",
+  "amountRedeemed": "المبلغ المسترد",
+  "fromSubscription": "من رصيد الاشتراك",
+  "fromCashback": "من الكاش باك",
+  "remainingBalance": "الرصيد المتبقي",
+  "confirmOperation": "تأكيد العملية",
+  "cancel": "إلغاء",
+  "operationSuccess": "تمت العملية بنجاح!",
+  "smsSent": "رسالة SMS تم إرسالها للعميل",
+  "returningIn": "العودة للكاميرا خلال: {seconds}",
+  "@returningIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "undoOperation": "تراجع عن العملية",
+  "undoAvailable": "متاح لمدة: {seconds} ثانية",
+  "@undoAvailable": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "cashbackPreview": "سيحصل العميل على: {amount} ريال كاش باك",
+  "@cashbackPreview": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "insufficientBalance": "الرصيد غير كافٍ",
+  "available": "متاح: {amount} ريال",
+  "@available": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "confirmCashReceived": "تأكد من استلام النقود قبل إضافة الاشتراك",
+  "offlineBanner": "أنت غير متصل بالإنترنت",
+  "pendingTransactions": "{count} عملية معلقة",
+  "@pendingTransactions": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "dashboard": "لوحة التحكم",
+  "today": "اليوم",
+  "thisWeek": "هذا الأسبوع",
+  "thisMonth": "هذا الشهر",
+  "custom": "مخصص",
+  "revenue": "الإيرادات",
+  "transactions": "المعاملات",
+  "newCustomers": "عملاء جدد",
+  "cashbackIssued": "كاش باك صدر",
+  "subscriptionsSold": "اشتراكات مباعة",
+  "fraudAlerts": "تنبيهات احتيال",
+  "topCustomers": "أفضل العملاء",
+  "staffActivity": "نشاط الموظفين",
+  "exportCsv": "تصدير CSV",
+  "adjustBalance": "تعديل الرصيد",
+  "blockCustomer": "حظر العميل",
+  "unblockCustomer": "إلغاء الحظر",
+  "inviteStaff": "دعوة موظف جديد",
+  "deactivateStaff": "تعطيل الحساب",
+  "markReviewed": "تم المراجعة",
+  "reverseTransaction": "عكس العملية",
+  "bronze": "برونزي",
+  "silver": "فضي",
+  "gold": "ذهبي",
+  "sarSuffix": " ريال",
+  "language": "اللغة",
+  "arabic": "العربية",
+  "english": "English",
+  "bengali": "البنغالية",
+  "enterName": "أدخل اسمك",
+  "name": "الاسم",
+  "idLabel": "المعرّف",
+  "birthday": "تاريخ الميلاد",
+  "notifications": "الإشعارات",
+  "enableNotifications": "تفعيل الإشعارات",
+  "next": "التالي",
+  "confirm": "تأكيد",
+  "search": "بحث",
+  "loading": "جارٍ التحميل...",
+  "error": "حدث خطأ",
+  "retry": "إعادة المحاولة",
+  "save": "حفظ",
+  "close": "إغلاق",
+  "yes": "نعم",
+  "no": "لا",
+  "dailyLimitExceeded": "تم تجاوز الحد اليومي للمعاملات",
+  "customerCardTitle": "بطاقة العميل",
+  "customerInformation": "معلومات العميل",
+  "totalSpentLabel": "إجمالي المصروف",
+  "streakLabel": "الستريك",
+  "registeredOn": "تاريخ التسجيل",
+  "blockedBadge": "محظور",
+  "customerNotFound": "العميل غير موجود",
+  "operationFailed": "فشلت العملية، حاول مجدداً",
+  "sessionExpired": "انتهت الجلسة، سجّل الدخول مجدداً",
+  "statTotalCustomers": "إجمالي العملاء",
+  "statStaffMembers": "الموظفون",
+  "statTodayTransactionsCount": "عمليات اليوم",
+  "statTodaySalesLabel": "مبيعات اليوم",
+  "statTodayCashbackLabel": "كاش باك اليوم",
+  "currencyDisplay": "ريال",
+  "customersTitle": "العملاء",
+  "navHome": "الرئيسية",
+  "navPlans": "الباقات",
+  "tabScanner": "الماسح",
+  "tabStore": "متجر",
+  "roleManager": "مدير",
+  "roleStaffMember": "موظف",
+  "roleOwnerLabel": "مالك",
+  "mainBranch": "الفرع الرئيسي",
+  "mobilePhone": "رقم الجوال",
+  "branchLabel": "الفرع",
+  "roleField": "الصلاحية",
+  "statusField": "الحالة",
+  "statusActive": "نشط",
+  "statusInactive": "غير نشط",
+  "staffCreatedOtpSent": "تم إنشاء الحساب — أُرسل OTP للجوال",
+  "pendingOfflineTooltip": "عمليات غير مرسلة",
+  "phoneLabelShort": "الهاتف",
+  "share": "مشاركة",
+  "loadMore": "تحميل المزيد",
+  "visits": "الزيارات",
+  "lastVisit": "آخر زيارة",
+  "accountSettingsSubtitle": "إعدادات الحساب والمعلومات",
+  "sectionInformation": "المعلومات",
+  "sectionPreferences": "التفضيلات",
+  "tapToEditName": "اضغط لتعديل الاسم",
+  "contactUsTitle": "تواصل معنا",
+  "contactUsSubtitle": "معلومات الفروع وأرقام التواصل",
+  "branchesEmpty": "لا توجد فروع متاحة",
+  "addressLabel": "العنوان",
+  "whatsappLabel": "واتساب",
+  "callAction": "اتصل",
+  "whatsappAction": "واتساب",
+  "teamSectionTitle": "فريق العمل",
+  "nameRequired": "الرجاء إدخال الاسم",
+  "youEarned": "ربحت {amount}",
+  "@youEarned": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "registerYourName": "أدخل اسمك",
+  "registerFullNameHint": "الاسم الكامل",
+  "welcomeDialogTitle": "أهلاً وسهلاً! 🌟",
+  "welcomeDialogBody": "يسعدنا انضمامك لعائلة Point\nكل نقطة = توفير أكثر 💙",
+  "welcomeGiftBadge": "🎉 هدية ترحيب",
+  "welcomeGiftAmount": "10.00 ريال",
+  "welcomeGiftCaption": "كاش باك مجاني في محفظتك",
+  "welcomeGetStarted": "ابدأ الاستخدام 🚀",
+  "homeBalanceReady": "رصيدك جاهز للاستخدام",
+  "homeLoadErrorMessage": "حدث خطأ، حاول مرة أخرى",
+  "loadingTakingLong": "يستغرق التحميل وقتاً أطول من المعتاد",
+  "addToWalletPrefix": "أضف إلى",
+  "addToGoogleWallet": "أضف إلى محفظة Google",
+  "addToAppleWallet": "أضف إلى Apple Wallet",
+  "errorWithMessage": "خطأ: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {"type": "String"}
+    }
+  },
+  "unknownError": "غير معروف",
+  "subscriptionShort": "الاشتراك",
+  "planLabelPremium": "قيمة استثنائية",
+  "planLabelDiamond": "ماسي",
+  "planPayHeader": "ادفع",
+  "planGetHeader": "احصل على",
+  "savePercentLabel": "توفير {percent}",
+  "@savePercentLabel": {
+    "placeholders": {
+      "percent": {"type": "String"}
+    }
+  },
+  "txTypeCashbackEarnedShort": "كاش باك",
+  "txTypeAdjustment": "تعديل",
+  "signInWithBiometrics": "الدخول بالبصمة / Face ID",
+  "biometricLoginTitle": "تسجيل الدخول بالبصمة",
+  "statusOn": "مفعّل",
+  "statusOff": "غير مفعّل",
+  "searchHint": "بحث…",
+  "fraudFlagSelfTx": "موظف أضاف لرقمه الخاص",
+  "fraudFlagVelocity": "معاملات متكررة بسرعة",
+  "fraudFlagLarge": "مبلغ كبير يحتاج مراجعة",
+  "fraudFlagDevice": "جهاز مشبوه",
+  "filterDormant": "غير نشط ٣٠ يوم",
+  "reasonRequired": "السبب (مطلوب)",
+  "staffListTitle": "الموظفون",
+  "currentSubscriptionBalancePrefix": "رصيد اشتراكك الحالي:",
+  "totalColon": "الإجمالي:",
+  "walletHowItWorks": "كيف تعمل المحفظة؟",
+  "walletStepPayCash": "ادفع نقداً",
+  "walletStepCashback": "احصل على ٢٠٪ كاش باك",
+  "walletStepUseNext": "استخدمه في زيارتك القادمة",
+  "actionDeactivate": "تعطيل",
+  "actionActivate": "تفعيل",
+  "cashbackEarnedSuffix": "كاش باك",
+  "staffSearchByPhone": "البحث برقم الهاتف",
+  "staffScanCustomerQr": "امسح رمز QR العميل",
+  "staffFindCustomer": "ابحث عن عميل",
+  "staffEnterNineDigits": "أدخل 9 أرقام",
+  "staffNoCustomerForPhone": "لا يوجد عميل بهذا الرقم",
+  "staffPickCustomer": "اختر العميل:",
+  "staffOfflineTxSaved": "لا يوجد اتصال — تم حفظ العملية وستُرسل تلقائياً",
+  "staffAmountSar": "{amount} ريال",
+  "@staffAmountSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSaudiRiyal": "ريال سعودي",
+  "staffAvailableSar": "متاح: {amount} ريال",
+  "@staffAvailableSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffCashbackPreviewPlus": "✨ الكاش باك: +{amount} ريال",
+  "@staffCashbackPreviewPlus": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchAmountPaid": "المبلغ المدفوع: {amount}",
+  "@staffSummaryPurchAmountPaid": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAdded": "الكاش باك المضاف: +{amount}",
+  "@staffSummaryPurchCbAdded": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAfter": "رصيد الكاش باك بعد العملية: {amount}",
+  "@staffSummaryPurchCbAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemAmount": "المبلغ المسترد: {amount}",
+  "@staffSummaryRedeemAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromSub": "من رصيد الاشتراك: {amount}",
+  "@staffSummaryRedeemFromSub": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromCb": "من الكاش باك: {amount}",
+  "@staffSummaryRedeemFromCb": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemWalletAfter": "رصيد المحفظة بعد العملية: {amount}",
+  "@staffSummaryRedeemWalletAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSubscriptionBalanceLine": "رصيد الاشتراك الحالي: {amount}",
+  "@staffSubscriptionBalanceLine": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerPaysCash": "العميل يدفع: {amount} نقداً",
+  "@staffPlanCustomerPaysCash": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerGetsCredit": "يحصل على: {amount} رصيد",
+  "@staffPlanCustomerGetsCredit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffConfirmAddSubscription": "تأكيد إضافة الاشتراك",
+  "staffTransactionCompleted": "تمت العملية بنجاح!",
+  "staffUndoDialogTitle": "تراجع عن العملية؟",
+  "staffUndoDialogBody": "سيتم إلغاء العملية للعميل.",
+  "staffConfirmUndo": "تأكيد التراجع",
+  "staffTransactionUndone": "تم التراجع عن العملية",
+  "staffUndoShort": "التراجع",
+  "staffSuccCustomer": "العميل",
+  "staffSuccAmountPaid": "المبلغ المدفوع",
+  "staffSuccCashbackAdded": "الكاش باك المضاف",
+  "staffSuccCashbackNow": "رصيد الكاش باك الآن",
+  "staffSuccAmountRedeemed": "المبلغ المسترد",
+  "staffSuccFromSubscription": "من الاشتراك",
+  "staffSuccFromCashback": "من الكاش باك",
+  "staffSuccSubAfter": "رصيد الاشتراك بعد",
+  "staffSuccCashbackAfter": "كاش باك بعد",
+  "staffSuccPaidCash": "تم الدفع نقداً",
+  "staffSuccCreditAdded": "رصيد مضاف",
+  "staffSuccSubNow": "رصيد الاشتراك الآن"
+}

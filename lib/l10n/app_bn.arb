@@ -1,0 +1,424 @@
+{
+  "@@locale": "bn",
+  "appName": "Point",
+  "tagline": "গণনা করুন, উপার্জন করুন, সঞ্চয় করুন",
+  "enterPhone": "আপনার ফোন নম্বর লিখুন",
+  "sendOtp": "যাচাইকরণ কোড পাঠান",
+  "loginAsStaff": "স্টাফ হিসেবে লগ ইন",
+  "otpSentTo": "{phone} নম্বরে পাঠানো কোড লিখুন",
+  "@otpSentTo": {
+    "placeholders": {
+      "phone": {"type": "String"}
+    }
+  },
+  "resendOtp": "কোড পাননি? আবার পাঠান",
+  "resendIn": "{seconds} সেকেন্ডে আবার পাঠান",
+  "@resendIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "welcomeUser": "স্বাগতম, {name}",
+  "@welcomeUser": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "subscriptionBalance": "সাবস্ক্রিপশন ব্যালেন্স",
+  "cashbackBalance": "ক্যাশব্যাক",
+  "showQrToStaff": "এই QR দেখান বা স্টাফকে আপনার ফোন নম্বর বলুন",
+  "qrRefreshIn": "রিফ্রেশ: {seconds} সেকেন্ডে",
+  "@qrRefreshIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "orTellPhone": "অথবা স্টাফকে আপনার ফোন নম্বর বলুন:",
+  "myWallet": "আমার ওয়ালেট",
+  "usedFirst": "পেমেন্টে আগে ব্যবহৃত হয়",
+  "cashbackRate": "প্রতিটি কেনাকাটায় ২০% ক্যাশব্যাক",
+  "totalBalance": "মোট: {amount} SAR",
+  "@totalBalance": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "transactionHistory": "লেনদেনের ইতিহাস",
+  "recentTransactionsTitle": "সাম্প্রতিক লেনদেন",
+  "recentSubscriptionsTitle": "সাম্প্রতিক সাবস্ক্রিপশন",
+  "filterAll": "সব",
+  "filterPurchase": "ক্রয়",
+  "filterRedemption": "রিডেম্পশন",
+  "filterSubscription": "সাবস্ক্রিপশন",
+  "filterBonus": "পুরস্কার",
+  "noTransactions": "এখনও কোনো লেনদেন নেই",
+  "nothingToShow": "দেখানোর মতো কিছু নেই",
+  "subscriptionScreenSubtitle": "আপনার জন্য উপযুক্ত সাবস্ক্রিপশন প্ল্যান বেছে নিন",
+  "walletSubscriptionHelp": "পেমেন্টে আগে ব্যবহৃত হয়",
+  "walletCashbackHelp": "প্রতিটি কেনাকাটা থেকে ২০%",
+  "rechargeWallet": "ওয়ালেট টপ আপ",
+  "rechargeTagline": "কম খরচে, বেশি ক্রেডিট",
+  "pay": "{amount} SAR পরিশোধ করুন",
+  "@pay": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "get": "{amount} SAR ক্রেডিট পান",
+  "@get": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "mostPopular": "সবচেয়ে জনপ্রিয়",
+  "howToBuy": "কীভাবে কিনবেন?",
+  "howToBuyStep1": "স্টাফকে আপনার পছন্দের প্ল্যান বলুন",
+  "howToBuyStep2": "স্টাফকে নগদ পরিশোধ করুন",
+  "howToBuyStep3": "স্টাফ তৎক্ষণাৎ আপনার ওয়ালেটে ক্রেডিট যোগ করবে",
+  "profile": "প্রোফাইল",
+  "referralCode": "আপনার রেফারেল কোড",
+  "referralShare": "Point-এ আমার সঙ্গে যোগ দিন এবং ৫ SAR পান! আমার কোড: {code}",
+  "@referralShare": {
+    "placeholders": {
+      "code": {"type": "String"}
+    }
+  },
+  "referredCount": "রেফারেল: {count} জন",
+  "@referredCount": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "logout": "লগ আউট",
+  "enterPin": "PIN লিখুন",
+  "wrongPin": "ভুল PIN",
+  "lockedOut": "লক হয়েছে। {minutes} মিনিট পর আবার চেষ্টা করুন",
+  "@lockedOut": {
+    "placeholders": {
+      "minutes": {"type": "int"}
+    }
+  },
+  "scanQr": "গ্রাহকের QR কোডে ক্যামেরা নির্দেশ করুন",
+  "enterPhone2": "ফোন নম্বর লিখুন",
+  "qrExpired": "QR মেয়াদ শেষ — গ্রাহককে রিফ্রেশ করতে বলুন",
+  "invalidQr": "অবৈধ QR",
+  "recordPurchase": "ক্রয় রেকর্ড করুন",
+  "redeemBalance": "ব্যালেন্স রিডিম করুন",
+  "addSubscription": "সাবস্ক্রিপশন যোগ করুন",
+  "addsCashback": "২০% ক্যাশব্যাক যোগ করে",
+  "deductsFromWallet": "গ্রাহকের ওয়ালেট থেকে কাটে",
+  "rechargeWithCash": "নগদে ওয়ালেট টপ আপ",
+  "visitNumber": "ভিজিট #{count}",
+  "@visitNumber": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "cashPaid": "নগদ পরিশোধ",
+  "cashbackAdded": "ক্যাশব্যাক যোগ হয়েছে",
+  "balanceAfter": "লেনদেনের পর ব্যালেন্স",
+  "amountRedeemed": "রিডিম করা পরিমাণ",
+  "fromSubscription": "সাবস্ক্রিপশন ব্যালেন্স থেকে",
+  "fromCashback": "ক্যাশব্যাক থেকে",
+  "remainingBalance": "অবশিষ্ট ব্যালেন্স",
+  "confirmOperation": "লেনদেন নিশ্চিত করুন",
+  "cancel": "বাতিল",
+  "operationSuccess": "সফল!",
+  "smsSent": "গ্রাহককে SMS পাঠানো হয়েছে",
+  "returningIn": "ক্যামেরায় ফিরছে: {seconds} সেকেন্ডে",
+  "@returningIn": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "undoOperation": "লেনদেন পূর্বাবস্থায় ফেরান",
+  "undoAvailable": "উপলব্ধ: {seconds} সেকেন্ড",
+  "@undoAvailable": {
+    "placeholders": {
+      "seconds": {"type": "int"}
+    }
+  },
+  "cashbackPreview": "গ্রাহক পাবেন: {amount} SAR ক্যাশব্যাক",
+  "@cashbackPreview": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "insufficientBalance": "অপর্যাপ্ত ব্যালেন্স",
+  "available": "উপলব্ধ: {amount} SAR",
+  "@available": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "confirmCashReceived": "সাবস্ক্রিপশন যোগ করার আগে নগদ পেয়েছেন নিশ্চিত করুন",
+  "offlineBanner": "আপনি অফলাইনে আছেন",
+  "pendingTransactions": "{count} লেনদেন অপেক্ষমাণ",
+  "@pendingTransactions": {
+    "placeholders": {
+      "count": {"type": "int"}
+    }
+  },
+  "dashboard": "ড্যাশবোর্ড",
+  "today": "আজ",
+  "thisWeek": "এই সপ্তাহ",
+  "thisMonth": "এই মাস",
+  "custom": "কাস্টম",
+  "revenue": "রাজস্ব",
+  "transactions": "লেনদেন",
+  "newCustomers": "নতুন গ্রাহক",
+  "cashbackIssued": "ইস্যুকৃত ক্যাশব্যাক",
+  "subscriptionsSold": "বিক্রি সাবস্ক্রিপশন",
+  "fraudAlerts": "জালিয়াতি সতর্কতা",
+  "topCustomers": "শীর্ষ গ্রাহক",
+  "staffActivity": "স্টাফ কার্যকলাপ",
+  "exportCsv": "CSV এক্সপোর্ট",
+  "adjustBalance": "ব্যালেন্স সমন্বয়",
+  "blockCustomer": "গ্রাহক ব্লক করুন",
+  "unblockCustomer": "ব্লক খুলুন",
+  "inviteStaff": "নতুন স্টাফ আমন্ত্রণ",
+  "deactivateStaff": "অ্যাকাউন্ট নিষ্ক্রিয় করুন",
+  "markReviewed": "পর্যালোচিত চিহ্নিত করুন",
+  "reverseTransaction": "লেনদেন বিপরীত করুন",
+  "bronze": "ব্রোঞ্জ",
+  "silver": "রূপা",
+  "gold": "সোনা",
+  "sarSuffix": " SAR",
+  "language": "ভাষা",
+  "arabic": "আরবি",
+  "english": "ইংরেজি",
+  "bengali": "বাংলা",
+  "enterName": "আপনার নাম লিখুন",
+  "name": "নাম",
+  "idLabel": "আইডি",
+  "birthday": "জন্মদিন",
+  "notifications": "বিজ্ঞপ্তি",
+  "enableNotifications": "বিজ্ঞপ্তি চালু করুন",
+  "next": "পরবর্তী",
+  "confirm": "নিশ্চিত করুন",
+  "search": "খুঁজুন",
+  "loading": "লোড হচ্ছে…",
+  "error": "কিছু ভুল হয়েছে",
+  "retry": "আবার চেষ্টা",
+  "save": "সংরক্ষণ",
+  "close": "বন্ধ",
+  "yes": "হ্যাঁ",
+  "no": "না",
+  "dailyLimitExceeded": "দৈনিক লেনদেন সীমা অতিক্রম",
+  "customerCardTitle": "গ্রাহক কার্ড",
+  "customerInformation": "গ্রাহকের তথ্য",
+  "totalSpentLabel": "মোট খরচ",
+  "streakLabel": "স্ট্রিক",
+  "registeredOn": "নিবন্ধনের তারিখ",
+  "blockedBadge": "ব্লক করা",
+  "customerNotFound": "গ্রাহক পাওয়া যায়নি",
+  "operationFailed": "অপারেশন ব্যর্থ — আবার চেষ্টা করুন",
+  "sessionExpired": "সেশন শেষ — আবার সাইন ইন করুন",
+  "statTotalCustomers": "মোট গ্রাহক",
+  "statStaffMembers": "স্টাফ",
+  "statTodayTransactionsCount": "আজকের লেনদেন",
+  "statTodaySalesLabel": "আজকের বিক্রি",
+  "statTodayCashbackLabel": "আজকের ক্যাশব্যাক",
+  "currencyDisplay": "SAR",
+  "customersTitle": "গ্রাহক",
+  "navHome": "হোম",
+  "navPlans": "প্ল্যান",
+  "tabScanner": "স্ক্যানার",
+  "tabStore": "স্টোর",
+  "roleManager": "ম্যানেজার",
+  "roleStaffMember": "স্টাফ",
+  "roleOwnerLabel": "মালিক",
+  "mainBranch": "প্রধান শাখা",
+  "mobilePhone": "মোবাইল নম্বর",
+  "branchLabel": "শাখা",
+  "roleField": "ভূমিকা",
+  "statusField": "অবস্থা",
+  "statusActive": "সক্রিয়",
+  "statusInactive": "নিষ্ক্রিয়",
+  "staffCreatedOtpSent": "স্টাফ তৈরি হয়েছে — ফোনে OTP পাঠানো হয়েছে",
+  "pendingOfflineTooltip": "অফলাইনে মুলতুবি",
+  "phoneLabelShort": "ফোন",
+  "share": "শেয়ার",
+  "loadMore": "আরও লোড",
+  "visits": "ভিজিট",
+  "lastVisit": "শেষ ভিজিট",
+  "accountSettingsSubtitle": "অ্যাকাউন্ট ও সেটিংস",
+  "sectionInformation": "তথ্য",
+  "sectionPreferences": "পছন্দসমূহ",
+  "tapToEditName": "নাম সম্পাদনা করতে ট্যাপ করুন",
+  "contactUsTitle": "যোগাযোগ করুন",
+  "contactUsSubtitle": "শাখার তথ্য ও ফোন নম্বর",
+  "branchesEmpty": "কোনো শাখা নেই",
+  "addressLabel": "ঠিকানা",
+  "whatsappLabel": "হোয়াটসঅ্যাপ",
+  "callAction": "কল করুন",
+  "whatsappAction": "হোয়াটসঅ্যাপ",
+  "teamSectionTitle": "আমাদের দল",
+  "nameRequired": "অনুগ্রহ করে নাম লিখুন",
+  "youEarned": "আপনি উপার্জন করেছেন {amount}",
+  "@youEarned": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "registerYourName": "আপনার নাম",
+  "registerFullNameHint": "পূর্ণ নাম",
+  "welcomeDialogTitle": "স্বাগতম! 🌟",
+  "welcomeDialogBody": "Point-এ যোগ দিয়ে আনন্দিত।\nপ্রতিটি পয়েন্ট = আরও সঞ্চয় 💙",
+  "welcomeGiftBadge": "স্বাগতম উপহার",
+  "welcomeGiftAmount": "10.00 SAR",
+  "welcomeGiftCaption": "আপনার ওয়ালেটে বিনামূল্যে ক্যাশব্যাক",
+  "welcomeGetStarted": "শুরু করুন 🚀",
+  "homeBalanceReady": "আপনার ব্যালেন্স প্রস্তুত",
+  "homeLoadErrorMessage": "কিছু ভুল হয়েছে, আবার চেষ্টা করুন",
+  "loadingTakingLong": "লোড হতে স্বাভাবিকের চেয়ে বেশি সময় লাগছে",
+  "addToWalletPrefix": "যোগ করুন",
+  "addToGoogleWallet": "Google Wallet-এ যোগ করুন",
+  "addToAppleWallet": "Apple Wallet-এ যোগ করুন",
+  "errorWithMessage": "ত্রুটি: {message}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "message": {"type": "String"}
+    }
+  },
+  "unknownError": "অজানা",
+  "subscriptionShort": "সাবস্ক্রিপশন",
+  "planLabelPremium": "প্রিমিয়াম",
+  "planLabelDiamond": "ডায়মন্ড",
+  "planPayHeader": "পরিশোধ",
+  "planGetHeader": "পান",
+  "savePercentLabel": "{percent} সাশ্রয়",
+  "@savePercentLabel": {
+    "placeholders": {
+      "percent": {"type": "String"}
+    }
+  },
+  "txTypeCashbackEarnedShort": "ক্যাশব্যাক",
+  "txTypeAdjustment": "সমন্বয়",
+  "signInWithBiometrics": "বায়োমেট্রিক / Face ID দিয়ে সাইন ইন",
+  "biometricLoginTitle": "বায়োমেট্রিক সাইন-ইন",
+  "statusOn": "চালু",
+  "statusOff": "বন্ধ",
+  "searchHint": "খুঁজুন…",
+  "fraudFlagSelfTx": "স্টাফ নিজের ফোনে ক্রেডিট দিয়েছে",
+  "fraudFlagVelocity": "দ্রুত পুনরাবৃত্ত লেনদেন",
+  "fraudFlagLarge": "বড় অঙ্ক পর্যালোচনা দরকার",
+  "fraudFlagDevice": "সন্দেহজনক ডিভাইস",
+  "filterDormant": "নিষ্ক্রিয় (৩০ দিন)",
+  "reasonRequired": "কারণ (প্রয়োজন)",
+  "staffListTitle": "স্টাফ",
+  "currentSubscriptionBalancePrefix": "বর্তমান সাবস্ক্রিপশন ব্যালেন্স:",
+  "totalColon": "মোট:",
+  "walletHowItWorks": "কীভাবে কাজ করে",
+  "walletStepPayCash": "নগদে পরিশোধ করুন",
+  "walletStepCashback": "২০% ক্যাশব্যাক পান",
+  "walletStepUseNext": "পরবর্তী ভিজিটে ব্যবহার করুন",
+  "actionDeactivate": "নিষ্ক্রিয় করুন",
+  "actionActivate": "সক্রিয় করুন",
+  "cashbackEarnedSuffix": "ক্যাশব্যাক",
+  "staffSearchByPhone": "ফোন নম্বর দিয়ে খুঁজুন",
+  "staffScanCustomerQr": "গ্রাহকের QR কোড স্ক্যান করুন",
+  "staffFindCustomer": "একজন গ্রাহক খুঁজুন",
+  "staffEnterNineDigits": "৯ সংখ্যা লিখুন",
+  "staffNoCustomerForPhone": "এই নম্বরে কোনো গ্রাহক নেই",
+  "staffPickCustomer": "গ্রাহক বেছে নিন:",
+  "staffOfflineTxSaved": "কানেকশন নেই — লেনদেন সংরক্ষিত হয়েছে এবং স্বয়ংক্রিয়ভাবে পাঠানো হবে",
+  "staffAmountSar": "{amount} SAR",
+  "@staffAmountSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSaudiRiyal": "সৌদি রিয়াল",
+  "staffAvailableSar": "উপলব্ধ: {amount} SAR",
+  "@staffAvailableSar": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffCashbackPreviewPlus": "✨ ক্যাশব্যাক: +{amount} SAR",
+  "@staffCashbackPreviewPlus": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchAmountPaid": "পরিশোধিত অঙ্ক: {amount}",
+  "@staffSummaryPurchAmountPaid": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAdded": "ক্যাশব্যাক যোগ হয়েছে: +{amount}",
+  "@staffSummaryPurchCbAdded": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryPurchCbAfter": "লেনদেনের পর ক্যাশব্যাক ব্যালেন্স: {amount}",
+  "@staffSummaryPurchCbAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemAmount": "রিডিম করা অঙ্ক: {amount}",
+  "@staffSummaryRedeemAmount": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromSub": "সাবস্ক্রিপশন ব্যালেন্স থেকে: {amount}",
+  "@staffSummaryRedeemFromSub": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemFromCb": "ক্যাশব্যাক থেকে: {amount}",
+  "@staffSummaryRedeemFromCb": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSummaryRedeemWalletAfter": "লেনদেনের পর ওয়ালেট ব্যালেন্স: {amount}",
+  "@staffSummaryRedeemWalletAfter": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffSubscriptionBalanceLine": "বর্তমান সাবস্ক্রিপশন ব্যালেন্স: {amount}",
+  "@staffSubscriptionBalanceLine": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerPaysCash": "গ্রাহক পরিশোধ করবে: {amount} নগদ",
+  "@staffPlanCustomerPaysCash": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffPlanCustomerGetsCredit": "পাবে: {amount} ক্রেডিট",
+  "@staffPlanCustomerGetsCredit": {
+    "placeholders": {
+      "amount": {"type": "String"}
+    }
+  },
+  "staffConfirmAddSubscription": "সাবস্ক্রিপশন যোগ নিশ্চিত করুন",
+  "staffTransactionCompleted": "লেনদেন সফলভাবে সম্পন্ন হয়েছে!",
+  "staffUndoDialogTitle": "এই লেনদেন পূর্বাবস্থায় ফেরাবেন?",
+  "staffUndoDialogBody": "গ্রাহকের লেনদেন বাতিল করা হবে।",
+  "staffConfirmUndo": "পূর্বাবস্থা নিশ্চিত করুন",
+  "staffTransactionUndone": "লেনদেন পূর্বাবস্থায় ফেরানো হয়েছে",
+  "staffUndoShort": "পূর্বাবস্থা",
+  "staffSuccCustomer": "গ্রাহক",
+  "staffSuccAmountPaid": "পরিশোধিত অঙ্ক",
+  "staffSuccCashbackAdded": "ক্যাশব্যাক যোগ হয়েছে",
+  "staffSuccCashbackNow": "এখন ক্যাশব্যাক ব্যালেন্স",
+  "staffSuccAmountRedeemed": "রিডিম করা অঙ্ক",
+  "staffSuccFromSubscription": "সাবস্ক্রিপশন থেকে",
+  "staffSuccFromCashback": "ক্যাশব্যাক থেকে",
+  "staffSuccSubAfter": "সাবস্ক্রিপশন ব্যালেন্স পরে",
+  "staffSuccCashbackAfter": "ক্যাশব্যাক পরে",
+  "staffSuccPaidCash": "নগদে পরিশোধ",
+  "staffSuccCreditAdded": "ক্রেডিট যোগ হয়েছে",
+  "staffSuccSubNow": "এখন সাবস্ক্রিপশন ব্যালেন্স"
+}

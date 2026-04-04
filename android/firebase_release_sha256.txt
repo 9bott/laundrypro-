@@ -1,0 +1,7 @@
+Register this SHA-256 fingerprint for the Android app in Firebase Console:
+Project settings → Your apps → Android (com.laundrypro.app) → Add fingerprint
+
+EE:A9:93:6B:AC:42:4D:44:66:9F:6D:50:FD:A9:59:8F:23:3D:96:DF:AA:D6:E0:96:65:58:EB:E6:F5:AF:C8:12
+
+Also remove +966550772508 from Authentication → Sign-in method → Phone →
+Phone numbers for testing so it receives real SMS.
