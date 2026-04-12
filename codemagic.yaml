@@ -1,0 +1,28 @@
+﻿workflows:
+  ios-release:
+    name: iOS Release
+    max_build_duration: 120
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: Apple Distribution
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.laundrypro.app
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Get Flutter packages
+        script: flutter packages pub get
+      - name: Build iOS
+        script: |
+          flutter build ipa --release \
+            --dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co \
+            --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
+    artifacts:
+      - build/ios/ipa/*.ipa
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
