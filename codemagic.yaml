@@ -9,6 +9,7 @@
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.laundrypro.app
+        certificate_name: Point Distribution
       flutter: stable
       xcode: latest
       cocoapods: default
