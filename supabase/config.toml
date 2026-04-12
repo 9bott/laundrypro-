@@ -16,41 +16,44 @@ enabled = true
 # Cron: hosted Supabase uses pg_cron + pg_net (see `cron_scheduled_notifications.sql` in this folder).
 # Schedule equivalent to 09:00 Asia/Riyadh = 06:00 UTC daily: `0 6 * * *`
 
+# بوابة Supabase قد تعيد 401 Invalid JWT قبل الدالة (مفاتيح publishable / JWT). التحقق داخل الدالة عبر requireStaff.
 [functions.add-purchase]
-verify_jwt = true
+verify_jwt = false
 
 [functions.redeem-balance]
-verify_jwt = true
+verify_jwt = false
 
 [functions.add-subscription]
-verify_jwt = true
+verify_jwt = false
 
 [functions.get-customer-by-qr]
-verify_jwt = true
+verify_jwt = false
 
 [functions.undo-transaction]
-verify_jwt = true
+verify_jwt = false
 
 [functions.owner-customer-adjust-balance]
-verify_jwt = true
+verify_jwt = false
 
 [functions.owner-customer-set-blocked]
-verify_jwt = true
+verify_jwt = false
 
 [functions.owner-staff-set-active]
-verify_jwt = true
+verify_jwt = false
 
 [functions.owner-fraud-resolve]
-verify_jwt = true
+verify_jwt = false
 
 [functions.owner-invite-staff]
-verify_jwt = true
+verify_jwt = false
 
+# بوابة Supabase + مفاتيح publishable الجديدة قد تعيد 401 قبل الدالة؛ التحقق يبقى داخل الدالة (requireCustomerId).
 [functions.generate-qr-token]
-verify_jwt = true
+verify_jwt = false
+
 
 [functions.get-owner-dashboard]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-notification]
 verify_jwt = false
@@ -58,8 +61,11 @@ verify_jwt = false
 [functions.scheduled-notifications]
 verify_jwt = false
 
-[functions.generate-wallet-pass]
+[functions.firebase-auth]
 verify_jwt = false
 
-[functions.firebase-auth]
+[functions.generate-google-wallet-url]
+verify_jwt = false
+
+[functions.generate-passkit-wallet-url]
 verify_jwt = false

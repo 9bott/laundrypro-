@@ -2,6 +2,7 @@ import { json } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { requireStaff } from "../_shared/auth.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 
 /**
  * Undoes a transaction within ~35s of creation (staff UX target 30s).
@@ -122,6 +123,8 @@ Deno.serve(async (req) => {
     record_id: txId,
     new_values: { type },
   });
+
+  await trySyncGoogleWalletLoyaltyObject(supabase, tx.customer_id as string);
 
   return json({ success: true });
 });

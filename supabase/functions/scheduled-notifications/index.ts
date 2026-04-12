@@ -3,6 +3,7 @@ import { serviceClient } from "../_shared/supabase.ts";
 import { requireServiceRole } from "../_shared/auth.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 import { riyadhDateString } from "../_shared/time.ts";
 
 /** Allows `Authorization: Bearer SERVICE_ROLE_KEY` (pg_cron) or `x-cron-secret`. */
@@ -191,6 +192,8 @@ Deno.serve(async (req) => {
       record_id: btx?.id as string,
       new_values: { bonus },
     });
+
+    await trySyncGoogleWalletLoyaltyObject(supabase, c.id as string);
 
     summary.birthdays_processed++;
   }

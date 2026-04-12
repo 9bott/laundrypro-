@@ -8,6 +8,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
@@ -127,6 +128,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
   Future<void> _verify() async {
     final token = _controllers.map((c) => c.text).join();
     if (token.length != 6) return;
+
+    if (!Env.hasSupabase) {
+      _failVerify(
+        message: _isAr
+            ? 'Supabase غير مهيأ. شغّل التطبيق مع SUPABASE_URL و SUPABASE_ANON_KEY.'
+            : 'Supabase is not configured. Run with SUPABASE_URL and SUPABASE_ANON_KEY.',
+      );
+      return;
+    }
 
     setState(() {
       _busy = true;

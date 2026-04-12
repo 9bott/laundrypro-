@@ -1,4 +1,5 @@
 /// Global business rules and tuning constants.
+library;
 
 /// SharedPreferences: phone auth — [`kLoginModeStaff`] checks staff before customer after OTP.
 const String kLoginModePrefKey = 'login_mode';

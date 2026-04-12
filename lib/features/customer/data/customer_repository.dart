@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
@@ -185,18 +186,87 @@ class CustomerRepository {
   }
 
   Future<QrTokenData> invokeGenerateQrToken() async {
-    final res = await _client.functions.invoke(
-      kFnGenerateQrToken,
-      method: HttpMethod.post,
-    );
+    late final FunctionResponse res;
+    try {
+      res = await _client.functions.invoke(
+        kFnGenerateQrToken,
+        method: HttpMethod.post,
+      );
+    } on FunctionException catch (e) {
+      final details = _parseFunctionsErrorBody(e.details);
+      final msg = details?['message']?.toString() ??
+          details?['error']?.toString() ??
+          'Function failed (${e.status})';
+      final code = details?['error']?.toString() ?? 'function_exception';
+      throw QrTokenFetchException(
+        status: e.status,
+        code: code,
+        message: msg.isEmpty ? 'function_exception:${e.status}' : msg,
+      );
+    } catch (e) {
+      throw QrTokenFetchException(
+        status: 0,
+        code: 'network_error',
+        message: '$e',
+      );
+    }
     if (res.status != 200) {
-      throw Exception('qr_token_failed:${res.status}');
+      final parsed = _parseFunctionsErrorBody(res.data);
+      final msg = parsed?['message']?.toString() ??
+          parsed?['error']?.toString() ??
+          '${res.data}';
+      final code = parsed?['error']?.toString() ?? '';
+      throw QrTokenFetchException(
+        status: res.status,
+        code: code,
+        message: msg.isEmpty ? 'http_${res.status}' : msg,
+      );
     }
     final map = Map<String, dynamic>.from(res.data as Map);
     return QrTokenData(
       token: map['qr_token'] as String,
       expiresAt: DateTime.parse(map['expires_at'] as String),
     );
+  }
+
+  static Map<String, dynamic>? _parseFunctionsErrorBody(dynamic data) {
+    if (data == null) return null;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String) {
+      try {
+        final decoded = jsonDecode(data);
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {}
+    }
+    return null;
+  }
+
+  Future<String> invokeGenerateGoogleWalletUrl() async {
+    final res = await _client.functions.invoke(
+      kFnGenerateGoogleWalletUrl,
+      method: HttpMethod.post,
+    );
+    if (res.status != 200) {
+      throw Exception('google_wallet_url_failed:${res.status}:${res.data}');
+    }
+    final map = Map<String, dynamic>.from(res.data as Map);
+    final url = map['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw Exception('google_wallet_url_missing');
+    }
+    return url;
+  }
+
+  /// PassKit (Apple Wallet / رابط التوزيع): يعيد `applePassUrl` و`landingUrl`.
+  Future<Map<String, dynamic>> invokeGeneratePasskitWalletUrls() async {
+    final res = await _client.functions.invoke(
+      kFnGeneratePasskitWalletUrl,
+      method: HttpMethod.post,
+    );
+    if (res.status != 200) {
+      throw Exception('passkit_wallet_failed:${res.status}:${res.data}');
+    }
+    return Map<String, dynamic>.from(res.data as Map);
   }
 
   /// Count of customers this user referred + sum of referral bonuses (if any).

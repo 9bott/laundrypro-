@@ -56,10 +56,50 @@ class AppLocalizationsBn extends AppLocalizations {
   }
 
   @override
+  String get staticLoyaltyQrHint => 'Google/Apple Wallet কার্ডের একই কোড';
+
+  @override
+  String get customerQrExpired => 'কোডের মেয়াদ শেষ — রিফ্রেশ করতে ট্যাপ করুন';
+
+  @override
+  String get qrTokenServerConfigError =>
+      'QR তৈরি করা যায়নি: সার্ভার কনফিগার করা নেই। Edge Function secrets-এ SUPABASE_JWT_SECRET অথবা QR_JWT_SECRET বা SUPABASE1_JWT_SECRET সেট করুন এবং generate-qr-token ডিপ্লয় করুন।';
+
+  @override
+  String get qrTokenAuthError =>
+      'অ্যাকাউন্ট যাচাই করা যায়নি। রিফ্রেশ করুন বার সাইন আউট করে আবার সাইন ইন করুন।';
+
+  @override
   String get orTellPhone => 'অথবা স্টাফকে আপনার ফোন নম্বর বলুন:';
 
   @override
-  String get myWallet => 'আমার ওয়ালেট';
+  String get myBalance => 'আমার ব্যালেন্স';
+
+  @override
+  String get walletTitle => 'Wallet';
+
+  @override
+  String get walletSubtitle => 'Add your loyalty card to your phone wallet.';
+
+  @override
+  String get addToGoogleWallet => 'Add to Google Wallet';
+
+  @override
+  String get addToAppleWallet => 'Add to Apple Wallet';
+
+  @override
+  String get appleWalletTitle => 'Apple Wallet';
+
+  @override
+  String get appleWalletNotEnabled =>
+      'Apple Wallet is not enabled yet. It requires Apple Pass Type certificate setup.';
+
+  @override
+  String get walletAddFailed =>
+      'Couldn\'t generate wallet pass. Please try again.';
+
+  @override
+  String get walletOpenFailed => 'Couldn\'t open wallet. Please try again.';
 
   @override
   String get usedFirst => 'পেমেন্টে আগে ব্যবহৃত হয়';
@@ -107,13 +147,13 @@ class AppLocalizationsBn extends AppLocalizations {
       'আপনার জন্য উপযুক্ত সাবস্ক্রিপশন প্ল্যান বেছে নিন';
 
   @override
-  String get walletSubscriptionHelp => 'পেমেন্টে আগে ব্যবহৃত হয়';
+  String get balanceSubscriptionHelp => 'পেমেন্টে আগে ব্যবহৃত হয়';
 
   @override
-  String get walletCashbackHelp => 'প্রতিটি কেনাকাটা থেকে ২০%';
+  String get balanceCashbackHelp => 'প্রতিটি কেনাকাটা থেকে ২০%';
 
   @override
-  String get rechargeWallet => 'ওয়ালেট টপ আপ';
+  String get topUpBalance => 'ব্যালেন্স টপ আপ';
 
   @override
   String get rechargeTagline => 'কম খরচে, বেশি ক্রেডিট';
@@ -141,7 +181,8 @@ class AppLocalizationsBn extends AppLocalizations {
   String get howToBuyStep2 => 'স্টাফকে নগদ পরিশোধ করুন';
 
   @override
-  String get howToBuyStep3 => 'স্টাফ তৎক্ষণাৎ আপনার ওয়ালেটে ক্রেডিট যোগ করবে';
+  String get howToBuyStep3 =>
+      'স্টাফ তৎক্ষণাৎ আপনার অ্যাকাউন্টে ক্রেডিট যোগ করবে';
 
   @override
   String get profile => 'প্রোফাইল';
@@ -198,10 +239,10 @@ class AppLocalizationsBn extends AppLocalizations {
   String get addsCashback => '২০% ক্যাশব্যাক যোগ করে';
 
   @override
-  String get deductsFromWallet => 'গ্রাহকের ওয়ালেট থেকে কাটে';
+  String get deductsFromBalance => 'গ্রাহকের ব্যালেন্স থেকে কাটে';
 
   @override
-  String get rechargeWithCash => 'নগদে ওয়ালেট টপ আপ';
+  String get topUpWithCash => 'নগদে ব্যালেন্স টপ আপ';
 
   @override
   String visitNumber(int count) {
@@ -593,7 +634,7 @@ class AppLocalizationsBn extends AppLocalizations {
   String get welcomeGiftAmount => '10.00 SAR';
 
   @override
-  String get welcomeGiftCaption => 'আপনার ওয়ালেটে বিনামূল্যে ক্যাশব্যাক';
+  String get welcomeGiftCaption => 'আপনার অ্যাকাউন্টে বিনামূল্যে ক্যাশব্যাক';
 
   @override
   String get welcomeGetStarted => 'শুরু করুন 🚀';
@@ -606,15 +647,6 @@ class AppLocalizationsBn extends AppLocalizations {
 
   @override
   String get loadingTakingLong => 'লোড হতে স্বাভাবিকের চেয়ে বেশি সময় লাগছে';
-
-  @override
-  String get addToWalletPrefix => 'যোগ করুন';
-
-  @override
-  String get addToGoogleWallet => 'Google Wallet-এ যোগ করুন';
-
-  @override
-  String get addToAppleWallet => 'Apple Wallet-এ যোগ করুন';
 
   @override
   String errorWithMessage(String message) {
@@ -694,16 +726,21 @@ class AppLocalizationsBn extends AppLocalizations {
   String get totalColon => 'মোট:';
 
   @override
-  String get walletHowItWorks => 'কীভাবে কাজ করে';
+  String get balanceHowItWorks => 'কীভাবে কাজ করে';
 
   @override
-  String get walletStepPayCash => 'নগদে পরিশোধ করুন';
+  String get balanceStepPayCash => 'নগদে পরিশোধ করুন';
 
   @override
-  String get walletStepCashback => '২০% ক্যাশব্যাক পান';
+  String get balanceStepCashback => '২০% ক্যাশব্যাক পান';
 
   @override
-  String get walletStepUseNext => 'পরবর্তী ভিজিটে ব্যবহার করুন';
+  String get balanceStepUseNext => 'পরবর্তী ভিজিটে ব্যবহার করুন';
+
+  @override
+  String staffSummaryRedeemBalanceAfter(String amount) {
+    return 'লেনদেনের পর ব্যালেন্স: $amount';
+  }
 
   @override
   String get actionDeactivate => 'নিষ্ক্রিয় করুন';
@@ -782,11 +819,6 @@ class AppLocalizationsBn extends AppLocalizations {
   @override
   String staffSummaryRedeemFromCb(String amount) {
     return 'ক্যাশব্যাক থেকে: $amount';
-  }
-
-  @override
-  String staffSummaryRedeemWalletAfter(String amount) {
-    return 'লেনদেনের পর ওয়ালেট ব্যালেন্স: $amount';
   }
 
   @override

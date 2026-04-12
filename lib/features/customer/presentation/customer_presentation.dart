@@ -1,1 +1,1 @@
-// Customer UI — home, wallet, history, subscription, profile.
+// Customer UI — home, history, subscription, profile.

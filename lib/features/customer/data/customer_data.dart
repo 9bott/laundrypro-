@@ -1,1 +1,1 @@
-// Customer data — wallet, transactions, profile API.
+// Customer data — transactions, profile API.

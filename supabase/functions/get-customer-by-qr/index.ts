@@ -1,7 +1,10 @@
 import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { requireStaff } from "../_shared/auth.ts";
-import { verifyQrToken } from "../_shared/qr_jwt.ts";
+import {
+  tryParsePlainCustomerId,
+  verifyQrToken,
+} from "../_shared/qr_jwt.ts";
 
 type Body = { qr_token: string };
 
@@ -25,15 +28,31 @@ Deno.serve(async (req) => {
     return jsonError("validation", "qr_token required", 400);
   }
 
-  const verified = await verifyQrToken(body.qr_token);
-  if (!verified.ok) {
-    return jsonError(
-      verified.code === "qr_expired" ? "qr_expired" : "qr_invalid",
-      verified.code === "qr_expired"
-        ? "QR code expired, ask customer to refresh"
-        : "Invalid QR token",
-      400,
-    );
+  const raw = body.qr_token.trim();
+  const plainId = tryParsePlainCustomerId(raw);
+
+  let customerId: string;
+  if (plainId) {
+    customerId = plainId;
+  } else {
+    const verified = await verifyQrToken(raw);
+    if (!verified.ok) {
+      if (verified.code === "qr_secret_missing") {
+        return jsonError(
+          "server_config",
+          "QR secret not set in Edge secrets (use SUPABASE_JWT_SECRET, QR_JWT_SECRET, or SUPABASE1_JWT_SECRET)",
+          500,
+        );
+      }
+      return jsonError(
+        verified.code === "qr_expired" ? "qr_expired" : "qr_invalid",
+        verified.code === "qr_expired"
+          ? "QR code expired, ask customer to refresh"
+          : `Invalid QR (${verified.code})`,
+        400,
+      );
+    }
+    customerId = verified.customerId;
   }
 
   const { data: customer, error } = await supabase
@@ -41,7 +60,7 @@ Deno.serve(async (req) => {
     .select(
       "id, name, avatar_url, cashback_balance, subscription_balance, tier, visit_count, active_plan_name, active_plan_name_ar",
     )
-    .eq("id", verified.customerId)
+    .eq("id", customerId)
     .maybeSingle();
 
   if (error || !customer) {

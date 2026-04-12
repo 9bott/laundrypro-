@@ -32,7 +32,7 @@ bool customerHistoryIsBonusType(String type) {
       return (
         bg: AppColors.goldTint,
         fg: AppColors.gold,
-        icon: Icons.account_balance_wallet_outlined,
+        icon: Icons.account_balance_outlined,
       );
     case 'purchase':
       return (
@@ -44,7 +44,7 @@ bool customerHistoryIsBonusType(String type) {
       return (
         bg: AppColors.warningTint,
         fg: AppColors.warning,
-        icon: Icons.account_balance_wallet_outlined,
+        icon: Icons.account_balance_outlined,
       );
     case 'subscription':
       return (

@@ -149,6 +149,18 @@ class StaffRepository {
 
   factory StaffRepository.fromEnv() => StaffRepository(SupabaseService.client);
 
+  static Map<String, dynamic>? _parseFunctionsResponseMap(dynamic data) {
+    if (data == null) return null;
+    if (data is Map) return Map<String, dynamic>.from(data);
+    if (data is String && data.isNotEmpty) {
+      try {
+        final d = jsonDecode(data);
+        if (d is Map) return Map<String, dynamic>.from(d);
+      } catch (_) {}
+    }
+    return null;
+  }
+
   static String hashPinSha256(String pin) {
     final bytes = utf8.encode(pin);
     final digest = sha256.convert(bytes);
@@ -247,13 +259,47 @@ class StaffRepository {
   }
 
   Future<StaffCustomerView> getCustomerByQr(String qrToken) async {
-    final res = await _client.functions.invoke(
-      kFnGetCustomerByQr,
-      body: {'qr_token': qrToken},
-    );
+    // Ensure we send a fresh staff JWT; function will reject missing/expired tokens.
+    final initialSession = _client.auth.currentSession;
+    if (initialSession == null) {
+      throw StaffApiException(401, 'missing_session', code: 'missing_session');
+    }
+    if (initialSession.isExpired) {
+      try {
+        await _client.auth.refreshSession();
+      } catch (e) {
+        throw StaffApiException(401, '$e', code: 'refresh_failed');
+      }
+    }
+    final token = _client.auth.currentSession?.accessToken;
+    if (token == null || token.isEmpty) {
+      throw StaffApiException(401, 'missing_access_token', code: 'missing_access_token');
+    }
+
+    late final FunctionResponse res;
+    try {
+      res = await _client.functions.invoke(
+        kFnGetCustomerByQr,
+        method: HttpMethod.post,
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+        body: {'qr_token': qrToken},
+      );
+    } catch (e) {
+      throw StaffApiException(
+        0,
+        '$e',
+        code: 'network_error',
+      );
+    }
     if (res.status != 200) {
-      final msg = res.data is Map ? '${(res.data as Map)['message'] ?? res.data}' : '${res.data}';
-      throw StaffApiException(res.status, msg);
+      final m = _parseFunctionsResponseMap(res.data);
+      final msg = m != null
+          ? '${m['message'] ?? m['error'] ?? res.data}'
+          : '${res.data}';
+      final code = m?['error']?.toString();
+      throw StaffApiException(res.status, msg, code: code);
     }
     final map = Map<String, dynamic>.from(res.data as Map);
     final v = StaffCustomerView.fromQrJson(map);

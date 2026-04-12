@@ -146,3 +146,5 @@ const String kFnOwnerSetBlocked = 'owner-customer-set-blocked';
 const String kFnOwnerStaffActive = 'owner-staff-set-active';
 const String kFnOwnerFraudResolve = 'owner-fraud-resolve';
 const String kFnOwnerInviteStaff = 'owner-invite-staff';
+const String kFnGenerateGoogleWalletUrl = 'generate-google-wallet-url';
+const String kFnGeneratePasskitWalletUrl = 'generate-passkit-wallet-url';

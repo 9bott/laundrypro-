@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
@@ -63,11 +65,52 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   bool _bioEnabled = false;
   bool _bioAvailable = false;
   bool _bioBusy = false;
+  /// جلسة محفوظة صالحة (بعد أول تسجيل دخول بـ OTP) — البصمة لا تُستخدم لأول مرة.
+  bool _hasValidPersistedSession = false;
+  String _biometricLoginAsset = AppAssets.fingerprintLoginIcon;
 
   bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
 
   bool _validNine(String d) =>
       d.length == 9 && d.startsWith('5') && RegExp(r'^[0-9]+$').hasMatch(d);
+
+  /// Same key pattern as SharedPreferencesLocalStorage in supabase_flutter.
+  String _supabaseAuthPersistKey(String supabaseUrl) {
+    final host = Uri.parse(supabaseUrl.trim()).host;
+    final ref = host.split('.').first;
+    return 'sb-$ref-auth-token';
+  }
+
+  Future<Session?> _ensureSupabaseSession() async {
+    if (!Env.hasSupabase) return null;
+
+    var session = Supabase.instance.client.auth.currentSession;
+    if (session != null && !session.isExpired) return session;
+
+    final prefs = await SharedPreferences.getInstance();
+    final persistKey = _supabaseAuthPersistKey(Env.supabaseUrl);
+    final persistedSessionStr = prefs.getString(persistKey);
+
+    if (session == null &&
+        persistedSessionStr != null &&
+        persistedSessionStr.isNotEmpty) {
+      try {
+        await Supabase.instance.client.auth.recoverSession(persistedSessionStr);
+      } catch (_) {
+        // If recover fails, we'll fall back to requiring OTP login.
+      }
+      session = Supabase.instance.client.auth.currentSession;
+    }
+
+    if (session != null && session.isExpired) {
+      try {
+        await Supabase.instance.client.auth.refreshSession();
+      } catch (_) {}
+      session = Supabase.instance.client.auth.currentSession;
+    }
+
+    return (session != null && !session.isExpired) ? session : null;
+  }
 
   @override
   void initState() {
@@ -81,11 +124,15 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     final bioEnabled = await BiometricService.isEnabled();
     final bioAvailable = await BiometricService.isAvailable();
     final loginMode = prefs.getString(kLoginModePrefKey);
+    final session = await _ensureSupabaseSession();
+    final bioIcon = await BiometricService.loginIconAssetPath();
     if (!mounted) return;
     setState(() {
       _rememberMe = rememberMe;
       _bioAvailable = bioAvailable;
       _bioEnabled = bioEnabled && bioAvailable && rememberMe;
+      _hasValidPersistedSession = session != null;
+      _biometricLoginAsset = bioIcon;
       if (loginMode == kLoginModeStaff) {
         _asStaff = true;
       } else if (loginMode == kLoginModeCustomer) {
@@ -100,10 +147,12 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
     if (!v) {
       await BiometricService.setEnabled(false);
     }
+    final session = await _ensureSupabaseSession();
     if (!mounted) return;
     setState(() {
       _rememberMe = v;
       if (!v) _bioEnabled = false;
+      _hasValidPersistedSession = session != null;
     });
   }
 
@@ -116,12 +165,29 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   Future<void> _loginWithBiometrics() async {
     if (_bioBusy || _loading) return;
     final auth = ref.read(authRepositoryProvider);
-    if (auth.currentSession == null) return;
 
     setState(() => _bioBusy = true);
     try {
       final ok = await BiometricService.authenticate();
       if (!ok) return;
+
+      // Ensure Supabase session is present/valid before resolving role + routing.
+      final session = await _ensureSupabaseSession();
+      if (session == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isAr
+                  ? 'انتهت الجلسة. سجّل دخول مرة واحدة بالرسالة ثم جرّب البصمة.'
+                  : 'Session expired. Sign in once with OTP, then use biometrics.',
+            ),
+            backgroundColor: AppColors.error,
+          ),
+        );
+        return;
+      }
+
       final role = await auth.resolveRole();
       final prefs = await SharedPreferences.getInstance();
       if (!mounted) return;
@@ -472,46 +538,6 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                 ),
                               ],
                               const SizedBox(height: 18),
-                              if (_bioAvailable)
-                                OutlinedButton(
-                                  onPressed: (_loading ||
-                                          _bioBusy ||
-                                          !_rememberMe ||
-                                          !_bioEnabled ||
-                                          ref
-                                                  .read(authRepositoryProvider)
-                                                  .currentSession ==
-                                              null)
-                                      ? null
-                                      : _loginWithBiometrics,
-                                  style: OutlinedButton.styleFrom(
-                                    minimumSize: const Size(double.infinity, 54),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(18),
-                                    ),
-                                  ),
-                                  child: Text(
-                                    isAr
-                                        ? 'الدخول عبر Face ID / البصمة'
-                                        : 'Sign in with biometrics',
-                                  ),
-                                ),
-                              if (_bioAvailable &&
-                                  (ref.read(authRepositoryProvider).currentSession ==
-                                          null ||
-                                      !_bioEnabled ||
-                                      !_rememberMe)) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  isAr
-                                      ? 'لتفعيل الدخول بالبصمة: فعّل "تذكرني" ثم سجّل دخول مرة واحدة بالرسالة.'
-                                      : 'To enable biometrics: turn on Remember me, then sign in once with OTP.',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                        color: AppColors.textHint,
-                                      ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
                               FilledButton(
                                 onPressed: (_loading || _bioBusy)
                                     ? null
@@ -533,6 +559,71 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                         isAr ? 'تسجيل الدخول' : 'Sign in',
                                       ),
                               ),
+                              if (_bioEnabled &&
+                                  _bioAvailable &&
+                                  _hasValidPersistedSession) ...[
+                                const SizedBox(height: 18),
+                                Center(
+                                  child: Opacity(
+                                    opacity: (_loading || _bioBusy) ? 0.45 : 1,
+                                    child: Material(
+                                      color: AppColors.surface,
+                                      shape: CircleBorder(
+                                        side: BorderSide(
+                                          color: AppColors.border.withValues(
+                                            alpha: 0.9,
+                                          ),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: InkWell(
+                                        onTap: (_loading || _bioBusy)
+                                            ? null
+                                            : _loginWithBiometrics,
+                                        customBorder: const CircleBorder(),
+                                        child: SizedBox(
+                                          width: 70,
+                                          height: 70,
+                                          child: Center(
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(14),
+                                              child: Image.asset(
+                                                _biometricLoginAsset,
+                                                fit: BoxFit.contain,
+                                                errorBuilder:
+                                                    (context, error, stackTrace) {
+                                                  return Icon(
+                                                    Icons.fingerprint,
+                                                    size: 36,
+                                                    color:
+                                                        AppColors.textPrimary,
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              if (_bioAvailable &&
+                                  (!_hasValidPersistedSession ||
+                                      !_bioEnabled ||
+                                      !_rememberMe)) ...[
+                                const SizedBox(height: 10),
+                                Text(
+                                  isAr
+                                      ? 'لتفعيل الدخول بالبصمة: فعّل "تذكرني" ثم سجّل دخول مرة واحدة بالرسالة.'
+                                      : 'To enable biometrics: turn on Remember me, then sign in once with OTP.',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppColors.textHint,
+                                      ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
                             ],
                           ),
                         ),

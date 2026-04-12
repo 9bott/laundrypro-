@@ -56,10 +56,50 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
+  String get staticLoyaltyQrHint =>
+      'نفس الرمز الموجود في بطاقة المحفظة (Google / Apple)';
+
+  @override
+  String get customerQrExpired => 'انتهت صلاحية الرمز — اضغط للتجديد';
+
+  @override
+  String get qrTokenServerConfigError =>
+      'تعذر إنشاء الرمز: إعداد الخادم غير مكتمل. في أسرار الدوال اضبط SUPABASE_JWT_SECRET أو QR_JWT_SECRET أو SUPABASE1_JWT_SECRET ثم انشر generate-qr-token.';
+
+  @override
+  String get qrTokenAuthError =>
+      'تعذر التحقق من حسابك. اسحب الشاشة للتحديث أو سجّل الخروج ثم الدخول مجدداً.';
+
+  @override
   String get orTellPhone => 'أو أخبر الموظف برقم هاتفك:';
 
   @override
-  String get myWallet => 'محفظتي';
+  String get myBalance => 'رصيدي';
+
+  @override
+  String get walletTitle => 'المحفظة';
+
+  @override
+  String get walletSubtitle => 'أضف بطاقة الولاء إلى محفظة هاتفك.';
+
+  @override
+  String get addToGoogleWallet => 'إضافة إلى Google Wallet';
+
+  @override
+  String get addToAppleWallet => 'إضافة إلى Apple Wallet';
+
+  @override
+  String get appleWalletTitle => 'Apple Wallet';
+
+  @override
+  String get appleWalletNotEnabled =>
+      'Apple Wallet غير مفعّل حالياً. يتطلب إعداد شهادة Apple Pass Type.';
+
+  @override
+  String get walletAddFailed => 'تعذر إنشاء البطاقة. حاول مرة أخرى.';
+
+  @override
+  String get walletOpenFailed => 'تعذر فتح المحفظة. حاول مرة أخرى.';
 
   @override
   String get usedFirst => 'يُستخدم أولاً عند الدفع';
@@ -106,13 +146,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get subscriptionScreenSubtitle => 'اختر باقة الاشتراك المناسبة لك';
 
   @override
-  String get walletSubscriptionHelp => 'يُستخدم أولاً عند الدفع';
+  String get balanceSubscriptionHelp => 'يُستخدم أولاً عند الدفع';
 
   @override
-  String get walletCashbackHelp => '٢٠٪ من كل عملية شراء';
+  String get balanceCashbackHelp => '٢٠٪ من كل عملية شراء';
 
   @override
-  String get rechargeWallet => 'شحن المحفظة';
+  String get topUpBalance => 'شحن الرصيد';
 
   @override
   String get rechargeTagline => 'ادفع أقل، واحصل على أكثر';
@@ -140,7 +180,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get howToBuyStep2 => 'ادفع المبلغ نقداً للموظف';
 
   @override
-  String get howToBuyStep3 => 'سيضيف الموظف الرصيد لمحفظتك فوراً';
+  String get howToBuyStep3 => 'سيضيف الموظف الرصيد لحسابك فوراً';
 
   @override
   String get profile => 'الملف الشخصي';
@@ -197,10 +237,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addsCashback => 'يضيف كاش باك 20%';
 
   @override
-  String get deductsFromWallet => 'يخصم من محفظة العميل';
+  String get deductsFromBalance => 'يخصم من رصيد العميل';
 
   @override
-  String get rechargeWithCash => 'شحن المحفظة بالكاش';
+  String get topUpWithCash => 'شحن الرصيد بالكاش';
 
   @override
   String visitNumber(int count) {
@@ -590,7 +630,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get welcomeGiftAmount => '10.00 ريال';
 
   @override
-  String get welcomeGiftCaption => 'كاش باك مجاني في محفظتك';
+  String get welcomeGiftCaption => 'كاش باك مجاني في حسابك';
 
   @override
   String get welcomeGetStarted => 'ابدأ الاستخدام 🚀';
@@ -603,15 +643,6 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get loadingTakingLong => 'يستغرق التحميل وقتاً أطول من المعتاد';
-
-  @override
-  String get addToWalletPrefix => 'أضف إلى';
-
-  @override
-  String get addToGoogleWallet => 'أضف إلى محفظة Google';
-
-  @override
-  String get addToAppleWallet => 'أضف إلى Apple Wallet';
 
   @override
   String errorWithMessage(String message) {
@@ -690,16 +721,21 @@ class AppLocalizationsAr extends AppLocalizations {
   String get totalColon => 'الإجمالي:';
 
   @override
-  String get walletHowItWorks => 'كيف تعمل المحفظة؟';
+  String get balanceHowItWorks => 'كيف يعمل الرصيد؟';
 
   @override
-  String get walletStepPayCash => 'ادفع نقداً';
+  String get balanceStepPayCash => 'ادفع نقداً';
 
   @override
-  String get walletStepCashback => 'احصل على ٢٠٪ كاش باك';
+  String get balanceStepCashback => 'احصل على ٢٠٪ كاش باك';
 
   @override
-  String get walletStepUseNext => 'استخدمه في زيارتك القادمة';
+  String get balanceStepUseNext => 'استخدمه في زيارتك القادمة';
+
+  @override
+  String staffSummaryRedeemBalanceAfter(String amount) {
+    return 'الرصيد بعد العملية: $amount';
+  }
 
   @override
   String get actionDeactivate => 'تعطيل';
@@ -778,11 +814,6 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String staffSummaryRedeemFromCb(String amount) {
     return 'من الكاش باك: $amount';
-  }
-
-  @override
-  String staffSummaryRedeemWalletAfter(String amount) {
-    return 'رصيد المحفظة بعد العملية: $amount';
   }
 
   @override

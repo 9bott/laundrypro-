@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,8 +8,6 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shimmer/shimmer.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/constants/app_colors.dart';
@@ -24,7 +21,7 @@ import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/tier_badge.dart';
 import 'providers/customer_providers.dart';
 import 'widgets/customer_history_content.dart';
-import 'wallet_hero_constants.dart';
+import 'widgets/wallet_add_buttons.dart';
 
 String _westernDigitsToArabic(String s) {
   // Requirement: always show Western (English) digits.
@@ -355,14 +352,8 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   SliverToBoxAdapter(
                     child: Padding(
                       padding: const EdgeInsets.all(20),
-                      child: _HomeQrSection(
-                        customerId: customer.id,
-                      ),
+                      child: _HomeQrSection(customerId: customer.id),
                     ),
-                  ),
-                  SliverToBoxAdapter(child: _buildGoogleWalletButton(context, ref)),
-                  SliverToBoxAdapter(
-                    child: _buildAppleWalletButton(context, ref),
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
@@ -472,7 +463,7 @@ class _WalletGradientCard extends StatelessWidget {
     final cb = customer.cashbackBalance;
 
     return Hero(
-      tag: kCustomerWalletHeroTag,
+      tag: 'customer_balance_hero_card',
       flightShuttleBuilder: (_, animation, flightDirection, fromContext, toContext) {
         final shuttleHero = toContext.widget as Hero;
         return shuttleHero.child;
@@ -535,7 +526,7 @@ class _WalletGradientCard extends StatelessWidget {
                           dense: false,
                         ),
                         Text(
-                          l10n.myWallet,
+                          l10n.myBalance,
                           style: GoogleFonts.cairo(
                             color: Colors.white.withOpacity(0.85),
                             fontSize: 14,
@@ -627,12 +618,11 @@ class _WalletGradientCard extends StatelessWidget {
   }
 }
 
+/// QR ثابت = `customers.id` (نفس قيمة الباركود في Google/Apple Wallet).
 class _HomeQrSection extends StatelessWidget {
   const _HomeQrSection({required this.customerId});
 
   final String customerId;
-
-  String get _payload => 'TEST-QR-$customerId';
 
   @override
   Widget build(BuildContext context) {
@@ -641,6 +631,7 @@ class _HomeQrSection extends StatelessWidget {
       padding: const EdgeInsets.all(20),
       radius: 20,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
             l10n.showQrToStaff,
@@ -651,19 +642,45 @@ class _HomeQrSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          QrImageView(
-            data: _payload,
-            size: 200,
-            backgroundColor: const Color(0xFFF8FAFC),
-            eyeStyle: const QrEyeStyle(
-              eyeShape: QrEyeShape.square,
-              color: Color(0xFF0F172A),
-            ),
-            dataModuleStyle: const QrDataModuleStyle(
-              dataModuleShape: QrDataModuleShape.square,
-              color: Color(0xFF0F172A),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.55),
+                  ),
+                ),
+                child: QrImageView(
+                  data: customerId,
+                  size: 196,
+                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Color(0xFF0F172A),
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
             ),
           ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.staticLoyaltyQrHint,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(
+              fontSize: 11,
+              color: AppColors.textHint,
+            ),
+          ),
+          const WalletAddButtons(compact: true),
         ],
       ),
     );
@@ -779,320 +796,6 @@ class _HomeErrorState extends StatelessWidget {
       ),
     );
   }
-}
-
-Widget _buildGoogleWalletButton(BuildContext context, WidgetRef ref) {
-  if (!Platform.isAndroid) return const SizedBox.shrink();
-
-  return Padding(
-    padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-    child: GestureDetector(
-      onTap: () async {
-        bool dialogShown = false;
-        final l10n = AppLocalizations.of(context)!;
-
-        try {
-          if (!context.mounted) return;
-
-          dialogShown = true;
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            useRootNavigator: true,
-            builder: (_) => const PopScope(
-              canPop: false,
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            ),
-          );
-
-          final res = await SupabaseService.client.functions
-              .invoke('generate-wallet-pass', method: HttpMethod.post)
-              .timeout(const Duration(seconds: 15));
-
-          if (dialogShown && context.mounted) {
-            Navigator.of(context, rootNavigator: true).pop();
-            dialogShown = false;
-          }
-
-          if (!context.mounted) return;
-
-          final data = res.data;
-          if (data != null && data['success'] == true) {
-            final url = data['wallet_url'] as String;
-            final uri = Uri.parse(url);
-            if (await canLaunchUrl(uri)) {
-              bool launched = false;
-              try {
-                launched = await launchUrl(
-                  uri,
-                  mode: LaunchMode.externalNonBrowserApplication,
-                );
-              } catch (_) {
-                launched = false;
-              }
-
-              if (!launched) {
-                await launchUrl(
-                  uri,
-                  mode: LaunchMode.inAppBrowserView,
-                );
-              }
-            }
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  l10n.errorWithMessage(
-                    '${data?['error'] ?? l10n.unknownError}',
-                  ),
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        } catch (e) {
-          if (dialogShown && context.mounted) {
-            try {
-              Navigator.of(context, rootNavigator: true).pop();
-            } catch (_) {}
-            dialogShown = false;
-          }
-
-          if (context.mounted) {
-            final loc = AppLocalizations.of(context)!;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(loc.errorWithMessage('$e')),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      },
-      child: Builder(
-        builder: (context) {
-          final l10n = AppLocalizations.of(context)!;
-          return Container(
-        height: 54,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Directionality(
-          textDirection: TextDirection.ltr,
-          child: Row(
-            children: [
-              const SizedBox(width: 16),
-              Image.asset(
-                'assets/images/google_wallet.png',
-                width: 44,
-                height: 44,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF4285F4), Color(0xFF34A853)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.account_balance_wallet_rounded,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.addToWalletPrefix,
-                    style: GoogleFonts.cairo(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  Text(
-                    'Google Wallet',
-                    style: GoogleFonts.cairo(
-                      fontSize: 15,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: AppColors.textHint,
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
-        ),
-          );
-        },
-      ),
-    ),
-  );
-}
-
-Widget _buildAppleWalletButton(BuildContext context, WidgetRef ref) {
-  if (!Platform.isIOS) return const SizedBox.shrink();
-
-  return Padding(
-    padding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
-    child: GestureDetector(
-      onTap: () async {
-        bool dialogShown = false;
-        final l10n = AppLocalizations.of(context)!;
-        try {
-          if (!context.mounted) return;
-          dialogShown = true;
-          showDialog(
-            context: context,
-            barrierDismissible: false,
-            useRootNavigator: true,
-            builder: (_) => const PopScope(
-              canPop: false,
-              child: Center(child: CircularProgressIndicator()),
-            ),
-          );
-
-          final res = await SupabaseService.client.functions
-              .invoke('generate-apple-pass', method: HttpMethod.post)
-              .timeout(const Duration(seconds: 15));
-
-          if (dialogShown && context.mounted) {
-            Navigator.of(context, rootNavigator: true).pop();
-            dialogShown = false;
-          }
-
-          if (!context.mounted) return;
-
-          final data = res.data;
-          if (data != null && data['success'] == true) {
-            final url = data['pass_url'] as String;
-            final uri = Uri.parse(url);
-            if (await canLaunchUrl(uri)) {
-              await launchUrl(
-                uri,
-                mode: LaunchMode.externalApplication,
-              );
-            }
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  l10n.errorWithMessage(
-                    '${data?['error'] ?? l10n.unknownError}',
-                  ),
-                ),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        } catch (e) {
-          if (dialogShown && context.mounted) {
-            try {
-              Navigator.of(context, rootNavigator: true).pop();
-            } catch (_) {}
-          }
-          if (context.mounted) {
-            final loc = AppLocalizations.of(context)!;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(loc.errorWithMessage('$e')),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
-        }
-      },
-      child: Builder(
-        builder: (context) {
-          final l10n = AppLocalizations.of(context)!;
-          return Container(
-        height: 54,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border),
-          boxShadow: AppColors.cardShadow,
-        ),
-        child: Directionality(
-          textDirection: TextDirection.ltr,
-          child: Row(
-            children: [
-              const SizedBox(width: 16),
-              Image.asset(
-                'assets/images/apple_wallet.png',
-                width: 44,
-                height: 44,
-                errorBuilder: (_, __, ___) => Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: Colors.black,
-                  ),
-                  child: const Icon(
-                    Icons.apple,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    l10n.addToWalletPrefix,
-                    style: GoogleFonts.cairo(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w400,
-                    ),
-                  ),
-                  Text(
-                    'Apple Wallet',
-                    style: GoogleFonts.cairo(
-                      fontSize: 15,
-                      color: AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              const Icon(
-                Icons.arrow_forward_ios_rounded,
-                size: 14,
-                color: AppColors.textHint,
-              ),
-              const SizedBox(width: 16),
-            ],
-          ),
-        ),
-          );
-        },
-      ),
-    ),
-  );
 }
 
 class _PressableScale extends StatefulWidget {

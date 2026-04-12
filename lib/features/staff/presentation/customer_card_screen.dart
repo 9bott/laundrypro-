@@ -256,7 +256,7 @@ class StaffCustomerCardScreen extends ConsumerWidget {
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
                   Text(
-                    l10n.deductsFromWallet,
+                    l10n.deductsFromBalance,
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ],
@@ -288,7 +288,7 @@ class StaffCustomerCardScreen extends ConsumerWidget {
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
                   Text(
-                    l10n.rechargeWithCash,
+                    l10n.topUpWithCash,
                     style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ],

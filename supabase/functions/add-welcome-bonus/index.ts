@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { requireCustomerId } from "../_shared/auth.ts";
 import { serviceClient } from "../_shared/supabase.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return preflight();
@@ -71,6 +72,8 @@ serve(async (req) => {
     if (txErr) {
       return jsonError("transaction_failed", txErr.message, 400);
     }
+
+    await trySyncGoogleWalletLoyaltyObject(supabase, customerId);
 
     return json({ success: true, bonus_amount: bonusAmount }, 200);
   } catch (e) {

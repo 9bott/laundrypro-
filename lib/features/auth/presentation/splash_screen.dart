@@ -147,7 +147,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         return;
       }
 
-      // Optional biometric — user can cancel and fall back to OTP next launch by disabling in settings
+      // بصمة / Face ID تلقائياً عند وجود جلسة صالحة (بدون انتظار زر) — أول دخول يبقى هاتف + OTP.
       final biometricEnabled = await BiometricService.isEnabled();
       final biometricAvailable = await BiometricService.isAvailable();
       _splashLog(
@@ -159,7 +159,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         _splashLog('biometric authenticate → $authenticated');
         if (!authenticated) {
           _splashLog(
-            'DECISION: biometric failed → signOut + /auth/phone',
+            'DECISION: biometric failed/cancelled → signOut + /auth/phone',
           );
           await prefs.remove(kLoginModePrefKey);
           await Supabase.instance.client.auth.signOut();

@@ -136,15 +136,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
-        path: '/customer/wallet',
-        name: 'customer-wallet',
-        builder: (context, state) => const WalletScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
         path: '/customer/branch',
         name: 'customer-branch',
         builder: (context, state) => const BranchScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: '/customer/wallet',
+        name: 'customer-wallet',
+        builder: (context, state) => const CustomerWalletScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

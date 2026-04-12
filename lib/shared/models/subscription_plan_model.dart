@@ -1,7 +1,7 @@
 import '../../core/constants/supabase_constants.dart';
 import 'model_parsing.dart';
 
-/// Row in `subscription_plans`: pay [price], credit [credit] to subscription wallet.
+/// Row in `subscription_plans`: pay [price], credit [credit] to subscription balance.
 class SubscriptionPlanModel {
   const SubscriptionPlanModel({
     required this.id,

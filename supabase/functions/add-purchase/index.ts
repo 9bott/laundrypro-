@@ -13,6 +13,7 @@ import {
 } from "../_shared/time.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 
 type Body = {
   customer_id: string;
@@ -332,6 +333,8 @@ Deno.serve(async (req) => {
     new_values: { purchaseTx, streakBonus },
     device_id: device_id ?? null,
   });
+
+  await trySyncGoogleWalletLoyaltyObject(supabase, customer_id);
 
   return json({
     success: true,

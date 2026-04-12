@@ -20,6 +20,55 @@ import 'providers/staff_providers.dart';
 
 const Color _scanPrimary = Color(0xFF2563EB);
 
+/// تنظيف ناتج الكاميرا — JWT = نقطة + نقطة؛ نأخذ أول 3 مقاطع كاملة (بدون regex خاطئ لـ `-` داخل `[]`).
+String normalizeScannedQrToken(String raw) {
+  var s = raw.trim();
+  s = s.replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), '');
+  s = s.replaceAll(RegExp(r'[\u2010\u2011\u2012\u2013\u2014]'), '-');
+
+  final param = RegExp(
+    r'(?:^|[?&#])(?:token|qr_token|access_token)=([^&#\s]+)',
+    caseSensitive: false,
+  ).firstMatch(s);
+  if (param != null) {
+    try {
+      s = Uri.decodeQueryComponent(param.group(1)!);
+    } catch (_) {
+      s = param.group(1)!;
+    }
+  }
+
+  final ey = s.indexOf('eyJ');
+  if (ey >= 0) s = s.substring(ey);
+
+  final parts = s.split('.');
+  if (parts.length >= 3) {
+    var a = parts[0].trim();
+    var b = parts[1].trim();
+    var c = parts[2].trim();
+    for (final stop in [' ', '\n', '\r', '\t', '"', ',', ')', ']', '}']) {
+      final i = c.indexOf(stop);
+      if (i > 0) c = c.substring(0, i);
+    }
+    return '$a.$b.$c';
+  }
+
+  return s.trim();
+}
+
+/// قيم لجرّة الاستدعاء: مُطبَّع ثم نص أنظف ثم الخام.
+Iterable<String> qrTokenCandidates(String raw) sync* {
+  final n = normalizeScannedQrToken(raw);
+  if (n.isNotEmpty) yield n;
+
+  var plain = raw.trim();
+  plain = plain.replaceAll(RegExp(r'[\u200B-\u200D\uFEFF]'), '');
+  if (plain.isNotEmpty && plain != n) yield plain;
+
+  final t = raw.trim();
+  if (t.isNotEmpty && t != n && t != plain) yield t;
+}
+
 class StaffScannerScreen extends ConsumerStatefulWidget {
   const StaffScannerScreen({super.key});
 
@@ -94,28 +143,60 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     _handling = true;
     try {
       final repo = ref.read(staffRepositoryProvider);
-      final c = await repo.getCustomerByQr(raw);
-      if (!mounted) return;
-      staffSuccessSound();
-      staffHaptic();
-      ref.read(staffCustomerProvider.notifier).select(c);
-      context.go('/staff/customer-card');
+      final candidates = qrTokenCandidates(raw).toList();
+      StaffApiException? lastErr;
+      for (var i = 0; i < candidates.length; i++) {
+        final token = candidates[i];
+        try {
+          final c = await repo.getCustomerByQr(token);
+          if (!mounted) return;
+          staffSuccessSound();
+          staffHaptic();
+          ref.read(staffCustomerProvider.notifier).select(c);
+          context.go('/staff/customer-card');
+          return;
+        } on StaffApiException catch (e) {
+          lastErr = e;
+          final canRetry = e.status == 400 &&
+              e.code == 'qr_invalid' &&
+              i < candidates.length - 1;
+          if (canRetry) continue;
+          break;
+        }
+      }
+      final e = lastErr;
+      if (e == null) return;
+      throw e;
     } on StaffApiException catch (e) {
+      debugPrint(
+        '[StaffScanner] getCustomerByQr failed: status=${e.status} code=${e.code} message=${e.message}',
+      );
       if (!mounted) return;
       staffHaptic();
       if (e.isQrExpired) {
         setState(() {
-          _scanMsg = AppLocalizations.of(context)!.qrExpired;
+          _scanMsg = 'رمز QR منتهي الصلاحية - اطلب من العميل تحديثه';
         });
         Future.delayed(const Duration(seconds: 4), _clearScanMsg);
+      } else if (e.code == 'qr_invalid' ||
+          e.message.toLowerCase().contains('qr_invalid') ||
+          e.message.toLowerCase().contains('invalid qr')) {
+        final detail =
+            e.message.isNotEmpty && e.message != 'qr_invalid' ? '\n${e.message}' : '';
+        setState(() => _scanMsg = 'رمز QR غير صالح$detail');
+        Future.delayed(const Duration(seconds: 6), _clearScanMsg);
+      } else if (e.code == 'network_error') {
+        setState(() => _scanMsg = e.message);
+        Future.delayed(const Duration(seconds: 4), _clearScanMsg);
       } else {
-        setState(() => _scanMsg = AppLocalizations.of(context)!.invalidQr);
-        Future.delayed(const Duration(seconds: 2), _clearScanMsg);
+        setState(() => _scanMsg = e.message);
+        Future.delayed(const Duration(seconds: 4), _clearScanMsg);
       }
     } catch (e) {
+      debugPrint('[StaffScanner] unexpected error: $e');
       if (!mounted) return;
-      setState(() => _scanMsg = AppLocalizations.of(context)!.invalidQr);
-      Future.delayed(const Duration(seconds: 2), _clearScanMsg);
+      setState(() => _scanMsg = '$e');
+      Future.delayed(const Duration(seconds: 4), _clearScanMsg);
     } finally {
       _handling = false;
     }

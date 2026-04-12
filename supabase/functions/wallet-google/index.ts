@@ -1,13 +1,7 @@
 import jwt from "npm:jsonwebtoken@9.0.2";
 import { supabaseAdmin } from "../_shared/supabase_admin.ts";
 
-type Json =
-  | null
-  | boolean
-  | number
-  | string
-  | Json[]
-  | { [key: string]: Json };
+type Json = null | boolean | number | string | Json[] | { [key: string]: Json };
 
 function json(status: number, body: Json) {
   return new Response(JSON.stringify(body), {
@@ -25,7 +19,6 @@ function getEnv(name: string) {
 function normalizePrivateKey(k: string) {
   const trimmed = k.trim();
   if (trimmed.includes("-----BEGIN")) return trimmed.replaceAll("\\n", "\n");
-  // allow base64 key contents
   try {
     const raw = atob(trimmed);
     return raw.includes("-----BEGIN") ? raw : trimmed;
@@ -45,7 +38,7 @@ Deno.serve(async (req) => {
     const sb = supabaseAdmin();
     const { data: user, error } = await sb
       .from("users")
-      .select("id,name,points")
+      .select("id,name,phone,cashback_balance,subscription_balance")
       .eq("id", userId)
       .maybeSingle();
 
@@ -57,29 +50,52 @@ Deno.serve(async (req) => {
     const issuerId = getEnv("GOOGLE_ISSUER_ID");
     const classId = getEnv("GOOGLE_CLASS_ID");
 
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + 3600;
+    const totalBalance = (
+      (user.cashback_balance ?? 0) + (user.subscription_balance ?? 0)
+    ).toFixed(2);
+
     const token = jwt.sign(
       {
-        loyaltyObjects: [
-          {
-            id: `${issuerId}.${user.id}`,
-            classId,
-            accountName: user.name ?? "",
-            barcode: { type: "QR_CODE", value: user.id },
-          },
-        ],
+        iss: serviceEmail,
+        aud: "google",
+        typ: "savetowallet",
+        iat,
+        exp,
+        origins: ["https://pay.google.com"],
+        payload: {
+          loyaltyObjects: [
+            {
+              id: `${issuerId}.pnt${iat}${Math.floor(Math.random() * 1000)}`,
+              classId,
+              state: "ACTIVE",
+              accountId: user.phone ?? user.id,
+              accountName: user.name ?? "",
+              loyaltyPoints: {
+                balance: { string: totalBalance },
+                label: "كاش باك (ريال)",
+              },
+              barcode: {
+                type: "QR_CODE",
+                value: user.id,
+                alternateText: user.phone ?? user.id,
+              },
+            },
+          ],
+        },
       },
       privateKey,
       {
         algorithm: "RS256",
-        issuer: serviceEmail,
-        audience: "google",
-        header: { typ: "savetowallet" },
+        header: { alg: "RS256", typ: "JWT" },
+        noTimestamp: true,
       },
     );
 
     return json(200, { url: `https://pay.google.com/gp/v/save/${token}` });
   } catch (e) {
-    return json(500, { error: "internal_error" });
+    console.error("wallet-google error:", e);
+    return json(500, { error: "internal_error", detail: String(e) });
   }
 });
-

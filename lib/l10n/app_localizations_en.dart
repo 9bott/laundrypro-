@@ -56,10 +56,51 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get staticLoyaltyQrHint =>
+      'Same code as your Google/Apple Wallet card';
+
+  @override
+  String get customerQrExpired => 'This code expired — tap to refresh';
+
+  @override
+  String get qrTokenServerConfigError =>
+      'Could not create your QR code: server not configured. In Edge Function secrets set SUPABASE_JWT_SECRET, or if blocked use QR_JWT_SECRET or SUPABASE1_JWT_SECRET, then deploy generate-qr-token.';
+
+  @override
+  String get qrTokenAuthError =>
+      'Could not verify your account. Pull to refresh, or sign out and sign in again.';
+
+  @override
   String get orTellPhone => 'Or tell staff your phone number:';
 
   @override
-  String get myWallet => 'My wallet';
+  String get myBalance => 'My balance';
+
+  @override
+  String get walletTitle => 'Wallet';
+
+  @override
+  String get walletSubtitle => 'Add your loyalty card to your phone wallet.';
+
+  @override
+  String get addToGoogleWallet => 'Add to Google Wallet';
+
+  @override
+  String get addToAppleWallet => 'Add to Apple Wallet';
+
+  @override
+  String get appleWalletTitle => 'Apple Wallet';
+
+  @override
+  String get appleWalletNotEnabled =>
+      'Apple Wallet is not enabled yet. It requires Apple Pass Type certificate setup.';
+
+  @override
+  String get walletAddFailed =>
+      'Couldn\'t generate wallet pass. Please try again.';
+
+  @override
+  String get walletOpenFailed => 'Couldn\'t open wallet. Please try again.';
 
   @override
   String get usedFirst => 'Used first when paying';
@@ -107,13 +148,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Choose the subscription plan that fits you';
 
   @override
-  String get walletSubscriptionHelp => 'Used first when paying';
+  String get balanceSubscriptionHelp => 'Used first when paying';
 
   @override
-  String get walletCashbackHelp => '20% from every purchase';
+  String get balanceCashbackHelp => '20% from every purchase';
 
   @override
-  String get rechargeWallet => 'Top up wallet';
+  String get topUpBalance => 'Top up balance';
 
   @override
   String get rechargeTagline => 'Pay less, get more credit';
@@ -141,7 +182,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get howToBuyStep2 => 'Pay cash to staff';
 
   @override
-  String get howToBuyStep3 => 'Staff will add credit to your wallet instantly';
+  String get howToBuyStep3 => 'Staff will add credit to your account instantly';
 
   @override
   String get profile => 'Profile';
@@ -198,10 +239,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addsCashback => 'Adds 20% cashback';
 
   @override
-  String get deductsFromWallet => 'Deducts from customer wallet';
+  String get deductsFromBalance => 'Deducts from customer balance';
 
   @override
-  String get rechargeWithCash => 'Top up wallet with cash';
+  String get topUpWithCash => 'Top up balance with cash';
 
   @override
   String visitNumber(int count) {
@@ -592,7 +633,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get welcomeGiftAmount => '10.00 SAR';
 
   @override
-  String get welcomeGiftCaption => 'Free cashback in your wallet';
+  String get welcomeGiftCaption => 'Free cashback in your account';
 
   @override
   String get welcomeGetStarted => 'Get started 🚀';
@@ -605,15 +646,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get loadingTakingLong => 'Loading is taking longer than usual';
-
-  @override
-  String get addToWalletPrefix => 'Add to';
-
-  @override
-  String get addToGoogleWallet => 'Add to Google Wallet';
-
-  @override
-  String get addToAppleWallet => 'Add to Apple Wallet';
 
   @override
   String errorWithMessage(String message) {
@@ -693,16 +725,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get totalColon => 'Total:';
 
   @override
-  String get walletHowItWorks => 'How it works';
+  String get balanceHowItWorks => 'How it works';
 
   @override
-  String get walletStepPayCash => 'Pay with cash';
+  String get balanceStepPayCash => 'Pay with cash';
 
   @override
-  String get walletStepCashback => 'Get 20% cashback';
+  String get balanceStepCashback => 'Get 20% cashback';
 
   @override
-  String get walletStepUseNext => 'Use it on your next visit';
+  String get balanceStepUseNext => 'Use it on your next visit';
+
+  @override
+  String staffSummaryRedeemBalanceAfter(String amount) {
+    return 'Balance after: $amount';
+  }
 
   @override
   String get actionDeactivate => 'Deactivate';
@@ -781,11 +818,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String staffSummaryRedeemFromCb(String amount) {
     return 'From cashback: $amount';
-  }
-
-  @override
-  String staffSummaryRedeemWalletAfter(String amount) {
-    return 'Wallet balance after: $amount';
   }
 
   @override

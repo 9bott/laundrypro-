@@ -3,7 +3,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../../core/config/env.dart';
 import '../../data/customer_repository.dart';
-import '../../data/qr_token_data.dart';
 import '../../../../shared/models/customer_model.dart';
 import '../../../../shared/models/subscription_plan_model.dart';
 import '../../../../core/router/auth_refresh.dart';
@@ -52,17 +51,6 @@ final customerStreamProvider =
     return;
   }
   yield* ref.read(customerRepositoryProvider).watchCustomer(id);
-});
-
-/// رمز QR يُجلب مرة واحدة عند الاشتراك — بدون تجديد تلقائي.
-final qrTokenStreamProvider = StreamProvider.autoDispose<QrTokenData>((ref) async* {
-  final repo = ref.read(customerRepositoryProvider);
-  try {
-    final data = await repo.invokeGenerateQrToken();
-    yield data;
-  } catch (_) {
-    // لا حلقة إعادة محاولة تلقائية
-  }
 });
 
 final subscriptionPlansProvider =

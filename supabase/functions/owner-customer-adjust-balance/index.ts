@@ -2,6 +2,7 @@ import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { requireOwner } from "../_shared/auth.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 
 type Body={
   customer_id: string;
@@ -65,6 +66,8 @@ Deno.serve(async (req) => {
     record_id: body.customer_id,
     new_values: { ds, dc, reason: body.reason },
   });
+
+  await trySyncGoogleWalletLoyaltyObject(supabase, body.customer_id);
 
   return json({
     success: true,

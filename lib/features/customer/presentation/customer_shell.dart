@@ -15,7 +15,7 @@ class CustomerShell extends ConsumerWidget {
 
   static const _iconsOutlined = [
     Icons.home_outlined,
-    Icons.account_balance_wallet_outlined,
+    Icons.account_balance_outlined,
     Icons.person_outline,
   ];
 

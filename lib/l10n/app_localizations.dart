@@ -178,17 +178,89 @@ abstract class AppLocalizations {
   /// **'Refreshes in: {seconds} seconds'**
   String qrRefreshIn(int seconds);
 
+  /// No description provided for @staticLoyaltyQrHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Same code as your Google/Apple Wallet card'**
+  String get staticLoyaltyQrHint;
+
+  /// No description provided for @customerQrExpired.
+  ///
+  /// In en, this message translates to:
+  /// **'This code expired — tap to refresh'**
+  String get customerQrExpired;
+
+  /// No description provided for @qrTokenServerConfigError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not create your QR code: server not configured. In Edge Function secrets set SUPABASE_JWT_SECRET, or if blocked use QR_JWT_SECRET or SUPABASE1_JWT_SECRET, then deploy generate-qr-token.'**
+  String get qrTokenServerConfigError;
+
+  /// No description provided for @qrTokenAuthError.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not verify your account. Pull to refresh, or sign out and sign in again.'**
+  String get qrTokenAuthError;
+
   /// No description provided for @orTellPhone.
   ///
   /// In en, this message translates to:
   /// **'Or tell staff your phone number:'**
   String get orTellPhone;
 
-  /// No description provided for @myWallet.
+  /// No description provided for @myBalance.
   ///
   /// In en, this message translates to:
-  /// **'My wallet'**
-  String get myWallet;
+  /// **'My balance'**
+  String get myBalance;
+
+  /// No description provided for @walletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Wallet'**
+  String get walletTitle;
+
+  /// No description provided for @walletSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your loyalty card to your phone wallet.'**
+  String get walletSubtitle;
+
+  /// No description provided for @addToGoogleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Google Wallet'**
+  String get addToGoogleWallet;
+
+  /// No description provided for @addToAppleWallet.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to Apple Wallet'**
+  String get addToAppleWallet;
+
+  /// No description provided for @appleWalletTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Wallet'**
+  String get appleWalletTitle;
+
+  /// No description provided for @appleWalletNotEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple Wallet is not enabled yet. It requires Apple Pass Type certificate setup.'**
+  String get appleWalletNotEnabled;
+
+  /// No description provided for @walletAddFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t generate wallet pass. Please try again.'**
+  String get walletAddFailed;
+
+  /// No description provided for @walletOpenFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open wallet. Please try again.'**
+  String get walletOpenFailed;
 
   /// No description provided for @usedFirst.
   ///
@@ -274,23 +346,23 @@ abstract class AppLocalizations {
   /// **'Choose the subscription plan that fits you'**
   String get subscriptionScreenSubtitle;
 
-  /// No description provided for @walletSubscriptionHelp.
+  /// No description provided for @balanceSubscriptionHelp.
   ///
   /// In en, this message translates to:
   /// **'Used first when paying'**
-  String get walletSubscriptionHelp;
+  String get balanceSubscriptionHelp;
 
-  /// No description provided for @walletCashbackHelp.
+  /// No description provided for @balanceCashbackHelp.
   ///
   /// In en, this message translates to:
   /// **'20% from every purchase'**
-  String get walletCashbackHelp;
+  String get balanceCashbackHelp;
 
-  /// No description provided for @rechargeWallet.
+  /// No description provided for @topUpBalance.
   ///
   /// In en, this message translates to:
-  /// **'Top up wallet'**
-  String get rechargeWallet;
+  /// **'Top up balance'**
+  String get topUpBalance;
 
   /// No description provided for @rechargeTagline.
   ///
@@ -337,7 +409,7 @@ abstract class AppLocalizations {
   /// No description provided for @howToBuyStep3.
   ///
   /// In en, this message translates to:
-  /// **'Staff will add credit to your wallet instantly'**
+  /// **'Staff will add credit to your account instantly'**
   String get howToBuyStep3;
 
   /// No description provided for @profile.
@@ -436,17 +508,17 @@ abstract class AppLocalizations {
   /// **'Adds 20% cashback'**
   String get addsCashback;
 
-  /// No description provided for @deductsFromWallet.
+  /// No description provided for @deductsFromBalance.
   ///
   /// In en, this message translates to:
-  /// **'Deducts from customer wallet'**
-  String get deductsFromWallet;
+  /// **'Deducts from customer balance'**
+  String get deductsFromBalance;
 
-  /// No description provided for @rechargeWithCash.
+  /// No description provided for @topUpWithCash.
   ///
   /// In en, this message translates to:
-  /// **'Top up wallet with cash'**
-  String get rechargeWithCash;
+  /// **'Top up balance with cash'**
+  String get topUpWithCash;
 
   /// No description provided for @visitNumber.
   ///
@@ -1195,7 +1267,7 @@ abstract class AppLocalizations {
   /// No description provided for @welcomeGiftCaption.
   ///
   /// In en, this message translates to:
-  /// **'Free cashback in your wallet'**
+  /// **'Free cashback in your account'**
   String get welcomeGiftCaption;
 
   /// No description provided for @welcomeGetStarted.
@@ -1221,24 +1293,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Loading is taking longer than usual'**
   String get loadingTakingLong;
-
-  /// No description provided for @addToWalletPrefix.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to'**
-  String get addToWalletPrefix;
-
-  /// No description provided for @addToGoogleWallet.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to Google Wallet'**
-  String get addToGoogleWallet;
-
-  /// No description provided for @addToAppleWallet.
-  ///
-  /// In en, this message translates to:
-  /// **'Add to Apple Wallet'**
-  String get addToAppleWallet;
 
   /// No description provided for @errorWithMessage.
   ///
@@ -1384,29 +1438,35 @@ abstract class AppLocalizations {
   /// **'Total:'**
   String get totalColon;
 
-  /// No description provided for @walletHowItWorks.
+  /// No description provided for @balanceHowItWorks.
   ///
   /// In en, this message translates to:
   /// **'How it works'**
-  String get walletHowItWorks;
+  String get balanceHowItWorks;
 
-  /// No description provided for @walletStepPayCash.
+  /// No description provided for @balanceStepPayCash.
   ///
   /// In en, this message translates to:
   /// **'Pay with cash'**
-  String get walletStepPayCash;
+  String get balanceStepPayCash;
 
-  /// No description provided for @walletStepCashback.
+  /// No description provided for @balanceStepCashback.
   ///
   /// In en, this message translates to:
   /// **'Get 20% cashback'**
-  String get walletStepCashback;
+  String get balanceStepCashback;
 
-  /// No description provided for @walletStepUseNext.
+  /// No description provided for @balanceStepUseNext.
   ///
   /// In en, this message translates to:
   /// **'Use it on your next visit'**
-  String get walletStepUseNext;
+  String get balanceStepUseNext;
+
+  /// No description provided for @staffSummaryRedeemBalanceAfter.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance after: {amount}'**
+  String staffSummaryRedeemBalanceAfter(String amount);
 
   /// No description provided for @actionDeactivate.
   ///
@@ -1527,12 +1587,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'From cashback: {amount}'**
   String staffSummaryRedeemFromCb(String amount);
-
-  /// No description provided for @staffSummaryRedeemWalletAfter.
-  ///
-  /// In en, this message translates to:
-  /// **'Wallet balance after: {amount}'**
-  String staffSummaryRedeemWalletAfter(String amount);
 
   /// No description provided for @staffSubscriptionBalanceLine.
   ///

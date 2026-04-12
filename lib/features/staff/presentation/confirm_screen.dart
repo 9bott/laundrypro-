@@ -537,7 +537,7 @@ class _SummaryRowsRedeem extends StatelessWidget {
         const SizedBox(height: 14),
         _SummaryRow(
           icon: '👜',
-          text: l10n.staffSummaryRedeemWalletAfter(_amt(totalAfter)),
+          text: l10n.staffSummaryRedeemBalanceAfter(_amt(totalAfter)),
           strong: true,
         ),
       ],

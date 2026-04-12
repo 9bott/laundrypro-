@@ -33,8 +33,20 @@
       "seconds": {"type": "int"}
     }
   },
+  "staticLoyaltyQrHint": "Google/Apple Wallet কার্ডের একই কোড",
+  "customerQrExpired": "কোডের মেয়াদ শেষ — রিফ্রেশ করতে ট্যাপ করুন",
+  "qrTokenServerConfigError": "QR তৈরি করা যায়নি: সার্ভার কনফিগার করা নেই। Edge Function secrets-এ SUPABASE_JWT_SECRET অথবা QR_JWT_SECRET বা SUPABASE1_JWT_SECRET সেট করুন এবং generate-qr-token ডিপ্লয় করুন।",
+  "qrTokenAuthError": "অ্যাকাউন্ট যাচাই করা যায়নি। রিফ্রেশ করুন বার সাইন আউট করে আবার সাইন ইন করুন।",
   "orTellPhone": "অথবা স্টাফকে আপনার ফোন নম্বর বলুন:",
-  "myWallet": "আমার ওয়ালেট",
+  "myBalance": "আমার ব্যালেন্স",
+  "walletTitle": "Wallet",
+  "walletSubtitle": "Add your loyalty card to your phone wallet.",
+  "addToGoogleWallet": "Add to Google Wallet",
+  "addToAppleWallet": "Add to Apple Wallet",
+  "appleWalletTitle": "Apple Wallet",
+  "appleWalletNotEnabled": "Apple Wallet is not enabled yet. It requires Apple Pass Type certificate setup.",
+  "walletAddFailed": "Couldn't generate wallet pass. Please try again.",
+  "walletOpenFailed": "Couldn't open wallet. Please try again.",
   "usedFirst": "পেমেন্টে আগে ব্যবহৃত হয়",
   "cashbackRate": "প্রতিটি কেনাকাটায় ২০% ক্যাশব্যাক",
   "totalBalance": "মোট: {amount} SAR",
@@ -54,9 +66,9 @@
   "noTransactions": "এখনও কোনো লেনদেন নেই",
   "nothingToShow": "দেখানোর মতো কিছু নেই",
   "subscriptionScreenSubtitle": "আপনার জন্য উপযুক্ত সাবস্ক্রিপশন প্ল্যান বেছে নিন",
-  "walletSubscriptionHelp": "পেমেন্টে আগে ব্যবহৃত হয়",
-  "walletCashbackHelp": "প্রতিটি কেনাকাটা থেকে ২০%",
-  "rechargeWallet": "ওয়ালেট টপ আপ",
+  "balanceSubscriptionHelp": "পেমেন্টে আগে ব্যবহৃত হয়",
+  "balanceCashbackHelp": "প্রতিটি কেনাকাটা থেকে ২০%",
+  "topUpBalance": "ব্যালেন্স টপ আপ",
   "rechargeTagline": "কম খরচে, বেশি ক্রেডিট",
   "pay": "{amount} SAR পরিশোধ করুন",
   "@pay": {
@@ -74,7 +86,7 @@
   "howToBuy": "কীভাবে কিনবেন?",
   "howToBuyStep1": "স্টাফকে আপনার পছন্দের প্ল্যান বলুন",
   "howToBuyStep2": "স্টাফকে নগদ পরিশোধ করুন",
-  "howToBuyStep3": "স্টাফ তৎক্ষণাৎ আপনার ওয়ালেটে ক্রেডিট যোগ করবে",
+  "howToBuyStep3": "স্টাফ তৎক্ষণাৎ আপনার অ্যাকাউন্টে ক্রেডিট যোগ করবে",
   "profile": "প্রোফাইল",
   "referralCode": "আপনার রেফারেল কোড",
   "referralShare": "Point-এ আমার সঙ্গে যোগ দিন এবং ৫ SAR পান! আমার কোড: {code}",
@@ -106,8 +118,8 @@
   "redeemBalance": "ব্যালেন্স রিডিম করুন",
   "addSubscription": "সাবস্ক্রিপশন যোগ করুন",
   "addsCashback": "২০% ক্যাশব্যাক যোগ করে",
-  "deductsFromWallet": "গ্রাহকের ওয়ালেট থেকে কাটে",
-  "rechargeWithCash": "নগদে ওয়ালেট টপ আপ",
+  "deductsFromBalance": "গ্রাহকের ব্যালেন্স থেকে কাটে",
+  "topUpWithCash": "নগদে ব্যালেন্স টপ আপ",
   "visitNumber": "ভিজিট #{count}",
   "@visitNumber": {
     "placeholders": {
@@ -267,14 +279,11 @@
   "welcomeDialogBody": "Point-এ যোগ দিয়ে আনন্দিত।\nপ্রতিটি পয়েন্ট = আরও সঞ্চয় 💙",
   "welcomeGiftBadge": "স্বাগতম উপহার",
   "welcomeGiftAmount": "10.00 SAR",
-  "welcomeGiftCaption": "আপনার ওয়ালেটে বিনামূল্যে ক্যাশব্যাক",
+  "welcomeGiftCaption": "আপনার অ্যাকাউন্টে বিনামূল্যে ক্যাশব্যাক",
   "welcomeGetStarted": "শুরু করুন 🚀",
   "homeBalanceReady": "আপনার ব্যালেন্স প্রস্তুত",
   "homeLoadErrorMessage": "কিছু ভুল হয়েছে, আবার চেষ্টা করুন",
   "loadingTakingLong": "লোড হতে স্বাভাবিকের চেয়ে বেশি সময় লাগছে",
-  "addToWalletPrefix": "যোগ করুন",
-  "addToGoogleWallet": "Google Wallet-এ যোগ করুন",
-  "addToAppleWallet": "Apple Wallet-এ যোগ করুন",
   "errorWithMessage": "ত্রুটি: {message}",
   "@errorWithMessage": {
     "placeholders": {
@@ -309,10 +318,10 @@
   "staffListTitle": "স্টাফ",
   "currentSubscriptionBalancePrefix": "বর্তমান সাবস্ক্রিপশন ব্যালেন্স:",
   "totalColon": "মোট:",
-  "walletHowItWorks": "কীভাবে কাজ করে",
-  "walletStepPayCash": "নগদে পরিশোধ করুন",
-  "walletStepCashback": "২০% ক্যাশব্যাক পান",
-  "walletStepUseNext": "পরবর্তী ভিজিটে ব্যবহার করুন",
+  "balanceHowItWorks": "কীভাবে কাজ করে",
+  "balanceStepPayCash": "নগদে পরিশোধ করুন",
+  "balanceStepCashback": "২০% ক্যাশব্যাক পান",
+  "balanceStepUseNext": "পরবর্তী ভিজিটে ব্যবহার করুন",
   "actionDeactivate": "নিষ্ক্রিয় করুন",
   "actionActivate": "সক্রিয় করুন",
   "cashbackEarnedSuffix": "ক্যাশব্যাক",
@@ -378,12 +387,13 @@
       "amount": {"type": "String"}
     }
   },
-  "staffSummaryRedeemWalletAfter": "লেনদেনের পর ওয়ালেট ব্যালেন্স: {amount}",
-  "@staffSummaryRedeemWalletAfter": {
+  "staffSummaryRedeemBalanceAfter": "লেনদেনের পর ব্যালেন্স: {amount}",
+  "@staffSummaryRedeemBalanceAfter": {
     "placeholders": {
       "amount": {"type": "String"}
     }
   },
+  
   "staffSubscriptionBalanceLine": "বর্তমান সাবস্ক্রিপশন ব্যালেন্স: {amount}",
   "@staffSubscriptionBalanceLine": {
     "placeholders": {

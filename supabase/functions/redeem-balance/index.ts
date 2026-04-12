@@ -2,6 +2,7 @@ import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { requireStaff } from "../_shared/auth.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
+import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
 
 type Body = {
@@ -156,6 +157,8 @@ Deno.serve(async (req) => {
       cashback_used: cashbackUsed,
     },
   });
+
+  await trySyncGoogleWalletLoyaltyObject(supabase, customer_id);
 
   return json({
     success: true,

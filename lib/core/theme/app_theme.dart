@@ -5,7 +5,7 @@ import '../constants/app_colors.dart';
 
 abstract final class AppTheme {
   static ThemeData theme() {
-    final colorScheme = ColorScheme.light(
+    final colorScheme = const ColorScheme.light(
       surface: AppColors.surface,
       primary: AppColors.primary,
       onPrimary: Colors.white,
@@ -21,11 +21,11 @@ abstract final class AppTheme {
     );
 
     final baseLight = ThemeData(brightness: Brightness.light);
-    final textTheme =
-        GoogleFonts.plusJakartaSansTextTheme(baseLight.textTheme).apply(
-      bodyColor: AppColors.textPrimary,
-      displayColor: AppColors.textPrimary,
-    );
+    final textTheme = GoogleFonts.plusJakartaSansTextTheme(baseLight.textTheme)
+        .apply(
+          bodyColor: AppColors.textPrimary,
+          displayColor: AppColors.textPrimary,
+        );
 
     return ThemeData(
       useMaterial3: true,
@@ -107,8 +107,10 @@ abstract final class AppTheme {
         ),
         labelStyle: GoogleFonts.plusJakartaSans(color: AppColors.textSecondary),
         hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.textHint),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }

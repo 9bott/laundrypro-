@@ -33,8 +33,20 @@
       "seconds": {"type": "int"}
     }
   },
+  "staticLoyaltyQrHint": "نفس الرمز الموجود في بطاقة المحفظة (Google / Apple)",
+  "customerQrExpired": "انتهت صلاحية الرمز — اضغط للتجديد",
+  "qrTokenServerConfigError": "تعذر إنشاء الرمز: إعداد الخادم غير مكتمل. في أسرار الدوال اضبط SUPABASE_JWT_SECRET أو QR_JWT_SECRET أو SUPABASE1_JWT_SECRET ثم انشر generate-qr-token.",
+  "qrTokenAuthError": "تعذر التحقق من حسابك. اسحب الشاشة للتحديث أو سجّل الخروج ثم الدخول مجدداً.",
   "orTellPhone": "أو أخبر الموظف برقم هاتفك:",
-  "myWallet": "محفظتي",
+  "myBalance": "رصيدي",
+  "walletTitle": "المحفظة",
+  "walletSubtitle": "أضف بطاقة الولاء إلى محفظة هاتفك.",
+  "addToGoogleWallet": "إضافة إلى Google Wallet",
+  "addToAppleWallet": "إضافة إلى Apple Wallet",
+  "appleWalletTitle": "Apple Wallet",
+  "appleWalletNotEnabled": "Apple Wallet غير مفعّل حالياً. يتطلب إعداد شهادة Apple Pass Type.",
+  "walletAddFailed": "تعذر إنشاء البطاقة. حاول مرة أخرى.",
+  "walletOpenFailed": "تعذر فتح المحفظة. حاول مرة أخرى.",
   "usedFirst": "يُستخدم أولاً عند الدفع",
   "cashbackRate": "20% من كل عملية شراء",
   "totalBalance": "الإجمالي: {amount} ريال",
@@ -54,9 +66,9 @@
   "noTransactions": "لا توجد معاملات بعد",
   "nothingToShow": "لا توجد بيانات",
   "subscriptionScreenSubtitle": "اختر باقة الاشتراك المناسبة لك",
-  "walletSubscriptionHelp": "يُستخدم أولاً عند الدفع",
-  "walletCashbackHelp": "٢٠٪ من كل عملية شراء",
-  "rechargeWallet": "شحن المحفظة",
+  "balanceSubscriptionHelp": "يُستخدم أولاً عند الدفع",
+  "balanceCashbackHelp": "٢٠٪ من كل عملية شراء",
+  "topUpBalance": "شحن الرصيد",
   "rechargeTagline": "ادفع أقل، واحصل على أكثر",
   "pay": "ادفع {amount} ريال",
   "@pay": {
@@ -74,7 +86,7 @@
   "howToBuy": "كيف تشتري؟",
   "howToBuyStep1": "أخبر الموظف بالخطة التي تريدها",
   "howToBuyStep2": "ادفع المبلغ نقداً للموظف",
-  "howToBuyStep3": "سيضيف الموظف الرصيد لمحفظتك فوراً",
+  "howToBuyStep3": "سيضيف الموظف الرصيد لحسابك فوراً",
   "profile": "الملف الشخصي",
   "referralCode": "رمز الإحالة الخاص بك",
   "referralShare": "انضم إلي في تطبيق Point واحصل على 5 ريال هدية! استخدم كودي: {code}",
@@ -106,8 +118,8 @@
   "redeemBalance": "استرداد الرصيد",
   "addSubscription": "إضافة اشتراك",
   "addsCashback": "يضيف كاش باك 20%",
-  "deductsFromWallet": "يخصم من محفظة العميل",
-  "rechargeWithCash": "شحن المحفظة بالكاش",
+  "deductsFromBalance": "يخصم من رصيد العميل",
+  "topUpWithCash": "شحن الرصيد بالكاش",
   "visitNumber": "الزيارة رقم {count}",
   "@visitNumber": {
     "placeholders": {
@@ -267,14 +279,11 @@
   "welcomeDialogBody": "يسعدنا انضمامك لعائلة Point\nكل نقطة = توفير أكثر 💙",
   "welcomeGiftBadge": "🎉 هدية ترحيب",
   "welcomeGiftAmount": "10.00 ريال",
-  "welcomeGiftCaption": "كاش باك مجاني في محفظتك",
+  "welcomeGiftCaption": "كاش باك مجاني في حسابك",
   "welcomeGetStarted": "ابدأ الاستخدام 🚀",
   "homeBalanceReady": "رصيدك جاهز للاستخدام",
   "homeLoadErrorMessage": "حدث خطأ، حاول مرة أخرى",
   "loadingTakingLong": "يستغرق التحميل وقتاً أطول من المعتاد",
-  "addToWalletPrefix": "أضف إلى",
-  "addToGoogleWallet": "أضف إلى محفظة Google",
-  "addToAppleWallet": "أضف إلى Apple Wallet",
   "errorWithMessage": "خطأ: {message}",
   "@errorWithMessage": {
     "placeholders": {
@@ -309,10 +318,10 @@
   "staffListTitle": "الموظفون",
   "currentSubscriptionBalancePrefix": "رصيد اشتراكك الحالي:",
   "totalColon": "الإجمالي:",
-  "walletHowItWorks": "كيف تعمل المحفظة؟",
-  "walletStepPayCash": "ادفع نقداً",
-  "walletStepCashback": "احصل على ٢٠٪ كاش باك",
-  "walletStepUseNext": "استخدمه في زيارتك القادمة",
+  "balanceHowItWorks": "كيف يعمل الرصيد؟",
+  "balanceStepPayCash": "ادفع نقداً",
+  "balanceStepCashback": "احصل على ٢٠٪ كاش باك",
+  "balanceStepUseNext": "استخدمه في زيارتك القادمة",
   "actionDeactivate": "تعطيل",
   "actionActivate": "تفعيل",
   "cashbackEarnedSuffix": "كاش باك",
@@ -378,12 +387,13 @@
       "amount": {"type": "String"}
     }
   },
-  "staffSummaryRedeemWalletAfter": "رصيد المحفظة بعد العملية: {amount}",
-  "@staffSummaryRedeemWalletAfter": {
+  "staffSummaryRedeemBalanceAfter": "الرصيد بعد العملية: {amount}",
+  "@staffSummaryRedeemBalanceAfter": {
     "placeholders": {
       "amount": {"type": "String"}
     }
   },
+  
   "staffSubscriptionBalanceLine": "رصيد الاشتراك الحالي: {amount}",
   "@staffSubscriptionBalanceLine": {
     "placeholders": {

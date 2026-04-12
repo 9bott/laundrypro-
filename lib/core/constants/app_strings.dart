@@ -92,19 +92,19 @@ abstract final class AppStrings {
   static const navProfileAr = 'حسابي';
   static const navProfileEn = 'Profile';
 
-  static const walletTitleAr = 'محفظتي';
-  static const walletTitleEn = 'My wallet';
+  static const balanceTitleAr = 'رصيدي';
+  static const balanceTitleEn = 'My balance';
 
-  static const walletSubscriptionDescAr = 'يُستخدم أولاً عند الدفع';
-  static const walletSubscriptionDescEn = 'Used first when paying';
+  static const balanceSubscriptionDescAr = 'يُستخدم أولاً عند الدفع';
+  static const balanceSubscriptionDescEn = 'Used first when paying';
 
-  static const walletCashbackDescAr = '٢٠٪ من كل عملية شراء';
-  static const walletCashbackDescEn = '20% from every purchase';
+  static const balanceCashbackDescAr = '٢٠٪ من كل عملية شراء';
+  static const balanceCashbackDescEn = '20% from every purchase';
 
-  static const walletTotalAr = 'الإجمالي:';
-  static const walletTotalEn = 'Total:';
+  static const balanceTotalAr = 'الإجمالي:';
+  static const balanceTotalEn = 'Total:';
 
-  static const howItWorksAr = 'كيف تعمل المحفظة؟';
+  static const howItWorksAr = 'كيف يعمل الرصيد؟';
   static const howItWorksEn = 'How it works';
 
   static const step1Ar = 'ادفع نقداً';
@@ -129,7 +129,7 @@ abstract final class AppStrings {
   static const filterRedemptionEn = 'Redemption';
 
   static const filterSubscriptionAr = 'اشتراك';
-  static const filterSubscriptionEn = 'Wallet top-up';
+  static const filterSubscriptionEn = 'Top-up';
 
   static const filterRewardsAr = 'مكافآت';
   static const filterRewardsEn = 'Rewards';
@@ -170,8 +170,8 @@ abstract final class AppStrings {
   static const howToBuy2Ar = 'ادفع المبلغ نقداً للموظف';
   static const howToBuy2En = 'Pay cash to staff';
 
-  static const howToBuy3Ar = 'سيضيف الموظف الرصيد لمحفظتك فوراً';
-  static const howToBuy3En = 'Staff will add credit to your wallet';
+  static const howToBuy3Ar = 'سيضيف الموظف الرصيد لحسابك فوراً';
+  static const howToBuy3En = 'Staff will add credit to your account';
 
   static const currentSubBalanceAr = 'رصيد اشتراكك الحالي:';
   static const currentSubBalanceEn = 'Current subscription balance:';

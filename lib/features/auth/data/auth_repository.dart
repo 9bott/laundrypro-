@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/config/env.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/constants/supabase_constants.dart';
@@ -70,6 +71,12 @@ class AuthRepository {
     required String phone,
     required String token,
   }) async {
+    if (!Env.hasSupabase) {
+      throw const AuthException(
+        'Supabase not configured. Run the app with SUPABASE_URL and SUPABASE_ANON_KEY.',
+      );
+    }
+
     final firebaseUser = FirebaseAuth.instance.currentUser;
     late final String idToken;
 
