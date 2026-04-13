@@ -17,16 +17,16 @@
         script: xcode-project use-profiles
       - name: Get Flutter packages
         script: flutter packages pub get
-      - name: Build iOS archive
+      - name: Build Flutter
         script: |
-          flutter build ipa --release \
-            --export-method app-store \
+          flutter build ios --release \
             --dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co \
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
-          echo "=== Searching for IPA ==="
-          find $CM_BUILD_DIR -name "*.ipa" 2>/dev/null
-          find ~ -name "*.ipa" 2>/dev/null
-          ls -la build/ios/ipa/ 2>/dev/null || echo "ipa folder not found"
+      - name: Build IPA
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/Runner.xcworkspace \
+            --scheme Runner
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
