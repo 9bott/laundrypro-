@@ -25,6 +25,8 @@ Future<void> main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
     }
+    // Note: on iOS, FirebaseApp.configure() is called in AppDelegate.swift
+    // Flutter firebase_core handles deduplication automatically.
   } catch (e) {
     debugPrint('[Firebase] skipped: $e');
   }
