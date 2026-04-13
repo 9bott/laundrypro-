@@ -3,7 +3,8 @@ import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -25,6 +26,25 @@ Future<void> main() async {
     }
   } catch (e) {
     debugPrint('[Firebase] skipped: $e');
+  }
+
+  if (!kIsWeb) {
+    try {
+      await FirebaseCrashlytics.instance
+          .setCrashlyticsCollectionEnabled(kReleaseMode);
+
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } catch (e) {
+      debugPrint('[Crashlytics] skipped: $e');
+    }
   }
 
   // Android Phone Auth: do not force the web reCAPTCHA flow; use Play Integrity /
@@ -65,7 +85,17 @@ Future<void> main() async {
     debugPrint('[Splash] logo precache skipped: $e');
   }
 
-  runApp(const ProviderScope(child: LaundryProApp()));
+  runZonedGuarded(
+    () => runApp(const ProviderScope(child: LaundryProApp())),
+    (error, stack) async {
+      if (!kIsWeb) {
+        try {
+          await FirebaseCrashlytics.instance
+              .recordError(error, stack, fatal: true);
+        } catch (_) {}
+      }
+    },
+  );
 }
 
 Future<void> _precacheSplashLogoAsset() async {
