@@ -23,6 +23,10 @@
             --export-method app-store \
             --dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co \
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
+          echo "=== Searching for IPA ==="
+          find $CM_BUILD_DIR -name "*.ipa" 2>/dev/null
+          find ~ -name "*.ipa" 2>/dev/null
+          ls -la build/ios/ipa/ 2>/dev/null || echo "ipa folder not found"
     artifacts:
       - build/ios/ipa/*.ipa
     publishing:
