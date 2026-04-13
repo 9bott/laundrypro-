@@ -25,8 +25,6 @@ Future<void> main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       );
     }
-    // Note: on iOS, FirebaseApp.configure() is called in AppDelegate.swift
-    // Flutter firebase_core handles deduplication automatically.
   } catch (e) {
     debugPrint('[Firebase] skipped: $e');
   }
@@ -50,19 +48,7 @@ Future<void> main() async {
     }
   }
 
-  // Android Phone Auth: do not force the web reCAPTCHA flow; use Play Integrity /
-  // device verification when the release cert is registered in Firebase Console.
-  // Also add the release SHA-256 fingerprint there (see android/firebase_release_sha256.txt).
-  if (!kIsWeb && Platform.isAndroid) {
-    try {
-      await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: false);
-    } catch (e) {
-      debugPrint('[Firebase Auth] setSettings: $e');
-    }
-  }
-
   await Hive.initFlutter();
-  await OfflineQueue.init();
 
   if (Env.hasSupabase) {
     final url = Env.supabaseUrl.trim();
@@ -82,14 +68,28 @@ Future<void> main() async {
     debugPrint('[Firebase] skipped: $e');
   }
 
-  try {
-    await _precacheSplashLogoAsset();
-  } catch (e) {
-    debugPrint('[Splash] logo precache skipped: $e');
-  }
-
   runZonedGuarded(
-    () => runApp(const ProviderScope(child: LaundryProApp())),
+    () {
+      runApp(const ProviderScope(child: LaundryProApp()));
+
+      // Fire-and-forget post-start tasks.
+      if (!kIsWeb && Platform.isAndroid) {
+        // Android Phone Auth: do not force the web reCAPTCHA flow; use Play Integrity /
+        // device verification when the release cert is registered in Firebase Console.
+        // Also add the release SHA-256 fingerprint there (see android/firebase_release_sha256.txt).
+        FirebaseAuth.instance
+            .setSettings(forceRecaptchaFlow: false)
+            .catchError((e) => debugPrint('[Firebase Auth] setSettings: $e'));
+      }
+
+      OfflineQueue.init().catchError(
+        (e) => debugPrint('[OfflineQueue] init skipped: $e'),
+      );
+
+      _precacheSplashLogoAsset().catchError(
+        (e) => debugPrint('[Splash] logo precache skipped: $e'),
+      );
+    },
     (error, stack) async {
       if (!kIsWeb) {
         try {
