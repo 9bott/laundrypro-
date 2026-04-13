@@ -1,6 +1,5 @@
 import Flutter
 import UIKit
-import FirebaseCore
 import FirebaseAuth
 
 @main
@@ -9,7 +8,6 @@ import FirebaseAuth
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-    FirebaseApp.configure()
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -23,17 +21,5 @@ import FirebaseAuth
       return true
     }
     return super.application(app, open: url, options: options)
-  }
-
-  override func application(
-    _ application: UIApplication,
-    continue userActivity: NSUserActivity,
-    restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
-  ) -> Bool {
-    return super.application(
-      application,
-      continue: userActivity,
-      restorationHandler: restorationHandler
-    )
   }
 }
