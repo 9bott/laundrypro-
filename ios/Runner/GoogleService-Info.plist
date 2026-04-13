@@ -2,7 +2,12 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<!-- Phone Auth / reCAPTCHA: enable Google Sign-In in Firebase Auth (or download a fresh plist) to include CLIENT_ID + REVERSED_CLIENT_ID; copy REVERSED_CLIENT_ID into Info.plist CFBundleURLTypes. -->
+	<key>CLIENT_ID</key>
+	<string>183334770022-t3gs2ms8pp01kacq5vacq0qf8aebfhg1.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.183334770022-t3gs2ms8pp01kacq5vacq0qf8aebfhg1</string>
+	<key>ANDROID_CLIENT_ID</key>
+	<string>183334770022-o6qfhmrk3ifi8ig5eo4us1fr4egugsfe.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
 	<string>AIzaSyA3J3IhE3mHJfDydA6hzDNn4-L5rvLj-ns</string>
 	<key>GCM_SENDER_ID</key>
