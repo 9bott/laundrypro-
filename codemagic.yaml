@@ -25,6 +25,7 @@
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
     artifacts:
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
     publishing:
       app_store_connect:
         auth: integration
