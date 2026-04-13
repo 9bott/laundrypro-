@@ -13,6 +13,8 @@
       xcode: latest
       cocoapods: default
     scripts:
+      - name: Set up code signing
+        script: xcode-project use-profiles
       - name: Get Flutter packages
         script: flutter packages pub get
       - name: Build iOS
