@@ -272,7 +272,7 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                           child: AppCard(
                             borderColor: s.isActive
                                 ? AppColors.border
-                                : AppColors.textHint.withOpacity(0.4),
+                                : AppColors.textHint.withValues(alpha: 0.4),
                             child: InkWell(
                               onTap: () => _detail(s),
                               borderRadius: BorderRadius.circular(16),

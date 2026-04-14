@@ -193,7 +193,7 @@ class _HistoryEmptyBody extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 48),
       child: Column(
         children: [
-          Icon(Icons.receipt_long, size: 56, color: AppColors.primary.withOpacity(0.45)),
+          Icon(Icons.receipt_long, size: 56, color: AppColors.primary.withValues(alpha: 0.45)),
           const SizedBox(height: 12),
           Text(
             l10n.noTransactions,

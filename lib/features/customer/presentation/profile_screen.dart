@@ -96,7 +96,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (onTap != null) ...[
           const SizedBox(width: 8),
           Icon(Icons.chevron_right_rounded,
-              color: AppColors.textHint.withOpacity(0.9)),
+              color: AppColors.textHint.withValues(alpha: 0.9)),
         ],
       ],
     );
@@ -263,7 +263,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   CircleAvatar(
                                     radius: 38,
                                     backgroundColor:
-                                        AppColors.primary.withOpacity(0.16),
+                                        AppColors.primary.withValues(alpha: 0.16),
                                     child: ClipOval(
                                       child: c.avatarUrl != null &&
                                               c.avatarUrl!.isNotEmpty

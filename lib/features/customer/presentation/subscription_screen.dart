@@ -204,23 +204,23 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
     final accent = isDiamond
         ? AppColors.primaryDark
         : (isGold ? AppColors.gold : AppColors.primary);
-    final accentSoft = accent.withOpacity(0.10);
+    final accentSoft = accent.withValues(alpha: 0.10);
 
     // Glass-like surface defaults (matches global background).
     Color tint;
     Color borderC;
     if (isDiamond) {
-      tint = Colors.white.withOpacity(0.88);
+      tint = Colors.white.withValues(alpha: 0.88);
       borderC = AppColors.primaryDark;
     } else if (isGold) {
-      tint = Colors.white.withOpacity(0.86);
+      tint = Colors.white.withValues(alpha: 0.86);
       borderC = AppColors.gold;
     } else if (isSilver) {
-      tint = Colors.white.withOpacity(0.82);
-      borderC = AppColors.primary.withOpacity( 0.65);
+      tint = Colors.white.withValues(alpha: 0.82);
+      borderC = AppColors.primary.withValues(alpha: 0.65);
     } else {
-      tint = Colors.white.withOpacity(0.78);
-      borderC = AppColors.primaryMid.withOpacity( 0.55);
+      tint = Colors.white.withValues(alpha: 0.78);
+      borderC = AppColors.primaryMid.withValues(alpha: 0.55);
     }
 
     final card = AnimatedScale(
@@ -237,7 +237,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: borderC.withOpacity(sel ? 0.35 : 0.18),
+                color: borderC.withValues(alpha: sel ? 0.35 : 0.18),
                 blurRadius: sel ? 20 : 14,
                 offset: const Offset(0, 8),
               ),
@@ -255,7 +255,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   height: 110,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: accent.withOpacity(0.08),
+                    color: accent.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -267,7 +267,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                   height: 140,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: accent.withOpacity(0.06),
+                    color: accent.withValues(alpha: 0.06),
                   ),
                 ),
               ),
@@ -299,7 +299,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     borderRadius: 999,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    tint: AppColors.gold.withOpacity(0.15),
+                    tint: AppColors.gold.withValues(alpha: 0.15),
                     borderColor: AppColors.gold,
                     child: Text(
                       l10n.planLabelPremium,
@@ -319,7 +319,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     borderRadius: 999,
                     padding:
                         const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    tint: AppColors.primaryDark.withOpacity(0.10),
+                    tint: AppColors.primaryDark.withValues(alpha: 0.10),
                     borderColor: AppColors.primaryDark,
                     child: Text(
                       l10n.planLabelDiamond,
@@ -355,7 +355,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                     16,
                   ),
                   tint: tint,
-                  borderColor: borderC.withOpacity(sel ? 0.85 : 0.55),
+                  borderColor: borderC.withValues(alpha: sel ? 0.85 : 0.55),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -367,7 +367,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                           color: accent,
                           boxShadow: [
                             BoxShadow(
-                              color: accent.withOpacity(0.35),
+                              color: accent.withValues(alpha: 0.35),
                               blurRadius: 12,
                               offset: const Offset(0, 6),
                             ),
@@ -435,7 +435,7 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
               decoration: BoxDecoration(
                 color: accentSoft,
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: accent.withOpacity(0.22)),
+                  border: Border.all(color: accent.withValues(alpha: 0.22)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -479,9 +479,9 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
         Container(
           padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
           decoration: BoxDecoration(
-            color: AppColors.surfaceAlt.withOpacity(0.70),
+            color: AppColors.surfaceAlt.withValues(alpha: 0.70),
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border.withOpacity(0.8)),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.8)),
           ),
           child: Row(
             children: [
@@ -513,10 +513,10 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: accent.withOpacity(0.12),
+                color: accent.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: accent.withOpacity(0.25),
+                  color: accent.withValues(alpha: 0.25),
                   ),
                 ),
                 child: Icon(
@@ -559,8 +559,8 @@ class _SubscriptionScreenState extends ConsumerState<SubscriptionScreen> {
             child: GlassCard(
               borderRadius: 14,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              tint: AppColors.successTint.withOpacity(0.65),
-              borderColor: AppColors.success.withOpacity(0.35),
+              tint: AppColors.successTint.withValues(alpha: 0.65),
+              borderColor: AppColors.success.withValues(alpha: 0.35),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 mainAxisSize: MainAxisSize.min,

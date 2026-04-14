@@ -119,7 +119,7 @@ class _UnifiedStaffShellState extends ConsumerState<UnifiedStaffShell> {
                 border: Border.all(color: AppColors.primaryBorder),
                 boxShadow: [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.10),
+                    color: AppColors.primary.withValues(alpha: 0.10),
                     blurRadius: 26,
                     offset: const Offset(0, 10),
                   ),
@@ -156,7 +156,7 @@ class _UnifiedStaffShellState extends ConsumerState<UnifiedStaffShell> {
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
                                   color: on
-                                      ? AppColors.primaryMid.withOpacity(0.35)
+                                      ? AppColors.primaryMid.withValues(alpha: 0.35)
                                       : Colors.transparent,
                                 ),
                               ),

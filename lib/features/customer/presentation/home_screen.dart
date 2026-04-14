@@ -321,7 +321,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                                 color: AppColors.surfaceAlt,
                                 borderRadius: BorderRadius.circular(14),
                                 border: Border.all(
-                                  color: AppColors.primary.withOpacity(0.35),
+                                  color: AppColors.primary.withValues(alpha: 0.35),
                                 ),
                               ),
                               child: IconButton(
@@ -480,7 +480,7 @@ class _WalletGradientCard extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: AppColors.primaryLight.withOpacity(0.35),
+              color: AppColors.primaryLight.withValues(alpha: 0.35),
               width: 1.5,
             ),
             boxShadow: AppColors.blueShadow,
@@ -495,7 +495,7 @@ class _WalletGradientCard extends StatelessWidget {
                   height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.08),
+                    color: Colors.white.withValues(alpha: 0.08),
                   ),
                 ),
               ),
@@ -507,7 +507,7 @@ class _WalletGradientCard extends StatelessWidget {
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
                 ),
               ),
@@ -528,7 +528,7 @@ class _WalletGradientCard extends StatelessWidget {
                         Text(
                           l10n.myBalance,
                           style: GoogleFonts.cairo(
-                            color: Colors.white.withOpacity(0.85),
+                            color: Colors.white.withValues(alpha: 0.85),
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
                           ),
@@ -546,7 +546,7 @@ class _WalletGradientCard extends StatelessWidget {
                                 Text(
                                   l10n.subscriptionShort,
                                   style: GoogleFonts.cairo(
-                                    color: Colors.white.withOpacity(0.7),
+                                    color: Colors.white.withValues(alpha: 0.7),
                                     fontSize: 11,
                                   ),
                                 ),
@@ -562,7 +562,7 @@ class _WalletGradientCard extends StatelessWidget {
                                 Text(
                                   l10n.currencyDisplay,
                                   style: GoogleFonts.cairo(
-                                    color: Colors.white.withOpacity(0.65),
+                                    color: Colors.white.withValues(alpha: 0.65),
                                     fontSize: 12,
                                   ),
                                 ),
@@ -753,7 +753,7 @@ class _HomeErrorState extends StatelessWidget {
             children: [
               AppCard(
               padding: const EdgeInsets.all(20),
-              borderColor: AppColors.error.withOpacity(0.4),
+              borderColor: AppColors.error.withValues(alpha: 0.4),
               child: Column(
                 children: [
                   const Icon(Icons.error_outline_rounded,
@@ -775,7 +775,7 @@ class _HomeErrorState extends StatelessWidget {
             OutlinedButton(
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error.withOpacity(0.8)),
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.8)),
                 padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),

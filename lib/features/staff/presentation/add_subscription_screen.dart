@@ -235,7 +235,7 @@ class _StaffAddSubscriptionScreenState
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Material(
                           color: sel
-                              ? AppColors.primary.withOpacity(0.12)
+                              ? AppColors.primary.withValues(alpha: 0.12)
                               : AppColors.surface,
                           borderRadius: BorderRadius.circular(14),
                           elevation: 1,
@@ -270,8 +270,9 @@ class _StaffAddSubscriptionScreenState
                                             vertical: 4,
                                           ),
                                           decoration: BoxDecoration(
-                                            color: AppColors.primary
-                                                .withOpacity(0.2),
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.2,
+                                            ),
                                             borderRadius:
                                                 BorderRadius.circular(8),
                                           ),

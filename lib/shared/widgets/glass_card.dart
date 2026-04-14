@@ -26,7 +26,7 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fill = tint ?? AppColors.surface;
-    final bc = borderColor ?? AppColors.primary.withOpacity(0.28);
+    final bc = borderColor ?? AppColors.primary.withValues(alpha: 0.28);
     return Container(
       padding: padding,
       decoration: BoxDecoration(

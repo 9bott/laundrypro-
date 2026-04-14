@@ -25,7 +25,7 @@ class OfflineBanner extends ConsumerWidget {
               left: 0,
               right: 0,
               child: Material(
-                color: AppColors.error.withOpacity(0.95),
+                color: AppColors.error.withValues(alpha: 0.95),
                 elevation: 4,
                 child: SafeArea(
                   bottom: false,

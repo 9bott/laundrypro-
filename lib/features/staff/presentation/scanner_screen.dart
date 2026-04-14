@@ -255,7 +255,9 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
                         decoration: BoxDecoration(
                           color: AppColors.warningTint,
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppColors.warning.withOpacity(0.5)),
+                            border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.5),
+                            ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
@@ -295,7 +297,9 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
                               color: isMgr ? AppColors.goldTint : AppColors.primaryTint,
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
-                                color: isMgr ? AppColors.gold.withOpacity(0.35) : AppColors.primaryBorder,
+                                color: isMgr
+                                    ? AppColors.gold.withValues(alpha: 0.35)
+                                    : AppColors.primaryBorder,
                               ),
                             ),
                             child: Text(
@@ -389,7 +393,7 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
                         fontWeight: FontWeight.w600,
                         shadows: [
                           Shadow(
-                            color: Colors.black.withOpacity(0.85),
+                            color: Colors.black.withValues(alpha: 0.85),
                             blurRadius: 8,
                           ),
                         ],
@@ -469,7 +473,7 @@ class _HoleMaskPainter extends CustomPainter {
     final hole = Path.combine(PathOperation.difference, outer, inner);
     canvas.drawPath(
       hole,
-      Paint()..color = Colors.black.withOpacity(0.55),
+      Paint()..color = Colors.black.withValues(alpha: 0.55),
     );
   }
 
@@ -556,7 +560,7 @@ class _ScanLinePainter extends CustomPainter {
         end: Alignment.centerRight,
         colors: [
           Colors.transparent,
-          _scanPrimary.withOpacity(0.95),
+          _scanPrimary.withValues(alpha: 0.95),
           Colors.transparent,
         ],
         stops: const [0.0, 0.5, 1.0],
@@ -697,7 +701,9 @@ class _PhoneLookupSheetState extends ConsumerState<_PhoneLookupSheet> {
                     fontWeight: FontWeight.w800,
                   ),
                   hintText: '5XXXXXXXX',
-                  hintStyle: TextStyle(color: AppColors.textHint.withOpacity(0.9)),
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint.withValues(alpha: 0.9),
+                  ),
                 ),
                 onFieldSubmitted: (_) {
                   HapticFeedback.lightImpact();

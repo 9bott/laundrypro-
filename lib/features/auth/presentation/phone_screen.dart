@@ -665,7 +665,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
           boxShadow: selected
               ? [
                   BoxShadow(
-                    color: AppColors.primary.withOpacity(0.10),
+                    color: AppColors.primary.withValues(alpha: 0.10),
                     blurRadius: 18,
                     offset: const Offset(0, 8),
                   ),

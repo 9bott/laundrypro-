@@ -69,7 +69,7 @@ class StaffCustomerCardScreen extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 44,
-                backgroundColor: AppColors.primary.withOpacity(0.2),
+                backgroundColor: AppColors.primary.withValues(alpha: 0.2),
                 child: ClipOval(
                   child: c.avatarUrl != null && c.avatarUrl!.isNotEmpty
                       ? CachedNetworkImage(
@@ -120,7 +120,7 @@ class StaffCustomerCardScreen extends ConsumerWidget {
                           color: AppColors.errorTint,
                           borderRadius: BorderRadius.circular(18),
                           border: Border.all(
-                            color: AppColors.error.withOpacity(0.45),
+                            color: AppColors.error.withValues(alpha: 0.45),
                           ),
                         ),
                         child: Row(

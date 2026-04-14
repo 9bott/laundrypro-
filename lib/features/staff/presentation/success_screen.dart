@@ -367,7 +367,7 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
     return AppCard(
       radius: 18,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      borderColor: AppColors.primary.withOpacity(0.35),
+      borderColor: AppColors.primary.withValues(alpha: 0.35),
       child: Container(
         decoration: const BoxDecoration(
           border: Border(

@@ -240,8 +240,9 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
     final afterCb = c.cashbackBalance + cbAdd;
     final totalAfterRedeem = c.totalWalletBalance - amount;
 
-    final summaryBorder =
-        purchase ? AppColors.primary.withOpacity(0.65) : AppColors.gold.withOpacity(0.65);
+    final summaryBorder = purchase
+        ? AppColors.primary.withValues(alpha: 0.65)
+        : AppColors.gold.withValues(alpha: 0.65);
 
     return Stack(
       children: [
@@ -387,7 +388,7 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
                 Container(
                   padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
                   decoration: BoxDecoration(
-                    color: AppColors.error.withOpacity(0.06),
+                    color: AppColors.error.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(12),
                     border: const BorderDirectional(
                       start: BorderSide(color: AppColors.error, width: 3),
@@ -570,10 +571,10 @@ class _SummaryRow extends StatelessWidget {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: AppColors.primaryTint,
-            border: Border.all(color: AppColors.border.withOpacity(0.55)),
+            border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
             boxShadow: [
               BoxShadow(
-                color: (accent ?? AppColors.primary).withOpacity(0.2),
+                color: (accent ?? AppColors.primary).withValues(alpha: 0.2),
                 blurRadius: 10,
               ),
             ],
@@ -587,7 +588,7 @@ class _SummaryRow extends StatelessWidget {
             style: GoogleFonts.cairo(
               fontSize: strong ? 15 : 14,
               fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
-              color: accent ?? AppColors.textPrimary.withOpacity(0.92),
+              color: (accent ?? AppColors.textPrimary).withValues(alpha: 0.92),
               height: 1.5,
             ),
           ),
@@ -609,7 +610,7 @@ class _ConfirmMarkPainter extends CustomPainter {
     final c = Offset(size.width / 2, size.height / 2);
     final r = (size.shortestSide / 2 - 6) * pulse;
     final glow = Paint()
-      ..color = color.withOpacity(0.22)
+      ..color = color.withValues(alpha: 0.22)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
     canvas.drawCircle(c, r + 2, glow);
 

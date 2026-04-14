@@ -49,23 +49,23 @@ class AnimatedBackground extends StatelessWidget {
         Positioned(
           top: -80,
           right: -60,
-          child: _blob(240, AppColors.primary.withOpacity(0.10)),
+          child: _blob(240, AppColors.primary.withValues(alpha: 0.10)),
         ),
         Positioned(
           top: 140,
           left: -70,
-          child: _blob(200, AppColors.surfaceAlt.withOpacity(0.9)),
+          child: _blob(200, AppColors.surfaceAlt.withValues(alpha: 0.9)),
         ),
         Positioned(
           bottom: 40,
           right: -50,
-          child: _blob(180, AppColors.primaryLight.withOpacity(0.10)),
+          child: _blob(180, AppColors.primaryLight.withValues(alpha: 0.10)),
         ),
         if (extraOrbs)
           Positioned(
             bottom: 200,
             left: -40,
-            child: _blob(160, AppColors.tertiary.withOpacity(0.06)),
+            child: _blob(160, AppColors.tertiary.withValues(alpha: 0.06)),
           ),
         _AppBackgroundScope(child: child),
       ],
