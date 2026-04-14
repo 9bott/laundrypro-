@@ -32,6 +32,25 @@ Future<void> main() async {
     debugPrint('[BOOT] step 2 FAILED: $e');
   }
 
+  if (!kIsWeb && Platform.isAndroid) {
+    try {
+      await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: false);
+    } catch (e) {
+      debugPrint('[Firebase Auth] Android setSettings: $e');
+    }
+  }
+
+  if (!kIsWeb && Platform.isIOS) {
+    try {
+      await FirebaseAuth.instance.setSettings(
+        appVerificationDisabledForTesting: true,
+      );
+      debugPrint('[Firebase Auth] iOS: verification disabled for testing');
+    } catch (e) {
+      debugPrint('[Firebase Auth] iOS setSettings: $e');
+    }
+  }
+
   try {
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
     FlutterError.onError = (FlutterErrorDetails details) {
