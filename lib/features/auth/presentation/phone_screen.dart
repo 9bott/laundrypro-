@@ -220,46 +220,34 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   /// Persists [kLoginModePrefKey] from the **current** tab ([_asStaff]) immediately before OTP,
   /// so a fast tap on Sign in cannot race the async Store/Customer segment handlers.
   Future<void> _submitPhoneOtp() async {
-    final digits = _controller.text.trim();
-    if (!_validNine(digits)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isAr ? AppStrings.phoneInvalidAr : AppStrings.phoneInvalidEn),
-          backgroundColor: AppColors.error,
-        ),
-      );
-      return;
-    }
+    debugPrint('[TEST] button pressed');
 
-    if (!Env.hasSupabase) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Supabase not configured')),
-      );
-      return;
-    }
-
+    // Test 1: does setState crash?
     setState(() => _loading = true);
+    debugPrint('[TEST] setState OK');
+
+    await Future.delayed(const Duration(milliseconds: 100));
+
+    // Test 2: does SharedPreferences crash?
     try {
-      final phone = '+966$digits';
       final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(
-        kLoginModePrefKey,
-        _asStaff ? kLoginModeStaff : kLoginModeCustomer,
-      );
-      await ref.read(authRepositoryProvider).signInWithPhoneOtp(phone);
-      if (!mounted) return;
-      context.push('/auth/otp', extra: phone);
+      await prefs.setString(kLoginModePrefKey, 'test');
+      debugPrint('[TEST] SharedPreferences OK');
     } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${_isAr ? AppStrings.errorGenericAr : AppStrings.errorGenericEn}: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _loading = false);
+      debugPrint('[TEST] SharedPreferences FAILED: $e');
     }
+
+    // Test 3: does Firebase crash?
+    try {
+      final phone = '+966500000000';
+      debugPrint('[TEST] calling Firebase...');
+      await ref.read(authRepositoryProvider).signInWithPhoneOtp(phone);
+      debugPrint('[TEST] Firebase OK');
+    } catch (e) {
+      debugPrint('[TEST] Firebase FAILED: $e');
+    }
+
+    if (mounted) setState(() => _loading = false);
   }
 
   @override
