@@ -278,7 +278,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                       ClipRRect(
                         borderRadius: BorderRadius.circular(22),
                         child: Image.asset(
-                          'assets/app_logo.png',
+                          'assets/images/app_logo.png',
                           width: 140,
                           height: 140,
                           fit: BoxFit.contain,

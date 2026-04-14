@@ -68,7 +68,7 @@ class _AppLogoLoaderState extends State<AppLogoLoader>
         ),
         clipBehavior: Clip.antiAlias,
         child: Image.asset(
-          'assets/app_logo.png',
+          'assets/images/app_logo.png',
           fit: BoxFit.contain,
           errorBuilder: (context, error, stack) {
             return const Center(
