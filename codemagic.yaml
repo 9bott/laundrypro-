@@ -29,6 +29,8 @@
             --scheme Runner
     artifacts:
       - build/ios/ipa/*.ipa
+      - $CM_BUILD_DIR/build/ios/archive/Runner.xcarchive/dSYMs/*.dSYM
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/Products/**/*.dSYM
     publishing:
       app_store_connect:
         auth: integration
