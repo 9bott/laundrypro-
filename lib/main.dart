@@ -30,13 +30,27 @@ Future<void> main() async {
   }
 
   if (!kIsWeb) {
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-    FlutterError.onError =
-        FirebaseCrashlytics.instance.recordFlutterFatalError;
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
+    try {
+      // Force enable in all modes for debugging
+      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+
+      // Test that Crashlytics is working
+      await FirebaseCrashlytics.instance
+          .log('Crashlytics initialized successfully');
+      await FirebaseCrashlytics.instance.setCustomKey('platform', 'ios');
+      await FirebaseCrashlytics.instance.setCustomKey('build', '14');
+
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+      };
+
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    } catch (e) {
+      debugPrint('[Crashlytics] error: $e');
+    }
   }
 
   await Hive.initFlutter();
