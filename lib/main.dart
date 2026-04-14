@@ -30,22 +30,13 @@ Future<void> main() async {
   }
 
   if (!kIsWeb) {
-    try {
-      await FirebaseCrashlytics.instance
-          .setCrashlyticsCollectionEnabled(kReleaseMode);
-
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FlutterError.presentError(details);
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-      };
-
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-    } catch (e) {
-      debugPrint('[Crashlytics] skipped: $e');
-    }
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    FlutterError.onError =
+        FirebaseCrashlytics.instance.recordFlutterFatalError;
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
   }
 
   await Hive.initFlutter();
@@ -68,35 +59,13 @@ Future<void> main() async {
     debugPrint('[Firebase] skipped: $e');
   }
 
+  // TEMPORARY: Remove after confirming Crashlytics works
+  FirebaseCrashlytics.instance.crash();
+
   runZonedGuarded(
-    () {
-      runApp(const ProviderScope(child: LaundryProApp()));
-
-      // Fire-and-forget post-start tasks.
-      if (!kIsWeb && Platform.isAndroid) {
-        // Android Phone Auth: do not force the web reCAPTCHA flow; use Play Integrity /
-        // device verification when the release cert is registered in Firebase Console.
-        // Also add the release SHA-256 fingerprint there (see android/firebase_release_sha256.txt).
-        FirebaseAuth.instance
-            .setSettings(forceRecaptchaFlow: false)
-            .catchError((e) => debugPrint('[Firebase Auth] setSettings: $e'));
-      }
-
-      OfflineQueue.init().catchError(
-        (e) => debugPrint('[OfflineQueue] init skipped: $e'),
-      );
-
-      _precacheSplashLogoAsset().catchError(
-        (e) => debugPrint('[Splash] logo precache skipped: $e'),
-      );
-    },
-    (error, stack) async {
-      if (!kIsWeb) {
-        try {
-          await FirebaseCrashlytics.instance
-              .recordError(error, stack, fatal: true);
-        } catch (_) {}
-      }
+    () => runApp(const ProviderScope(child: LaundryProApp())),
+    (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     },
   );
 }
