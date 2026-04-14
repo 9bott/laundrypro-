@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart' hide User;
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,8 +12,6 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/constants/supabase_constants.dart';
 
 enum AppRole { customer, staff }
-
-bool get _isIOS => !kIsWeb && Platform.isIOS;
 
 class AuthRepository {
   AuthRepository(this._client);
@@ -33,17 +30,8 @@ class AuthRepository {
   Stream<AuthState> get onAuthStateChange =>
       _client.auth.onAuthStateChange;
 
-  /// iOS: Supabase native OTP (bypasses Firebase reCAPTCHA crash on iOS 18).
-  /// Android: Firebase verifyPhoneNumber.
   Future<void> signInWithPhoneOtp(String e164Phone) async {
-    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone (iOS=$_isIOS)');
-
-    if (_isIOS) {
-      await _client.auth.signInWithOtp(phone: e164Phone);
-      debugPrint('[AUTH] Supabase OTP sent to $e164Phone');
-      return;
-    }
-
+    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone');
     try {
       _verificationId = null;
       final completer = Completer<void>();
@@ -101,15 +89,6 @@ class AuthRepository {
     if (!Env.hasSupabase) {
       throw const AuthException(
         'Supabase not configured. Run the app with SUPABASE_URL and SUPABASE_ANON_KEY.',
-      );
-    }
-
-    if (_isIOS) {
-      debugPrint('[AUTH] verifyOTP via Supabase phone=$phone');
-      return _client.auth.verifyOTP(
-        phone: phone,
-        token: token,
-        type: OtpType.sms,
       );
     }
 
