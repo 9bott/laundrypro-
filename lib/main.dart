@@ -19,66 +19,68 @@ import 'core/utils/offline_queue.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  debugPrint('[BOOT] step 1: Flutter binding OK');
+
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
     }
+    debugPrint('[BOOT] step 2: Firebase OK');
   } catch (e) {
-    debugPrint('[Firebase] skipped: $e');
+    debugPrint('[BOOT] step 2 FAILED: $e');
   }
 
-  if (!kIsWeb) {
-    try {
-      // Force enable in all modes for debugging
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+  try {
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+    FlutterError.onError = (FlutterErrorDetails details) {
+      debugPrint('[CRASH] Flutter error: ${details.exception}');
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    };
+    PlatformDispatcher.instance.onError = (error, stack) {
+      debugPrint('[CRASH] Platform error: $error');
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
+    debugPrint('[BOOT] step 3: Crashlytics OK');
+  } catch (e) {
+    debugPrint('[BOOT] step 3 FAILED: $e');
+  }
 
-      // Test that Crashlytics is working
-      await FirebaseCrashlytics.instance
-          .log('Crashlytics initialized successfully');
-      await FirebaseCrashlytics.instance.setCustomKey('platform', 'ios');
-      await FirebaseCrashlytics.instance.setCustomKey('build', '14');
+  try {
+    await Hive.initFlutter();
+    debugPrint('[BOOT] step 4: Hive OK');
+  } catch (e) {
+    debugPrint('[BOOT] step 4 FAILED: $e');
+  }
 
-      FlutterError.onError = (FlutterErrorDetails details) {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-      };
-
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-    } catch (e) {
-      debugPrint('[Crashlytics] error: $e');
+  try {
+    if (Env.hasSupabase) {
+      await SupabaseService.init(
+        url: Env.supabaseUrl.trim(),
+        anonKey: Env.supabaseAnonKey.trim(),
+      );
+      debugPrint('[BOOT] step 5: Supabase OK');
+    } else {
+      debugPrint('[BOOT] step 5: Supabase SKIPPED');
     }
-  }
-
-  await Hive.initFlutter();
-
-  if (Env.hasSupabase) {
-    final url = Env.supabaseUrl.trim();
-    final key = Env.supabaseAnonKey.trim();
-    debugPrint('[Supabase] hasSupabase=true url="$url" keyLen=${key.length}');
-    await SupabaseService.init(
-      url: url,
-      anonKey: key,
-    );
-  } else {
-    debugPrint('[Supabase] hasSupabase=false SUPABASE_URL/SUPABASE_ANON_KEY missing');
+  } catch (e) {
+    debugPrint('[BOOT] step 5 FAILED: $e');
   }
 
   try {
     await NotificationService.initialize();
+    debugPrint('[BOOT] step 6: Notifications OK');
   } catch (e) {
-    debugPrint('[Firebase] skipped: $e');
+    debugPrint('[BOOT] step 6 FAILED: $e');
   }
 
-  // TEMPORARY: Remove after confirming Crashlytics works
-  FirebaseCrashlytics.instance.crash();
-
+  debugPrint('[BOOT] step 7: starting runApp');
   runZonedGuarded(
     () => runApp(const ProviderScope(child: LaundryProApp())),
     (error, stack) {
+      debugPrint('[CRASH] Zone error: $error');
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
     },
   );

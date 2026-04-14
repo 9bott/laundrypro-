@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart' hide User;
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -30,41 +31,47 @@ class AuthRepository {
       _client.auth.onAuthStateChange;
 
   Future<void> signInWithPhoneOtp(String e164Phone) async {
-    _verificationId = null;
-    final completer = Completer<void>();
+    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone');
+    try {
+      _verificationId = null;
+      final completer = Completer<void>();
 
-    await FirebaseAuth.instance.verifyPhoneNumber(
-      phoneNumber: e164Phone,
-      timeout: const Duration(seconds: 120),
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        try {
-          await FirebaseAuth.instance.signInWithCredential(credential);
-          final vid = credential.verificationId;
-          if (vid != null && vid.isNotEmpty) {
-            _verificationId = vid;
+      await FirebaseAuth.instance.verifyPhoneNumber(
+        phoneNumber: e164Phone,
+        timeout: const Duration(seconds: 120),
+        verificationCompleted: (PhoneAuthCredential credential) async {
+          try {
+            await FirebaseAuth.instance.signInWithCredential(credential);
+            final vid = credential.verificationId;
+            if (vid != null && vid.isNotEmpty) {
+              _verificationId = vid;
+            }
+          } catch (e) {
+            if (!completer.isCompleted) {
+              completer.completeError(e);
+            }
+            return;
           }
-        } catch (e) {
-          if (!completer.isCompleted) {
-            completer.completeError(e);
-          }
-          return;
-        }
-        if (!completer.isCompleted) completer.complete();
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (!completer.isCompleted) completer.completeError(e);
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        _verificationId = verificationId;
-        if (!completer.isCompleted) completer.complete();
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        _verificationId = verificationId;
-        if (!completer.isCompleted) completer.complete();
-      },
-    );
+          if (!completer.isCompleted) completer.complete();
+        },
+        verificationFailed: (FirebaseAuthException e) {
+          if (!completer.isCompleted) completer.completeError(e);
+        },
+        codeSent: (String verificationId, int? resendToken) {
+          _verificationId = verificationId;
+          if (!completer.isCompleted) completer.complete();
+        },
+        codeAutoRetrievalTimeout: (String verificationId) {
+          _verificationId = verificationId;
+          if (!completer.isCompleted) completer.complete();
+        },
+      );
 
-    return completer.future;
+      return completer.future;
+    } catch (e, stack) {
+      debugPrint('[AUTH] signInWithPhoneOtp FAILED: $e');
+      rethrow;
+    }
   }
 
   Future<AuthResponse> verifyPhoneOtp({
