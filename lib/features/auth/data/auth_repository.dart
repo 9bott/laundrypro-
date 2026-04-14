@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 
 import 'package:firebase_auth/firebase_auth.dart' hide User;
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -13,11 +12,6 @@ import '../../../core/services/supabase_service.dart';
 import '../../../core/constants/supabase_constants.dart';
 
 enum AppRole { customer, staff }
-
-/// Whether to use Supabase-native phone OTP instead of Firebase phone auth.
-/// Firebase verifyPhoneNumber crashes on iOS 18 due to a reCAPTCHA keyWindow
-/// nil force-unwrap, so we bypass it entirely on Apple platforms.
-bool get _useSupabaseOtp => !kIsWeb && Platform.isIOS;
 
 class AuthRepository {
   AuthRepository(this._client);
@@ -37,19 +31,7 @@ class AuthRepository {
       _client.auth.onAuthStateChange;
 
   Future<void> signInWithPhoneOtp(String e164Phone) async {
-    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone (supabaseOtp=$_useSupabaseOtp)');
-
-    if (_useSupabaseOtp) {
-      try {
-        await _client.auth.signInWithOtp(phone: e164Phone);
-        debugPrint('[AUTH] Supabase OTP sent to $e164Phone');
-      } catch (e) {
-        debugPrint('[AUTH] Supabase OTP failed: $e — ensure Phone provider is enabled in Supabase Dashboard');
-        rethrow;
-      }
-      return;
-    }
-
+    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone');
     try {
       _verificationId = null;
       final completer = Completer<void>();
@@ -110,31 +92,6 @@ class AuthRepository {
       );
     }
 
-    if (_useSupabaseOtp) {
-      return _verifyViaSupabase(phone: phone, token: token);
-    }
-
-    return _verifyViaFirebase(phone: phone, token: token);
-  }
-
-  /// iOS path: verify OTP directly through Supabase (no Firebase involved).
-  Future<AuthResponse> _verifyViaSupabase({
-    required String phone,
-    required String token,
-  }) async {
-    debugPrint('[AUTH] verifyViaSupabase phone=$phone');
-    return _client.auth.verifyOTP(
-      phone: phone,
-      token: token,
-      type: OtpType.sms,
-    );
-  }
-
-  /// Android path: verify OTP through Firebase, exchange ID token for Supabase session.
-  Future<AuthResponse> _verifyViaFirebase({
-    required String phone,
-    required String token,
-  }) async {
     final firebaseUser = FirebaseAuth.instance.currentUser;
     late final String idToken;
 
