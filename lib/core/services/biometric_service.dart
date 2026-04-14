@@ -1,5 +1,6 @@
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../constants/app_assets.dart';
 
@@ -12,19 +13,29 @@ class BiometricService {
       final canCheck = await _auth.canCheckBiometrics;
       final isSupported = await _auth.isDeviceSupported();
       return canCheck && isSupported;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Biometric] isAvailable error: $e');
       return false;
     }
   }
 
   static Future<bool> isEnabled() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_enabledKey) ?? false;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_enabledKey) ?? false;
+    } catch (e) {
+      debugPrint('[Biometric] isEnabled error: $e');
+      return false;
+    }
   }
 
   static Future<void> setEnabled(bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(_enabledKey, value);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_enabledKey, value);
+    } catch (e) {
+      debugPrint('[Biometric] setEnabled error: $e');
+    }
   }
 
   static Future<bool> authenticate() async {
@@ -36,7 +47,8 @@ class BiometricService {
           stickyAuth: true,
         ),
       );
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Biometric] authenticate error: $e');
       return false;
     }
   }
@@ -47,7 +59,8 @@ class BiometricService {
       if (types.contains(BiometricType.face)) return 'Face ID';
       if (types.contains(BiometricType.fingerprint)) return 'البصمة';
       return 'البصمة';
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Biometric] getBiometricLabel error: $e');
       return 'البصمة';
     }
   }
@@ -59,7 +72,8 @@ class BiometricService {
       final hasFace = types.contains(BiometricType.face) ||
           types.contains(BiometricType.iris);
       if (hasFace) return AppAssets.faceIdLoginIcon;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('[Biometric] loginIconAssetPath error: $e');
       /* fallback below */
     }
     return AppAssets.fingerprintLoginIcon;

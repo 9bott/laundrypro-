@@ -121,11 +121,20 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   Future<void> _loadPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     final rememberMe = prefs.getBool(kRememberMePrefKey) ?? true;
-    final bioEnabled = await BiometricService.isEnabled();
-    final bioAvailable = await BiometricService.isAvailable();
+    bool bioEnabled = false;
+    bool bioAvailable = false;
+    String bioIcon = AppAssets.fingerprintLoginIcon;
     final loginMode = prefs.getString(kLoginModePrefKey);
     final session = await _ensureSupabaseSession();
-    final bioIcon = await BiometricService.loginIconAssetPath();
+    try {
+      bioEnabled = await BiometricService.isEnabled();
+      bioAvailable = await BiometricService.isAvailable();
+      bioIcon = await BiometricService.loginIconAssetPath();
+    } catch (e) {
+      debugPrint('[PhoneScreen] biometric init error: $e');
+      bioAvailable = false;
+      bioEnabled = false;
+    }
     if (!mounted) return;
     setState(() {
       _rememberMe = rememberMe;
