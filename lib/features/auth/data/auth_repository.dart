@@ -40,30 +40,38 @@ class AuthRepository {
         phoneNumber: e164Phone,
         timeout: const Duration(seconds: 120),
         verificationCompleted: (PhoneAuthCredential credential) async {
-          try {
-            await FirebaseAuth.instance.signInWithCredential(credential);
-            final vid = credential.verificationId;
-            if (vid != null && vid.isNotEmpty) {
-              _verificationId = vid;
+          await Future.microtask(() async {
+            try {
+              await FirebaseAuth.instance.signInWithCredential(credential);
+              final vid = credential.verificationId;
+              if (vid != null && vid.isNotEmpty) {
+                _verificationId = vid;
+              }
+            } catch (e) {
+              if (!completer.isCompleted) {
+                completer.completeError(e);
+              }
+              return;
             }
-          } catch (e) {
-            if (!completer.isCompleted) {
-              completer.completeError(e);
-            }
-            return;
-          }
-          if (!completer.isCompleted) completer.complete();
+            if (!completer.isCompleted) completer.complete();
+          });
         },
         verificationFailed: (FirebaseAuthException e) {
-          if (!completer.isCompleted) completer.completeError(e);
+          Future.microtask(() {
+            if (!completer.isCompleted) completer.completeError(e);
+          });
         },
         codeSent: (String verificationId, int? resendToken) {
-          _verificationId = verificationId;
-          if (!completer.isCompleted) completer.complete();
+          Future.microtask(() {
+            _verificationId = verificationId;
+            if (!completer.isCompleted) completer.complete();
+          });
         },
         codeAutoRetrievalTimeout: (String verificationId) {
-          _verificationId = verificationId;
-          if (!completer.isCompleted) completer.complete();
+          Future.microtask(() {
+            _verificationId = verificationId;
+            if (!completer.isCompleted) completer.complete();
+          });
         },
       );
 
