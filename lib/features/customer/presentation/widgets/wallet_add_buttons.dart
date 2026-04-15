@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart'
-    show kDebugMode, kIsWeb, defaultTargetPlatform;
+    show debugPrint, kDebugMode, kIsWeb, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -55,13 +55,13 @@ class _WalletAddButtonsState extends ConsumerState<WalletAddButtons> {
         );
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('Google Wallet error: $e');
+      debugPrint('Google Wallet error: $e');
       if (context.mounted) {
-        final msg = kDebugMode
-            ? '${context.l10n.walletAddFailed}\n$e'
-            : context.l10n.walletAddFailed;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(
+            content: Text('${context.l10n.walletAddFailed}\n$e'),
+            duration: const Duration(seconds: 6),
+          ),
         );
       }
     } finally {
@@ -96,13 +96,13 @@ class _WalletAddButtonsState extends ConsumerState<WalletAddButtons> {
         );
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('PassKit / Apple Wallet error: $e');
+      debugPrint('PassKit / Apple Wallet error: $e');
       if (context.mounted) {
-        final msg = kDebugMode
-            ? '${context.l10n.walletAddFailed}\n$e'
-            : context.l10n.walletAddFailed;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
+          SnackBar(
+            content: Text('${context.l10n.walletAddFailed}\n$e'),
+            duration: const Duration(seconds: 6),
+          ),
         );
       }
     } finally {

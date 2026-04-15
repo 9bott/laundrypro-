@@ -242,11 +242,22 @@ class CustomerRepository {
   }
 
   Future<String> invokeGenerateGoogleWalletUrl() async {
-    final res = await _client.functions.invoke(
-      kFnGenerateGoogleWalletUrl,
-      method: HttpMethod.post,
-    );
+    late final FunctionResponse res;
+    try {
+      res = await _client.functions.invoke(
+        kFnGenerateGoogleWalletUrl,
+        method: HttpMethod.post,
+      );
+    } on FunctionException catch (e) {
+      final details = _parseFunctionsErrorBody(e.details);
+      final msg = details?['message']?.toString() ??
+          details?['error']?.toString() ??
+          'Function failed (${e.status})';
+      if (kDebugMode) debugPrint('[GoogleWallet] FunctionException: $msg');
+      throw Exception('google_wallet_fn_error:${e.status}:$msg');
+    }
     if (res.status != 200) {
+      if (kDebugMode) debugPrint('[GoogleWallet] status=${res.status} body=${res.data}');
       throw Exception('google_wallet_url_failed:${res.status}:${res.data}');
     }
     final map = Map<String, dynamic>.from(res.data as Map);
@@ -259,11 +270,22 @@ class CustomerRepository {
 
   /// PassKit (Apple Wallet / رابط التوزيع): يعيد `applePassUrl` و`landingUrl`.
   Future<Map<String, dynamic>> invokeGeneratePasskitWalletUrls() async {
-    final res = await _client.functions.invoke(
-      kFnGeneratePasskitWalletUrl,
-      method: HttpMethod.post,
-    );
+    late final FunctionResponse res;
+    try {
+      res = await _client.functions.invoke(
+        kFnGeneratePasskitWalletUrl,
+        method: HttpMethod.post,
+      );
+    } on FunctionException catch (e) {
+      final details = _parseFunctionsErrorBody(e.details);
+      final msg = details?['message']?.toString() ??
+          details?['error']?.toString() ??
+          'Function failed (${e.status})';
+      if (kDebugMode) debugPrint('[AppleWallet] FunctionException: $msg');
+      throw Exception('passkit_fn_error:${e.status}:$msg');
+    }
     if (res.status != 200) {
+      if (kDebugMode) debugPrint('[AppleWallet] status=${res.status} body=${res.data}');
       throw Exception('passkit_wallet_failed:${res.status}:${res.data}');
     }
     return Map<String, dynamic>.from(res.data as Map);
