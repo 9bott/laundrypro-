@@ -10,8 +10,7 @@ import {
 const DEFAULT_PROGRAM_ID = "70ageTTsrtgK7JPUfvx5A8";
 
 const ENROL_PATHS = [
-  "/members/member/enrolMember",
-  "/members/enrolMember",
+  "/members/member",
 ];
 
 Deno.serve(async (req) => {
@@ -82,15 +81,24 @@ Deno.serve(async (req) => {
     });
     if (existing.ok) {
       passId = existing.passId;
-    } else if (existing.status === 404) {
+    } else if (existing.status === 404 ||
+               (existing.status === 401 && existing.body?.includes('could not find a user record'))) {
+      const displayName = (typeof customer.name === "string" && customer.name.trim())
+        ? customer.name.trim()
+        : "Customer";
+      const phone = (typeof customer.phone === "string" && customer.phone.trim())
+        ? customer.phone.trim().replace(/\+/g, "")
+        : customerId.replace(/-/g, "").slice(0, 12);
       const payload: Record<string, unknown> = {
         programId,
         tierId,
         externalId: customerId,
         person: {
-          displayName: (typeof customer.name === "string" && customer.name.trim())
-            ? customer.name.trim()
-            : "Customer",
+          forename: displayName.split(" ")[0] || "Customer",
+          surname: displayName.split(" ").slice(1).join(" ") || ".",
+          displayName,
+          emailAddress: `${phone}@point.loyalty`,
+          mobileNumber: customer.phone ?? "",
         },
         points,
         secondaryPoints,
