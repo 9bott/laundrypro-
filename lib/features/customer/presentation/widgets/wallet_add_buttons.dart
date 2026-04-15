@@ -42,11 +42,15 @@ class _WalletAddButtonsState extends ConsumerState<WalletAddButtons> {
     if (_busyGoogle) return;
     setState(() => _busyGoogle = true);
     try {
-      final url =
-          await ref.read(customerRepositoryProvider).invokeGenerateGoogleWalletUrl();
-      if (kDebugMode) debugPrint('Google Wallet URL: $url');
+      final map =
+          await ref.read(customerRepositoryProvider).invokeGeneratePasskitWalletUrls();
+      final landingUrl = map['landingUrl'] as String?;
+      if (landingUrl == null || landingUrl.isEmpty) {
+        throw Exception('passkit_landing_url_missing');
+      }
+      if (kDebugMode) debugPrint('Google Wallet (PassKit) URL: $landingUrl');
       final ok = await launchUrl(
-        Uri.parse(url),
+        Uri.parse(landingUrl),
         mode: LaunchMode.externalApplication,
       );
       if (!ok && context.mounted) {
