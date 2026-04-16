@@ -113,12 +113,12 @@ class CustomerRepository {
       if (typeFilter != null && typeFilter.isNotEmpty && typeFilter != 'all') {
         if (typeFilter == 'rewards') {
           query = query.or(
-            '${kTransactionsType}.eq.cashback_bonus,'
-            '${kTransactionsType}.eq.referral_bonus,'
-            '${kTransactionsType}.eq.streak_bonus,'
-            '${kTransactionsType}.eq.birthday_bonus,'
+            '$kTransactionsType.eq.cashback_bonus,'
+            '$kTransactionsType.eq.referral_bonus,'
+            '$kTransactionsType.eq.streak_bonus,'
+            '$kTransactionsType.eq.birthday_bonus,'
             // Include any row that earned cashback (usually purchases).
-            '${kTransactionsCashbackEarned}.gt.0',
+            '$kTransactionsCashbackEarned.gt.0',
           );
         } else {
           query = query.eq(kTransactionsType, typeFilter);

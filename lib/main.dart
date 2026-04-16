@@ -5,7 +5,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart' show kIsWeb, kReleaseMode;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -15,7 +15,6 @@ import 'firebase_options.dart';
 import 'core/config/env.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/supabase_service.dart';
-import 'core/utils/offline_queue.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -94,25 +93,4 @@ Future<void> main() async {
   );
 }
 
-Future<void> _precacheSplashLogoAsset() async {
-  const provider = AssetImage('assets/images/app_logo.png');
-  final stream = provider.resolve(ImageConfiguration.empty);
-  final completer = Completer<void>();
-  late final ImageStreamListener listener;
-  listener = ImageStreamListener(
-    (ImageInfo image, bool synchronousCall) {
-      if (!completer.isCompleted) completer.complete();
-    },
-    onError: (Object exception, StackTrace? stackTrace) {
-      if (!completer.isCompleted) {
-        completer.completeError(exception, stackTrace);
-      }
-    },
-  );
-  stream.addListener(listener);
-  try {
-    await completer.future;
-  } finally {
-    stream.removeListener(listener);
-  }
-}
+// (removed unused precache helper)

@@ -52,6 +52,7 @@ class _OwnerFraudScreenState extends ConsumerState<OwnerFraudScreen> {
   }
 
   Future<void> _resolve(FraudFlagRow f, String action) async {
+    final messenger = ScaffoldMessenger.of(context);
     try {
       await ref.read(ownerRepositoryProvider).resolveFraudFlag(
             flagId: f.id,
@@ -60,11 +61,11 @@ class _OwnerFraudScreenState extends ConsumerState<OwnerFraudScreen> {
           );
       if (mounted) {
         await _load();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OK')));
+        messenger.showSnackBar(const SnackBar(content: Text('OK')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        messenger.showSnackBar(SnackBar(content: Text('$e')));
       }
     }
   }

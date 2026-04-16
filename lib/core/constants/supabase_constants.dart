@@ -31,6 +31,7 @@ const String kCustomersReferredBy = 'referred_by';
 const String kCustomersDeviceToken = 'device_token';
 const String kCustomersPreferredLanguage = 'preferred_language';
 const String kCustomersIsBlocked = 'is_blocked';
+const String kCustomersStoreId = 'store_id';
 const String kCustomersCreatedAt = 'created_at';
 const String kCustomersUpdatedAt = 'updated_at';
 

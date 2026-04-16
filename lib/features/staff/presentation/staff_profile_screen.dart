@@ -164,25 +164,25 @@ class StaffProfileScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Card(
+                  const Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
                       side: BorderSide(color: AppColors.border),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(8, 12, 8, 8),
+                      padding: EdgeInsets.fromLTRB(8, 12, 8, 8),
                       child: AppLanguageSelector(dense: true),
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Card(
+                  const Card(
                     elevation: 0,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.all(Radius.circular(16)),
                       side: BorderSide(color: AppColors.border),
                     ),
-                    child: const BiometricToggle(),
+                    child: BiometricToggle(),
                   ),
                   const SizedBox(height: 24),
                   FilledButton.icon(

@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
+import '../../../core/router/auth_route_resolution.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
@@ -184,11 +185,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       }
 
+      final resolved = await resolveRouteAfterOtp();
+      if (resolved != null && resolved != '/auth/phone') {
+        _splashLog('DECISION: resolveRouteAfterOtp → $resolved');
+        if (mounted) await _navigate(resolved);
+        return;
+      }
+
       if (loginMode == kLoginModeStaff) {
-        _splashLog('DECISION: route → /staff/app (login_mode=staff)');
+        _splashLog('DECISION: route → /staff/app (login_mode=staff, fallback)');
         if (mounted) await _navigate('/staff/app');
       } else if (loginMode == kLoginModeCustomer) {
-        _splashLog('DECISION: route → /customer/home (login_mode=customer)');
+        _splashLog('DECISION: route → /customer/home (login_mode=customer, fallback)');
         if (mounted) await _navigate('/customer/home');
       }
     } catch (e, st) {

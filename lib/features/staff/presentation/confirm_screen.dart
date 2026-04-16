@@ -1,21 +1,17 @@
 import 'dart:async';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/staff/staff_feedback.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/widgets/app_card.dart';
-import '../../../shared/widgets/blue_button.dart';
-import '../../../shared/widgets/tier_badge.dart';
 import '../../../core/staff/staff_offline_queue.dart';
 import '../../../core/staff/staff_pending_tx.dart';
 import '../../../core/utils/offline_pending_provider.dart';
@@ -50,6 +46,9 @@ class StaffConfirmScreen extends ConsumerStatefulWidget {
 
 class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
     with SingleTickerProviderStateMixin {
+  static const _kPageBg = Color(0xFFF8F9FA);
+  static const _kPointBlue = Color(0xFF185FA5);
+
   bool _loading = false;
   String? _error;
 
@@ -205,16 +204,8 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
     }
   }
 
-  String _initials(String name) {
-    final p = name.trim().split(RegExp(r'\s+'));
-    if (p.isEmpty) return '?';
-    if (p.length == 1) return p[0].isNotEmpty ? p[0][0].toUpperCase() : '?';
-    return '${p[0][0]}${p[p.length - 1][0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
-    final disableAnim = MediaQuery.disableAnimationsOf(context);
     final mode = ref.watch(staffTxnModeProvider);
     final c = ref.watch(staffCustomerProvider);
     final amount = ref.watch(staffEntryAmountProvider);
@@ -224,428 +215,192 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
           context.go(staffShellScannerPathForRef(ref));
         }
       });
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppColors.background,
-        body: const Center(
+        body: Center(
           child: CircularProgressIndicator(color: AppColors.primary),
         ),
       );
     }
 
-    final l10n = AppLocalizations.of(context)!;
     final purchase = mode == StaffTxnMode.purchase;
-    final markColor = purchase ? AppColors.primary : AppColors.warning;
-    final cbAdd = amount * 0.20;
     final split = _redeemSplit(amount, c);
-    final afterCb = c.cashbackBalance + cbAdd;
-    final totalAfterRedeem = c.totalWalletBalance - amount;
-
-    final summaryBorder = purchase
-        ? AppColors.primary.withValues(alpha: 0.65)
-        : AppColors.gold.withValues(alpha: 0.65);
+    final badge = switch (mode) {
+      StaffTxnMode.purchase => ('شراء', const Color(0xFFEFF6FF), _kPointBlue),
+      StaffTxnMode.redeem => ('استرداد', const Color(0xFFFFF7ED), const Color(0xFF9A3412)),
+      StaffTxnMode.subscription => ('باقة', const Color(0xFFEEEDFE), const Color(0xFF3C3489)),
+    };
 
     return Stack(
       children: [
         Scaffold(
-          backgroundColor: AppColors.background,
+          backgroundColor: _kPageBg,
           appBar: AppBar(
+            title: const Text('تأكيد العملية', style: TextStyle(fontWeight: FontWeight.w900)),
+            backgroundColor: _kPageBg,
             elevation: 0,
-            backgroundColor: AppColors.background,
             surfaceTintColor: Colors.transparent,
-            foregroundColor: AppColors.textPrimary,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.primary),
-              onPressed: _loading
-                  ? null
-                  : () {
-                      HapticFeedback.lightImpact();
-                      context.pop();
-                    },
+              icon: const Icon(Icons.arrow_back_ios_new_rounded),
+              onPressed: _loading ? null : () => context.pop(),
             ),
           ),
-          body: ListView(
-              padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-              children: [
-                Center(
-                  child: AnimatedBuilder(
-                    animation: _markAnim,
-                    builder: (context, _) {
-                      return CustomPaint(
-                        size: const Size(80, 80),
-                        painter: _ConfirmMarkPainter(
-                          progress: _markAnim.value,
-                          color: markColor,
-                          pulse: disableAnim ? 1.0 : (0.92 + 0.08 * (0.5 - (_markAnim.value - 0.5).abs() * 2)),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.confirmOperation,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cairo(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  c.name,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.cairo(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                AppCard(
-                  radius: 18,
-                  padding: const EdgeInsets.all(14),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              c.name,
-                              style: GoogleFonts.cairo(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 6),
-                            TierBadge(
-                              tier: c.tier,
-                              activePlanName: c.activePlanName,
-                              activePlanNameAr: c.activePlanNameAr,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundColor: AppColors.primary,
-                        child: ClipOval(
-                          child: c.avatarUrl != null && c.avatarUrl!.isNotEmpty
-                              ? CachedNetworkImage(
-                                  imageUrl: c.avatarUrl!,
-                                  width: 40,
-                                  height: 40,
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 80,
-                                  memCacheHeight: 80,
-                                )
-                              : Text(
-                                  _initials(c.name),
-                                  style: GoogleFonts.cairo(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textOnBlue,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-                AppCard(
-                  radius: 18,
-                  padding: EdgeInsets.zero,
-                  borderColor: summaryBorder,
-                  child: Container(
+          body: FutureBuilder<double>(
+            future: _cashbackRate(),
+            builder: (context, snap) {
+              final rate = snap.data ?? 0.20;
+              final cbAdd = amount * rate;
+              final afterCb = c.cashbackBalance + cbAdd;
+              final totalAfterRedeem = c.totalWalletBalance - amount;
+
+              return ListView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(24),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border(
-                        left: BorderSide(color: summaryBorder, width: 4),
-                      ),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
-                    padding: const EdgeInsets.fromLTRB(16, 18, 16, 18),
-                    child: purchase
-                        ? _SummaryRowsPurchase(
-                            l10n: l10n,
-                            amount: amount,
-                            cbAdd: cbAdd,
-                            afterCb: afterCb,
-                          )
-                        : _SummaryRowsRedeem(
-                            l10n: l10n,
-                            amount: amount,
-                            split: split,
-                            totalAfter: totalAfterRedeem,
-                          ),
-                  ),
-                ),
-              if (_error != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-                  decoration: BoxDecoration(
-                    color: AppColors.error.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(12),
-                    border: const BorderDirectional(
-                      start: BorderSide(color: AppColors.error, width: 3),
-                    ),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Icon(Icons.error_outline_rounded, color: AppColors.error),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _error!,
-                          style: GoogleFonts.cairo(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.error,
-                            height: 1.5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: badge.$2,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(color: badge.$3.withValues(alpha: 0.18)),
+                            ),
+                            child: Text(
+                              badge.$1,
+                              style: TextStyle(color: badge.$3, fontWeight: FontWeight.w900),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-              const SizedBox(height: 28),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 0),
-                child: BlueButton(
-                  loading: _loading,
-                  enabled: !_loading,
-                  label: '✓ ${l10n.confirmOperation}',
-                  onTap: _loading ? null : _confirm,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: _loading
-                      ? null
-                      : () {
-                          HapticFeedback.lightImpact();
-                          _resetFlow();
-                          context.go(staffShellScannerPathForRef(ref));
-                        },
-                  child: Text(
-                    l10n.cancel,
-                    style: GoogleFonts.cairo(
-                      fontSize: 16,
-                      color: AppColors.textSecondary,
-                      fontWeight: FontWeight.w700,
+                        const SizedBox(height: 18),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        _kv('العميل', c.name, bold: true),
+                        _kv('المبلغ', '${amount.toStringAsFixed(2)} ر.س', bold: true, valueColor: _kPointBlue),
+                        if (purchase)
+                          _kv('كاش باك مضاف', '+${cbAdd.toStringAsFixed(2)} ر.س', bold: true, valueColor: AppColors.success),
+                        if (!purchase)
+                          _kv('سيُخصم من', split.sub > 0 ? 'رصيد الاشتراك + كاش باك' : 'كاش باك', bold: true),
+                        const SizedBox(height: 12),
+                        const Divider(),
+                        const SizedBox(height: 12),
+                        _kv('الرصيد الحالي', '${c.totalWalletBalance.toStringAsFixed(2)} ر.س'),
+                        _kv(
+                          'الرصيد بعد العملية',
+                          purchase ? '${(c.totalWalletBalance + cbAdd).toStringAsFixed(2)} ر.س' : '${totalAfterRedeem.toStringAsFixed(2)} ر.س',
+                          valueColor: purchase ? AppColors.success : (totalAfterRedeem <= 5 ? AppColors.error : AppColors.success),
+                          bold: true,
+                        ),
+                        if (purchase) ...[
+                          const SizedBox(height: 6),
+                          _kv('كاش باك بعد العملية', '${afterCb.toStringAsFixed(2)} ر.س'),
+                        ],
+                      ],
                     ),
                   ),
-                ),
-              ),
-            ],
+                  if (_error != null) ...[
+                    const SizedBox(height: 14),
+                    Text(_error!, style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w700)),
+                  ],
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    height: 54,
+                    child: FilledButton(
+                      onPressed: _loading ? null : _confirm,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: _kPointBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: _loading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                          : const Text('تأكيد', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Center(
+                    child: TextButton(
+                      onPressed: _loading
+                          ? null
+                          : () {
+                              HapticFeedback.lightImpact();
+                              _resetFlow();
+                              context.go(staffShellScannerPathForRef(ref));
+                            },
+                      child: const Text('إلغاء', style: TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF6B7280))),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ),
         if (_loading)
           const ColoredBox(
-            color: Color(0x88000000),
-            child: Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            color: Color(0x55000000),
+            child: Center(child: CircularProgressIndicator(color: Colors.white)),
           ),
       ],
     );
   }
-}
 
-class _SummaryRowsPurchase extends StatelessWidget {
-  const _SummaryRowsPurchase({
-    required this.l10n,
-    required this.amount,
-    required this.cbAdd,
-    required this.afterCb,
-  });
-
-  final AppLocalizations l10n;
-  final double amount;
-  final double cbAdd;
-  final double afterCb;
-
-  String _amt(double v) => '${v.toStringAsFixed(2)} ${l10n.currencyDisplay}';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SummaryRow(
-          icon: '💵',
-          text: l10n.staffSummaryPurchAmountPaid(_amt(amount)),
-          strong: true,
-        ),
-        const SizedBox(height: 14),
-        _SummaryRow(
-          icon: '✨',
-          text: l10n.staffSummaryPurchCbAdded(_amt(cbAdd)),
-          accent: AppColors.gold,
-        ),
-        const SizedBox(height: 14),
-        _SummaryRow(
-          icon: '👜',
-          text: l10n.staffSummaryPurchCbAfter(_amt(afterCb)),
-        ),
-      ],
-    );
+  Future<double> _cashbackRate() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return 0.20;
+    final mem = await Supabase.instance.client
+        .from('store_memberships')
+        .select('store_id')
+        .eq('user_id', user.id)
+        .eq('status', 'active')
+        .limit(1)
+        .maybeSingle();
+    final storeId = mem?['store_id'] as String?;
+    if (storeId == null) return 0.20;
+    final store = await Supabase.instance.client
+        .from('stores')
+        .select('cashback_rate')
+        .eq('id', storeId)
+        .maybeSingle();
+    final r = store?['cashback_rate'];
+    if (r is num) return r.toDouble();
+    return double.tryParse('$r') ?? 0.20;
   }
-}
 
-class _SummaryRowsRedeem extends StatelessWidget {
-  const _SummaryRowsRedeem({
-    required this.l10n,
-    required this.amount,
-    required this.split,
-    required this.totalAfter,
-  });
-
-  final AppLocalizations l10n;
-  final double amount;
-  final ({double sub, double cb}) split;
-  final double totalAfter;
-
-  String _amt(double v) => '${v.toStringAsFixed(2)} ${l10n.currencyDisplay}';
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _SummaryRow(
-          icon: '💳',
-          text: l10n.staffSummaryRedeemAmount(_amt(amount)),
-          strong: true,
-        ),
-        const SizedBox(height: 10),
-        _SummaryRow(
-          icon: '📦',
-          text: l10n.staffSummaryRedeemFromSub(_amt(split.sub)),
-        ),
-        const SizedBox(height: 6),
-        _SummaryRow(
-          icon: '💎',
-          text: l10n.staffSummaryRedeemFromCb(_amt(split.cb)),
-          accent: AppColors.gold,
-        ),
-        const SizedBox(height: 14),
-        _SummaryRow(
-          icon: '👜',
-          text: l10n.staffSummaryRedeemBalanceAfter(_amt(totalAfter)),
-          strong: true,
-        ),
-      ],
-    );
-  }
-}
-
-class _SummaryRow extends StatelessWidget {
-  const _SummaryRow({
-    required this.icon,
-    required this.text,
-    this.strong = false,
-    this.accent,
-  });
-
-  final String icon;
-  final String text;
-  final bool strong;
-  final Color? accent;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primaryTint,
-            border: Border.all(color: AppColors.border.withValues(alpha: 0.55)),
-            boxShadow: [
-              BoxShadow(
-                color: (accent ?? AppColors.primary).withValues(alpha: 0.2),
-                blurRadius: 10,
+  Widget _kv(String k, String v, {bool bold = false, Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              k,
+              style: const TextStyle(
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w700,
               ),
-            ],
-          ),
-          child: Text(icon, style: const TextStyle(fontSize: 18)),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Text(
-            text,
-            style: GoogleFonts.cairo(
-              fontSize: strong ? 15 : 14,
-              fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
-              color: (accent ?? AppColors.textPrimary).withValues(alpha: 0.92),
-              height: 1.5,
             ),
           ),
-        ),
-      ],
+          Text(
+            v,
+            style: TextStyle(
+              color: valueColor ?? const Color(0xFF111827),
+              fontWeight: bold ? FontWeight.w900 : FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
-
-class _ConfirmMarkPainter extends CustomPainter {
-  _ConfirmMarkPainter({required this.progress, required this.color, this.pulse = 1.0});
-
-  final double progress;
-  final Color color;
-  final double pulse;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final c = Offset(size.width / 2, size.height / 2);
-    final r = (size.shortestSide / 2 - 6) * pulse;
-    final glow = Paint()
-      ..color = color.withValues(alpha: 0.22)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
-    canvas.drawCircle(c, r + 2, glow);
-
-    final ringPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round;
-
-    final ringPhase = (progress / 0.55).clamp(0.0, 1.0);
-    final sweep = 2 * 3.141592653589793 * ringPhase;
-    canvas.drawArc(Rect.fromCircle(center: c, radius: r), -3.141592653589793 / 2, sweep, false, ringPaint);
-
-    if (progress < 0.55) return;
-
-    final checkT = ((progress - 0.55) / 0.45).clamp(0.0, 1.0);
-    final path = Path()
-      ..moveTo(c.dx - r * 0.42, c.dy)
-      ..lineTo(c.dx - r * 0.08, c.dy + r * 0.32)
-      ..lineTo(c.dx + r * 0.45, c.dy - r * 0.34);
-    final metric = path.computeMetrics().first;
-    final extract = metric.extractPath(0, metric.length * checkT);
-    canvas.drawPath(
-      extract,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _ConfirmMarkPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color || oldDelegate.pulse != pulse;
-}
-

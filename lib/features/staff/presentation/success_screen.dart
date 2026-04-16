@@ -92,9 +92,14 @@ class StaffSuccessScreen extends ConsumerStatefulWidget {
 
 class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
     with TickerProviderStateMixin {
+  static const _kPageBg = Color(0xFFF8F9FA);
+  static const _kPointBlue = Color(0xFF185FA5);
+  static const _kGreenText = Color(0xFF085041);
+  static const _kAmberBorder = Color(0xFFEF9F27);
+
   late AnimationController _ring;
   late AnimationController _check;
-  late AnimationController _navBar;
+  late AnimationController _scale;
   Timer? _undoTimer;
   int _undoSec = 30;
   bool _undoVisible = true;
@@ -111,9 +116,9 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    _navBar = AnimationController(
+    _scale = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(milliseconds: 600),
     );
     _ring.addStatusListener((s) {
       if (s == AnimationStatus.completed && mounted) {
@@ -126,16 +131,11 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
       if (MediaQuery.disableAnimationsOf(context)) {
         _ring.value = 1;
         _check.value = 1;
-        _navBar.value = 0;
-        Future<void>.delayed(const Duration(seconds: 3), () {
-          if (mounted) _goScanner();
-        });
+        _scale.value = 1;
         return;
       }
+      unawaited(_scale.forward());
       unawaited(_ring.forward());
-      unawaited(_navBar.forward().then((_) {
-        if (mounted) _goScanner();
-      }));
     });
 
     _undoSec = 30;
@@ -162,7 +162,7 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
     _undoTimer?.cancel();
     _ring.dispose();
     _check.dispose();
-    _navBar.dispose();
+    _scale.dispose();
     super.dispose();
   }
 
@@ -224,141 +224,122 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final p = widget.payload;
     final r = p.response;
     final disableAnim = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
-      backgroundColor: AppColors.successTint,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: disableAnim
-                        ? CustomPaint(
-                            painter: _SuccessRingPainter(
-                              ringT: 1,
-                              checkT: 1,
-                              strokeColor: AppColors.primary,
-                            ),
-                          )
-                        : AnimatedBuilder(
-                            animation: Listenable.merge([_ring, _check]),
-                            builder: (context, _) {
-                              return CustomPaint(
-                                painter: _SuccessRingPainter(
-                                  ringT: _ring.value,
-                                  checkT: _check.value,
-                                  strokeColor: AppColors.primary,
-                                ),
-                              );
-                            },
-                          ),
+      backgroundColor: _kPageBg,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          child: Column(
+            children: [
+              const SizedBox(height: 8),
+              ScaleTransition(
+                scale: CurvedAnimation(parent: _scale, curve: Curves.elasticOut),
+                child: Container(
+                  width: 110,
+                  height: 110,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE1F5EE),
+                    shape: BoxShape.circle,
                   ),
-                  const SizedBox(height: 18),
-                  Text(
-                    l10n.staffTransactionCompleted,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.smsSent,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: _summaryCard(context, p, r),
-                    ),
-                  ),
-                  if (_undoVisible && p.transactionId.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    if (_undoBusy)
-                      const CircularProgressIndicator(color: AppColors.primary)
-                    else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: _undo,
-                            child: Text(
-                              l10n.staffUndoShort,
-                              style: GoogleFonts.cairo(
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
+                  child: Center(
+                    child: SizedBox(
+                      width: 84,
+                      height: 84,
+                      child: disableAnim
+                          ? CustomPaint(
+                              painter: _SuccessRingPainter(
+                                ringT: 1,
+                                checkT: 1,
+                                strokeColor: AppColors.success,
                               ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: _undoSec / 30,
-                                  strokeWidth: 2,
-                                  color: AppColors.error,
-                                  backgroundColor: AppColors.errorTint,
-                                ),
-                                Text(
-                                  '$_undoSec',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.error,
+                            )
+                          : AnimatedBuilder(
+                              animation: Listenable.merge([_ring, _check]),
+                              builder: (context, _) {
+                                return CustomPaint(
+                                  painter: _SuccessRingPainter(
+                                    ringT: _ring.value,
+                                    checkT: _check.value,
+                                    strokeColor: AppColors.success,
                                   ),
-                                ),
-                              ],
+                                );
+                              },
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          PositionedDirectional(
-            start: 0,
-            end: 0,
-            bottom: 0,
-            child: disableAnim
-                ? const SizedBox(height: 4)
-                : AnimatedBuilder(
-                    animation: _navBar,
-                    builder: (context, _) {
-                      return LinearProgressIndicator(
-                        value: 1 - _navBar.value,
-                        minHeight: 4,
-                        backgroundColor: AppColors.border,
-                        color: AppColors.primary,
-                      );
-                    },
+                    ),
                   ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'تمت العملية بنجاح!',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900, color: _kGreenText),
+              ),
+              const SizedBox(height: 14),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: _summaryCard(context, p, r),
+                ),
+              ),
+              if (_undoVisible && p.transactionId.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                if (_undoBusy)
+                  const CircularProgressIndicator(color: _kPointBlue)
+                else
+                  SizedBox(
+                    height: 52,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        SizedBox(
+                          width: 56,
+                          height: 56,
+                          child: CircularProgressIndicator(
+                            value: _undoSec / 30,
+                            strokeWidth: 3,
+                            color: _kAmberBorder,
+                            backgroundColor: _kAmberBorder.withValues(alpha: 0.18),
+                          ),
+                        ),
+                        OutlinedButton(
+                          onPressed: _undo,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: const Color(0xFF633806),
+                            side: const BorderSide(color: _kAmberBorder),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                          ),
+                          child: Text(
+                            'تراجع عن العملية ($_undoSec)',
+                            style: const TextStyle(fontWeight: FontWeight.w900),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 54,
+                child: FilledButton(
+                  onPressed: _goScanner,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: _kPointBlue,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: const Text('تم', style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
