@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -34,11 +32,28 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   String? _error;
+  late DateTime _splashShownAt;
+
+  static const _minSplashVisible = Duration(milliseconds: 850);
 
   @override
   void initState() {
     super.initState();
+    _splashShownAt = DateTime.now();
     _boot();
+  }
+
+  Future<void> _ensureMinSplashVisible() async {
+    final elapsed = DateTime.now().difference(_splashShownAt);
+    if (elapsed < _minSplashVisible) {
+      await Future<void>.delayed(_minSplashVisible - elapsed);
+    }
+  }
+
+  Future<void> _navigate(String location) async {
+    await _ensureMinSplashVisible();
+    if (!mounted) return;
+    context.go(location);
   }
 
   Future<void> _boot() async {
@@ -73,7 +88,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         _splashLog('DECISION: sign out + /auth/phone (remember_me false)');
         await ref.read(authRepositoryProvider).signOut();
         if (!mounted) return;
-        context.go('/auth/phone');
+        await _navigate('/auth/phone');
         return;
       }
 
@@ -128,7 +143,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         await prefs.remove(kLoginModePrefKey);
         await Supabase.instance.client.auth.signOut();
         if (!mounted) return;
-        context.go('/auth/phone');
+        await _navigate('/auth/phone');
         return;
       }
 
@@ -143,7 +158,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         await prefs.remove(kLoginModePrefKey);
         await Supabase.instance.client.auth.signOut();
         if (!mounted) return;
-        context.go('/auth/phone');
+        await _navigate('/auth/phone');
         return;
       }
 
@@ -164,17 +179,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           await prefs.remove(kLoginModePrefKey);
           await Supabase.instance.client.auth.signOut();
           if (!mounted) return;
-          context.go('/auth/phone');
+          await _navigate('/auth/phone');
           return;
         }
       }
 
       if (loginMode == kLoginModeStaff) {
         _splashLog('DECISION: route → /staff/app (login_mode=staff)');
-        if (mounted) context.go('/staff/app');
+        if (mounted) await _navigate('/staff/app');
       } else if (loginMode == kLoginModeCustomer) {
         _splashLog('DECISION: route → /customer/home (login_mode=customer)');
-        if (mounted) context.go('/customer/home');
+        if (mounted) await _navigate('/customer/home');
       }
     } catch (e, st) {
       _splashLog('boot EXCEPTION: $e');
@@ -185,15 +200,19 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
   }
 
+  bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
+
   @override
   Widget build(BuildContext context) {
+    final isAr = _isAr;
+
     if (_error != null) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
         body: SafeArea(
-          child: Center(
+          child: SizedBox.expand(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -202,15 +221,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   Text(
                     _error!,
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyLarge,
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppColors.textPrimary,
+                        ),
                   ),
                   const SizedBox(height: 24),
                   FilledButton(
                     onPressed: () {
                       setState(() => _error = null);
+                      _splashShownAt = DateTime.now();
                       _boot();
                     },
-                    child: Text(AppStrings.retryAr),
+                    child: Text(isAr ? AppStrings.retryAr : AppStrings.retryEn),
                   ),
                 ],
               ),
@@ -220,33 +242,74 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       );
     }
 
-    final media = MediaQuery.of(context);
-    final usableWidth = media.size.width - media.padding.left - media.padding.right;
-    final logoSide = math.min(usableWidth - 8, 720.0).clamp(260.0, 720.0);
+    final shortest = MediaQuery.sizeOf(context).shortestSide;
+    final logoSide = (shortest * 0.34).clamp(132.0, 188.0);
 
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Center(
-        child: TweenAnimationBuilder<double>(
-          tween: Tween(begin: 0.0, end: 1.0),
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutCubic,
-          builder: (context, t, child) {
-            const startScale = 0.72;
-            final scale = startScale + (1.0 - startScale) * t;
-            return Transform.scale(
-              scale: scale,
-              child: child,
-            );
-          },
-          child: Image.asset(
-            'assets/images/app_logo.png',
-            width: logoSide,
-            height: logoSide,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) {
-              return Icon(Icons.local_laundry_service, size: logoSide * 0.35, color: AppColors.primary);
-            },
+      backgroundColor: Colors.transparent,
+      body: SizedBox.expand(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Spacer(flex: 3),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.0, end: 1.0),
+                duration: const Duration(milliseconds: 520),
+                curve: Curves.easeOutCubic,
+                builder: (context, t, child) {
+                  const startScale = 0.82;
+                  final scale = startScale + (1.0 - startScale) * t;
+                  return Opacity(
+                    opacity: t,
+                    child: Transform.scale(
+                      scale: scale,
+                      child: child,
+                    ),
+                  );
+                },
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/app_logo.png',
+                    width: logoSide,
+                    height: logoSide,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Icon(
+                        Icons.local_laundry_service,
+                        size: logoSide * 0.45,
+                        color: AppColors.primary,
+                      );
+                    },
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+              Text(
+                isAr ? AppStrings.splashLoadingAr : AppStrings.splashLoadingEn,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textSecondary,
+                      letterSpacing: 0.2,
+                    ),
+              ),
+              const SizedBox(height: 20),
+              Center(
+                child: SizedBox(
+                  width: 148,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: const LinearProgressIndicator(
+                      minHeight: 4,
+                      backgroundColor: Color(0x33B3D7FF),
+                      color: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(flex: 2),
+            ],
           ),
         ),
       ),

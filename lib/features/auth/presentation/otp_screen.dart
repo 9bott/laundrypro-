@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,14 +23,15 @@ import '../../customer/presentation/providers/customer_providers.dart';
 import '../../staff/data/staff_repository.dart';
 import '../../staff/presentation/providers/staff_providers.dart';
 
-class _ArabicDigitsToWesternFormatter extends TextInputFormatter {
-  const _ArabicDigitsToWesternFormatter();
+/// Normalizes Arabic/Persian digits and keeps at most [kPhoneOtpCodeLength] digits.
+class _OtpCodeFormatter extends TextInputFormatter {
+  const _OtpCodeFormatter();
 
   static const _west = '0123456789';
   static const _arabicIndic = '٠١٢٣٤٥٦٧٨٩';
   static const _persian = '۰۱۲۳۴۵۶۷۸۹';
 
-  String _normalize(String input) {
+  static String _normalize(String input) {
     var out = input;
     for (var i = 0; i < _west.length; i++) {
       out = out.replaceAll(_arabicIndic[i], _west[i]);
@@ -44,11 +47,13 @@ class _ArabicDigitsToWesternFormatter extends TextInputFormatter {
   ) {
     final normalized = _normalize(newValue.text);
     final digits = normalized.replaceAll(RegExp(r'[^0-9]'), '');
-    final clipped = digits.isEmpty ? '' : digits.substring(digits.length - 1);
-    if (clipped == newValue.text) return newValue;
+    final limited = digits.length > kPhoneOtpCodeLength
+        ? digits.substring(0, kPhoneOtpCodeLength)
+        : digits;
+    if (limited == newValue.text) return newValue;
     return TextEditingValue(
-      text: clipped,
-      selection: TextSelection.collapsed(offset: clipped.length),
+      text: limited,
+      selection: TextSelection.collapsed(offset: limited.length),
       composing: TextRange.empty,
     );
   }
@@ -65,8 +70,8 @@ class OtpScreen extends ConsumerStatefulWidget {
 
 class _OtpScreenState extends ConsumerState<OtpScreen>
     with SingleTickerProviderStateMixin {
-  final _nodes = List.generate(6, (_) => FocusNode());
-  final _controllers = List.generate(6, (_) => TextEditingController());
+  final _otpController = TextEditingController();
+  final _otpFocus = FocusNode();
   late AnimationController _shake;
 
   int _resendSeconds = 0;
@@ -94,8 +99,68 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
+    _otpController.addListener(_onOtpChanged);
     _startResend();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _nodes.first.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _otpFocus.requestFocus());
+  }
+
+  void _onOtpChanged() {
+    if (!mounted) return;
+    // Avoid setState here — digits rebuild via AnimatedBuilder (less jank with keyboard).
+    if (_otpController.text.length == kPhoneOtpCodeLength && !_busy) {
+      _verify();
+    }
+  }
+
+  /// Deletes one digit before the caret (or selection). Keeps caret in the
+  /// previous "box" so backspace / hold-delete feels continuous.
+  void _deleteOtpBackward() {
+    final t = _otpController.text;
+    if (t.isEmpty) return;
+    final sel = _otpController.selection;
+    if (!sel.isValid) {
+      _otpController.value = TextEditingValue(
+        text: t.substring(0, t.length - 1),
+        selection: TextSelection.collapsed(offset: t.length - 1),
+        composing: TextRange.empty,
+      );
+      _otpFocus.requestFocus();
+      return;
+    }
+    if (sel.start != sel.end) {
+      final nt = t.replaceRange(sel.start, sel.end, '');
+      final off = sel.start.clamp(0, nt.length);
+      _otpController.value = TextEditingValue(
+        text: nt,
+        selection: TextSelection.collapsed(offset: off),
+        composing: TextRange.empty,
+      );
+      _otpFocus.requestFocus();
+      return;
+    }
+    final off = sel.start;
+    if (off <= 0) return;
+    final nt = t.replaceRange(off - 1, off, '');
+    _otpController.value = TextEditingValue(
+      text: nt,
+      selection: TextSelection.collapsed(offset: off - 1),
+      composing: TextRange.empty,
+    );
+    _otpFocus.requestFocus();
+  }
+
+  bool get _needsOtpDeleteButton {
+    if (kIsWeb) return false;
+    return defaultTargetPlatform == TargetPlatform.iOS;
+  }
+
+  TextInputType get _otpKeyboardType {
+    // iOS: TextInputType.number → UIKeyboardTypeNumberPad → NO delete key.
+    // Phone / decimal pad include delete; formatter keeps digits only.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      return TextInputType.phone;
+    }
+    return TextInputType.number;
   }
 
   void _startResend() {
@@ -116,18 +181,15 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
   void dispose() {
     _shake.dispose();
     _resendTimer?.cancel();
-    for (final n in _nodes) {
-      n.dispose();
-    }
-    for (final c in _controllers) {
-      c.dispose();
-    }
+    _otpController.removeListener(_onOtpChanged);
+    _otpController.dispose();
+    _otpFocus.dispose();
     super.dispose();
   }
 
   Future<void> _verify() async {
-    final token = _controllers.map((c) => c.text).join();
-    if (token.length != 6) return;
+    final token = _otpController.text;
+    if (token.length != kPhoneOtpCodeLength) return;
 
     if (!Env.hasSupabase) {
       _failVerify(
@@ -163,7 +225,11 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
   void _failVerify({String? message}) {
     SharedPreferences.getInstance().then((p) => p.remove(kLoginModePrefKey));
     _shake.forward(from: 0);
+    _otpController.clear();
     setState(() => _error = message ?? (_isAr ? AppStrings.errorGenericAr : AppStrings.errorGenericEn));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _otpFocus.requestFocus();
+    });
   }
 
   /// After successful OTP: staff-first or customer-first based on [kLoginModePrefKey], then registration.
@@ -371,19 +437,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     context.go('/customer/home');
   }
 
-  void _onDigit(int i, String v) {
-    if (v.length > 1) {
-      _controllers[i].text = v.substring(v.length - 1);
-    }
-    if (v.isNotEmpty && i < 5) {
-      _nodes[i + 1].requestFocus();
-    }
-    final full = _controllers.map((c) => c.text).join();
-    if (full.length == 6) {
-      _verify();
-    }
-  }
-
   Future<void> _resend() async {
     if (_resendSeconds > 0) return;
     try {
@@ -404,13 +457,18 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
         ? '${ph.substring(0, ph.length - 4)}••••'
         : ph;
 
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
     return OfflineBanner(
       child: Scaffold(
         backgroundColor: Colors.transparent,
+        // iOS: resizing body on each key causes the OTP row + keyboard to jump; keyboard overlays instead.
+        resizeToAvoidBottomInset: false,
         body: AnimatedBackground(
           extraOrbs: true,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             slivers: [
               SliverToBoxAdapter(
                 child: GradientHeader(
@@ -423,7 +481,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                 ),
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
+                padding: EdgeInsets.fromLTRB(20, 18, 20, 24 + bottomInset),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -439,60 +497,179 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                         },
                         child: Directionality(
                           textDirection: TextDirection.ltr,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: List.generate(6, (i) {
-                              return SizedBox(
-                                width: 46,
-                                child: TextField(
-                                  controller: _controllers[i],
-                                  focusNode: _nodes[i],
-                                  textAlign: TextAlign.center,
-                                  keyboardType: TextInputType.number,
-                                  maxLength: 1,
-                                  showCursor: false,
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                    height: 1.1,
-                                  ),
-                                  decoration: InputDecoration(
-                                    counterText: '',
-                                    filled: true,
-                                    fillColor: AppColors.surface,
-                                    contentPadding:
-                                        const EdgeInsets.symmetric(vertical: 12),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.primaryBorder,
-                                        width: 2.0,
+                          child: AnimatedBuilder(
+                            animation: Listenable.merge(
+                                [_otpController, _otpFocus]),
+                            builder: (context, _) {
+                              final value = _otpController.value;
+                              return RepaintBoundary(
+                                child: SizedBox(
+                                  height: 52,
+                                  child: Stack(
+                                    alignment: Alignment.center,
+                                    clipBehavior: Clip.none,
+                                    children: [
+                                      Positioned.fill(
+                                        child: Theme(
+                                          data: Theme.of(context).copyWith(
+                                            splashColor: Colors.transparent,
+                                            highlightColor: Colors.transparent,
+                                            hoverColor: Colors.transparent,
+                                            focusColor: Colors.transparent,
+                                            inputDecorationTheme:
+                                                const InputDecorationTheme(
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              disabledBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder:
+                                                  InputBorder.none,
+                                            ),
+                                          ),
+                                          child: TextField(
+                                            controller: _otpController,
+                                            focusNode: _otpFocus,
+                                            keyboardType: _otpKeyboardType,
+                                            keyboardAppearance:
+                                                Theme.of(context).brightness ==
+                                                        Brightness.dark
+                                                    ? Brightness.dark
+                                                    : Brightness.light,
+                                            maxLength: kPhoneOtpCodeLength,
+                                            textAlign: TextAlign.center,
+                                            showCursor: false,
+                                            scrollPadding: EdgeInsets.zero,
+                                            enableInteractiveSelection: false,
+                                            autocorrect: false,
+                                            enableSuggestions: false,
+                                            smartQuotesType:
+                                                SmartQuotesType.disabled,
+                                            smartDashesType:
+                                                SmartDashesType.disabled,
+                                            style: TextStyle(
+                                              fontSize: 22,
+                                              fontWeight: FontWeight.w800,
+                                              color: defaultTargetPlatform ==
+                                                      TargetPlatform.iOS
+                                                  ? const Color(0x01FFFFFF)
+                                                  : Colors.transparent,
+                                              height: 1.1,
+                                            ),
+                                            cursorColor: Colors.transparent,
+                                            decoration: const InputDecoration(
+                                              border: InputBorder.none,
+                                              enabledBorder: InputBorder.none,
+                                              focusedBorder: InputBorder.none,
+                                              disabledBorder: InputBorder.none,
+                                              errorBorder: InputBorder.none,
+                                              focusedErrorBorder:
+                                                  InputBorder.none,
+                                              filled: true,
+                                              fillColor: Color(0x00000000),
+                                              counterText: '',
+                                              isDense: true,
+                                              contentPadding: EdgeInsets.zero,
+                                            ),
+                                            inputFormatters: const [
+                                              _OtpCodeFormatter(),
+                                            ],
+                                          ),
+                                        ),
                                       ),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: const BorderSide(
-                                        color: AppColors.primary,
-                                        width: 2.4,
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceEvenly,
+                                        children: List.generate(
+                                            kPhoneOtpCodeLength, (i) {
+                                          final text = value.text;
+                                          final ch = i < text.length
+                                              ? text[i]
+                                              : '';
+                                          final focused = _otpFocus.hasFocus;
+                                          final lastIdx =
+                                              kPhoneOtpCodeLength - 1;
+                                          final active = focused &&
+                                              (i == text.length ||
+                                                  (i == lastIdx &&
+                                                      text.length ==
+                                                          kPhoneOtpCodeLength));
+                                          return GestureDetector(
+                                            behavior: HitTestBehavior.opaque,
+                                            onTap: () {
+                                              _otpFocus.requestFocus();
+                                              final len = text.length;
+                                              final off =
+                                                  i > len ? len : i;
+                                              _otpController.selection =
+                                                  TextSelection.collapsed(
+                                                      offset: off);
+                                            },
+                                            child: Container(
+                                              width: 46,
+                                              alignment: Alignment.center,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                vertical: 12,
+                                              ),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.surface,
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                                border: Border.all(
+                                                  color: active
+                                                      ? AppColors.primary
+                                                      : AppColors
+                                                          .primaryBorder,
+                                                  width: 2,
+                                                ),
+                                              ),
+                                              child: Text(
+                                                ch,
+                                                style: const TextStyle(
+                                                  fontSize: 22,
+                                                  fontWeight: FontWeight.w800,
+                                                  color: AppColors.textPrimary,
+                                                  height: 1.1,
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }),
                                       ),
-                                    ),
+                                    ],
                                   ),
-                                  inputFormatters: const [
-                                    _ArabicDigitsToWesternFormatter(),
-                                  ],
-                                  onChanged: (v) => _onDigit(i, v),
-                                  onTap: () => _controllers[i].selection =
-                                      TextSelection(
-                                    baseOffset: 0,
-                                    extentOffset: _controllers[i].text.length,
-                                  ),
-                              ),
+                                ),
                               );
-                            }),
+                            },
                           ),
                         ),
                       ),
+                      if (_needsOtpDeleteButton) ...[
+                        const SizedBox(height: 6),
+                        Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TextButton.icon(
+                            onPressed: _busy ? null : _deleteOtpBackward,
+                            icon: Icon(
+                              Icons.backspace_outlined,
+                              size: 18,
+                              color: AppColors.primary.withValues(
+                                alpha: _busy ? 0.4 : 1,
+                              ),
+                            ),
+                            label: Text(
+                              isAr ? 'حذف' : 'Delete',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary.withValues(
+                                  alpha: _busy ? 0.4 : 1,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                       const SizedBox(height: 14),
                       if (_error != null)
                         Text(

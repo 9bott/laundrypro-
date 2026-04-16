@@ -87,9 +87,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/auth/otp',
         name: 'auth-otp',
-        builder: (context, state) {
+        // Avoid RTL slide + stacked routes on iOS (torn screen: OTP left, phone right).
+        pageBuilder: (context, state) {
           final phone = state.extra as String? ?? '';
-          return OtpScreen(phone: phone);
+          return NoTransitionPage<void>(
+            key: state.pageKey,
+            name: state.name,
+            child: OtpScreen(phone: phone),
+          );
         },
       ),
       GoRoute(

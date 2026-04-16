@@ -1,4 +1,11 @@
-storePassword=YOUR_KEYSTORE_PASSWORD
+# Copy to key.properties (same folder as this file) and fill in real values.
+# key.properties is gitignored — never commit it.
+#
+# Create a Play upload keystore once:
+#   keytool -genkey -v -keystore upload-keystore.jks -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+#
+# Then set storeFile relative to android/ (example keeps keystore in project android folder):
+storePassword=YOUR_STORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
-keyAlias=laundrypro
-storeFile=../laundrypro.keystore
+keyAlias=upload
+storeFile=upload-keystore.jks

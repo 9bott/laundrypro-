@@ -5,6 +5,7 @@ import {
   passkitApiAndPubHosts,
   passkitEnrolMember,
   passkitGetMemberByExternalId,
+  passkitUpdateMember,
 } from "../_shared/passkit_client.ts";
 
 const DEFAULT_PROGRAM_ID = "70ageTTsrtgK7JPUfvx5A8";
@@ -55,7 +56,7 @@ Deno.serve(async (req) => {
   try {
     const { data: customer, error } = await supabase
       .from("customers")
-      .select("id, name, phone, cashback_balance, subscription_balance")
+      .select("id, name, phone, cashback_balance, subscription_balance, tier, active_plan_name_ar")
       .eq("id", customerId)
       .maybeSingle();
 
@@ -79,29 +80,47 @@ Deno.serve(async (req) => {
       programId,
       externalId: customerId,
     });
+    const displayName = (typeof customer.name === "string" && customer.name.trim())
+      ? customer.name.trim()
+      : "Customer";
+    const phone = (typeof customer.phone === "string" && customer.phone.trim())
+      ? customer.phone.trim().replace(/\+/g, "")
+      : customerId.replace(/-/g, "").slice(0, 12);
+    const memberData: Record<string, unknown> = {
+      person: {
+        forename: displayName.split(" ")[0] || "Customer",
+        surname: displayName.split(" ").slice(1).join(" ") || ".",
+        displayName,
+        emailAddress: `${phone}@point.loyalty`,
+        mobileNumber: customer.phone ?? "",
+      },
+      points,
+      secondaryPoints,
+      metaData: {
+        awl: customer.phone ?? "",
+        "الباقة": customer.active_plan_name_ar ?? customer.tier ?? "عادي",
+      },
+    };
+
     if (existing.ok) {
       passId = existing.passId;
+      const upd = await passkitUpdateMember({
+        apiBase,
+        passId,
+        payload: memberData,
+      });
+      if (!upd.ok) {
+        console.error("passkit_update_failed", upd.status, upd.body);
+      } else {
+        console.log("passkit_update_ok", passId, JSON.stringify(memberData));
+      }
     } else if (existing.status === 404 ||
                (existing.status === 401 && existing.body?.includes('could not find a user record'))) {
-      const displayName = (typeof customer.name === "string" && customer.name.trim())
-        ? customer.name.trim()
-        : "Customer";
-      const phone = (typeof customer.phone === "string" && customer.phone.trim())
-        ? customer.phone.trim().replace(/\+/g, "")
-        : customerId.replace(/-/g, "").slice(0, 12);
-      const payload: Record<string, unknown> = {
+      const enrolPayload: Record<string, unknown> = {
         programId,
         tierId,
         externalId: customerId,
-        person: {
-          forename: displayName.split(" ")[0] || "Customer",
-          surname: displayName.split(" ").slice(1).join(" ") || ".",
-          displayName,
-          emailAddress: `${phone}@point.loyalty`,
-          mobileNumber: customer.phone ?? "",
-        },
-        points,
-        secondaryPoints,
+        ...memberData,
       };
 
       let lastErr = "";
@@ -109,7 +128,7 @@ Deno.serve(async (req) => {
         const en = await passkitEnrolMember({
           apiBase,
           enrolPath: path,
-          payload,
+          payload: enrolPayload,
         });
         if (en.ok) {
           passId = en.passId;
@@ -144,6 +163,8 @@ Deno.serve(async (req) => {
       landingUrl,
       applePassUrl,
       programId,
+      customerPhone: customer.phone ?? "",
+      customerTier: customer.active_plan_name_ar ?? customer.tier ?? "",
     });
   } catch (e) {
     console.error(e);

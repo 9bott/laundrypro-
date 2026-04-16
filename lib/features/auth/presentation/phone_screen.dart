@@ -249,7 +249,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       );
       await ref.read(authRepositoryProvider).signInWithPhoneOtp(phone);
       if (!mounted) return;
-      context.push('/auth/otp', extra: phone);
+      context.pushReplacement('/auth/otp', extra: phone);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -508,17 +508,46 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                           ),
                                           const SizedBox(width: 8),
                                           Expanded(
-                                            child: Text(
-                                              isAr
+                                            child: Semantics(
+                                              label: isAr
                                                   ? 'الدخول عبر Face ID / البصمة'
                                                   : 'Login with Face ID / biometrics',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall
-                                                  ?.copyWith(
-                                                    fontWeight: FontWeight.w800,
-                                                    color: AppColors.textSecondary,
-                                                  ),
+                                              child: Directionality(
+                                                textDirection: TextDirection.ltr,
+                                                child: Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Image.asset(
+                                                      AppAssets.faceIdLoginIcon,
+                                                      height: 26,
+                                                      width: 26,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder:
+                                                          (_, __, ___) => Icon(
+                                                        Icons.face_rounded,
+                                                        size: 26,
+                                                        color: AppColors
+                                                            .textSecondary,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Image.asset(
+                                                      AppAssets
+                                                          .fingerprintLoginIcon,
+                                                      height: 26,
+                                                      width: 26,
+                                                      fit: BoxFit.contain,
+                                                      errorBuilder:
+                                                          (_, __, ___) => Icon(
+                                                        Icons.fingerprint,
+                                                        size: 26,
+                                                        color: AppColors
+                                                            .textSecondary,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
                                             ),
                                           ),
                                         ],

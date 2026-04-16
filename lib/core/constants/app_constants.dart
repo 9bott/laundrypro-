@@ -9,6 +9,12 @@ const String kLoginModeCustomer = 'customer';
 /// SharedPreferences: auth convenience
 const String kRememberMePrefKey = 'remember_me';
 
+/// طول رمز التحقق في واجهة التطبيق. يجب أن يطابق ما يرسله المزود (SMS).
+/// - أندرويد: Firebase Phone Auth يستخدم عادة **6** أرقام.
+/// - iOS: Supabase `signInWithOtp` عادة **6** أرقام ما لم تضبط قالب/Hook مختلف.
+/// لا تغيّر هذا إلى 4 إلا بعد ضبط مزود الرسائل لإرسال 4 أرقام فعلاً.
+const int kPhoneOtpCodeLength = 6;
+
 const double kCashbackRate = 0.20;
 
 /// Pay 100 SAR → 120 SAR prepaid credit (example tier).

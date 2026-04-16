@@ -4,6 +4,6 @@ abstract final class AppAssets {
   static const appleWalletIcon = 'assets/images/apple_wallet.png';
 
   /// أيقونات الدخول الحيوي (في مجلد `assets/`).
-  static const fingerprintLoginIcon = 'assets/fingerprint.png';
-  static const faceIdLoginIcon = 'assets/face-id(1).png';
+  static const fingerprintLoginIcon = 'assets/finger.png';
+  static const faceIdLoginIcon = 'assets/face-id.png';
 }

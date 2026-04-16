@@ -19,7 +19,10 @@
         script: flutter packages pub get
       - name: Build Flutter
         script: |
+          # CFBundleVersion must always increase on App Store Connect.
+          # Codemagic PROJECT_BUILD_NUMBER increments per build (avoids stale pubspec on clone).
           flutter build ios --release \
+            --build-number=$PROJECT_BUILD_NUMBER \
             --dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co \
             --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
       - name: Build IPA

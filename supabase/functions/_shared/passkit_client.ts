@@ -115,6 +115,29 @@ export async function passkitGetMemberByExternalId(params: {
   return { ok: true, passId };
 }
 
+export async function passkitUpdateMember(params: {
+  apiBase: string;
+  passId: string;
+  payload: Record<string, unknown>;
+}): Promise<{ ok: true } | { ok: false; status: number; body: string }> {
+  const auth = await getPasskitAuth();
+  if (!auth) return { ok: false, status: 500, body: "missing_passkit_key" };
+
+  const res = await fetch(`${params.apiBase}/members/member`, {
+    method: "PUT",
+    headers: {
+      authorization: auth,
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ id: params.passId, ...params.payload }),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    return { ok: false, status: res.status, body: text };
+  }
+  return { ok: true };
+}
+
 export async function passkitEnrolMember(params: {
   apiBase: string;
   enrolPath: string;
