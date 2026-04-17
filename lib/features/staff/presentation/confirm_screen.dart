@@ -167,6 +167,7 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
         res = await repo.addPurchase(
           customerId: c.id,
           staffId: staff.id,
+          storeId: staff.storeId,
           amount: amount,
           idempotencyKey: key,
         );
@@ -174,6 +175,7 @@ class _StaffConfirmScreenState extends ConsumerState<StaffConfirmScreen>
         res = await repo.redeemBalance(
           customerId: c.id,
           staffId: staff.id,
+          storeId: staff.storeId,
           amount: amount,
           idempotencyKey: key,
         );

@@ -198,6 +198,7 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
       await ref.read(staffRepositoryProvider).undoTransaction(
             transactionId: id,
             staffId: staff.id,
+            storeId: staff.storeId,
           );
       if (!mounted) return;
       staffSuccessSound();

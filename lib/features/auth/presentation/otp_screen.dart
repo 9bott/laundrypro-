@@ -16,6 +16,7 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/providers/active_store_provider.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../customer/presentation/providers/customer_providers.dart';
@@ -257,14 +258,26 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
     Future<void> navigateStaff(StaffMember? member) async {
       await prefs.setString(kLoginModePrefKey, kLoginModeStaff);
+      final storeId = member?.storeId ?? '';
+      if (storeId.isNotEmpty) {
+        await prefs.setString(kActiveStoreIdPrefKey, storeId);
+        ref.invalidate(activeStoreProvider);
+      }
       ref.invalidate(staffMemberProvider);
       if (!mounted) return;
       final path = staffShellScannerPath(member);
       context.go(path);
     }
 
-    Future<void> navigateCustomer(String customerId) async {
+    Future<void> navigateCustomer({
+      required String customerId,
+      required String storeId,
+    }) async {
       await prefs.setString(kLoginModePrefKey, kLoginModeCustomer);
+      if (storeId.isNotEmpty) {
+        await prefs.setString(kActiveStoreIdPrefKey, storeId);
+        ref.invalidate(activeStoreProvider);
+      }
       await custRepo.updateCustomer(customerId, {kCustomersAuthUserId: user.id});
       ref.invalidate(currentCustomerIdProvider);
       if (!mounted) return;
@@ -295,9 +308,37 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       context.go('/auth/phone');
       return;
     } else {
-      final existing = await custRepo.getCustomerIdByPhone(widget.phone);
+      final cmRes = await Supabase.instance.client
+          .from('customer_store_memberships')
+          .select('store_id')
+          .eq('user_id', user.id);
+
+      final cmList = ((cmRes as List?) ?? const <dynamic>[])
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+      final storeIds = cmList.map((e) => '${e['store_id']}').toSet();
+
+      if (storeIds.length > 1) {
+        await prefs.setString(kLoginModePrefKey, kLoginModeCustomer);
+        if (!mounted) return;
+        context.go('/store-selector');
+        return;
+      }
+
+      final storeId = storeIds.isNotEmpty ? storeIds.first : '';
+      if (storeId.isEmpty || storeId == 'null') {
+        await prefs.setString(kLoginModePrefKey, kLoginModeCustomer);
+        if (!mounted) return;
+        context.go('/customer/my-stores');
+        return;
+      }
+
+      final existing = await custRepo.getCustomerIdByPhone(
+        widget.phone,
+        storeId: storeId,
+      );
       if (existing != null) {
-        await navigateCustomer(existing);
+        await navigateCustomer(customerId: existing, storeId: storeId);
         return;
       }
       final staff = await staffRepo.getStaffForCurrentUser();
@@ -416,6 +457,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
       return;
     }
 
+    String? joinStoreId;
     try {
       final membership = await Supabase.instance.client
           .from('customer_store_memberships')
@@ -424,8 +466,8 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
           .limit(1)
           .maybeSingle();
 
-      final storeId = membership?['store_id'] as String?;
-      if (storeId == null || storeId.isEmpty) {
+      joinStoreId = membership?['store_id'] as String?;
+      if (joinStoreId == null || joinStoreId.isEmpty) {
         throw Exception('لم يتم ربط حسابك بأي متجر بعد. اطلب كود المتجر من المتجر ثم جرّب مرة أخرى.');
       }
 
@@ -434,11 +476,14 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
         kCustomersName: name,
         kCustomersAuthUserId: user.id,
         kCustomersPreferredLanguage: _isAr ? 'ar' : 'en',
-        kCustomersStoreId: storeId,
+        kCustomersStoreId: joinStoreId,
       });
     } on PostgrestException catch (pe) {
       if (pe.code == '23505') {
-        final id = await custRepo.getCustomerIdByPhone(widget.phone);
+        final id = await custRepo.getCustomerIdByPhone(
+          widget.phone,
+          storeId: joinStoreId,
+        );
         if (id != null) {
           await custRepo.updateCustomer(id, {kCustomersAuthUserId: user.id});
         } else {
@@ -458,6 +503,10 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
     ref.invalidate(currentCustomerIdProvider);
     await prefs.setString(kLoginModePrefKey, kLoginModeCustomer);
+    if (joinStoreId != null && joinStoreId.isNotEmpty) {
+      await prefs.setString(kActiveStoreIdPrefKey, joinStoreId);
+      ref.invalidate(activeStoreProvider);
+    }
     if (!mounted) return;
     context.go('/customer/home');
   }

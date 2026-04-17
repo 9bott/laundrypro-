@@ -4,6 +4,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../l10n/app_localizations.dart';
 import '../data/owner_repository.dart';
+import '../../../core/providers/active_store_provider.dart';
 import 'providers/owner_providers.dart';
 
 class OwnerTransactionsScreen extends ConsumerStatefulWidget {
@@ -42,8 +43,13 @@ class _OwnerTransactionsScreenState extends ConsumerState<OwnerTransactionsScree
     setState(() => _loading = true);
     try {
       final repo = ref.read(ownerRepositoryProvider);
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
       final offset = reset ? 0 : _page * _pageSize;
       final rows = await repo.fetchTransactionsPage(
+        storeId: storeId,
         offset: offset,
         limit: _pageSize,
         search: _search.text.trim().isEmpty ? null : _search.text.trim(),

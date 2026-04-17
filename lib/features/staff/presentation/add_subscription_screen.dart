@@ -130,6 +130,7 @@ class _StaffAddSubscriptionScreenState
       final res = await ref.read(staffRepositoryProvider).addSubscription(
             customerId: c.id,
             staffId: staff.id,
+            storeId: staff.storeId,
             planId: planId,
             idempotencyKey: key,
           );

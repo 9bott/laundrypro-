@@ -203,12 +203,13 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     _handling = true;
     try {
       final repo = ref.read(staffRepositoryProvider);
+      final storeId = ref.read(staffMemberProvider).value?.storeId ?? '';
       final candidates = qrTokenCandidates(raw).toList();
       StaffApiException? lastErr;
       for (var i = 0; i < candidates.length; i++) {
         final token = candidates[i];
         try {
-          final c = await repo.getCustomerByQr(token);
+          final c = await repo.getCustomerByQr(qrToken: token, storeId: storeId);
           if (!mounted) return;
           staffSuccessSound();
           staffHaptic();
@@ -282,7 +283,10 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
       _phoneResults = [];
     });
     try {
-      final list = await ref.read(staffRepositoryProvider).getCustomerByPhone(e164);
+      final storeId = ref.read(staffMemberProvider).value?.storeId ?? '';
+      final list = await ref
+          .read(staffRepositoryProvider)
+          .getCustomerByPhone(phoneE164: e164, storeId: storeId);
       if (!mounted) return;
       setState(() {
         _phoneResults = list;

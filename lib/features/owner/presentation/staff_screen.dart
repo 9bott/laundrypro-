@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_card.dart';
+import '../../../core/providers/active_store_provider.dart';
 import '../data/owner_repository.dart';
 import 'providers/owner_providers.dart';
 
@@ -29,7 +30,12 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
   Future<void> _load() async {
     setState(() => _loading = true);
     try {
-      _staff = await ref.read(ownerRepositoryProvider).fetchStaffDirectory();
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
+      _staff =
+          await ref.read(ownerRepositoryProvider).fetchStaffDirectory(storeId: storeId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -180,7 +186,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                           final l10n = AppLocalizations.of(context)!;
                           final nav = Navigator.of(ctx);
                           try {
+                            final storeId =
+                                ref.read(activeStoreProvider).asData?.value;
+                            if (storeId == null || storeId.isEmpty) {
+                              throw Exception('missing_active_store');
+                            }
                             await ref.read(ownerRepositoryProvider).inviteStaff(
+                                  storeId: storeId,
                                   phoneE164: '+966$nine',
                                   name: name.text.trim().isEmpty
                                       ? (role == 'manager' ? 'مدير' : 'موظف')
@@ -227,7 +239,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
   Future<void> _detail(StaffDirectoryRow s) async {
     List<TransactionListRow> txs = [];
     try {
-      txs = await ref.read(ownerRepositoryProvider).fetchStaffTransactions(s.id);
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
+      txs = await ref
+          .read(ownerRepositoryProvider)
+          .fetchStaffTransactions(storeId: storeId, staffId: s.id);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -258,7 +276,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                       ? () async {
                           final outerMessenger = ScaffoldMessenger.of(context);
                           try {
+                            final storeId =
+                                ref.read(activeStoreProvider).asData?.value;
+                            if (storeId == null || storeId.isEmpty) {
+                              throw Exception('missing_active_store');
+                            }
                             await ref.read(ownerRepositoryProvider).setStaffActive(
+                                  storeId: storeId,
                                   staffId: s.id,
                                   isActive: false,
                                 );
@@ -275,7 +299,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                       : () async {
                           final outerMessenger = ScaffoldMessenger.of(context);
                           try {
+                            final storeId =
+                                ref.read(activeStoreProvider).asData?.value;
+                            if (storeId == null || storeId.isEmpty) {
+                              throw Exception('missing_active_store');
+                            }
                             await ref.read(ownerRepositoryProvider).setStaffActive(
+                                  storeId: storeId,
                                   staffId: s.id,
                                   isActive: true,
                                 );
@@ -418,7 +448,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                             ),
                             onDismissed: (_) async {
                               try {
+                                final storeId =
+                                    ref.read(activeStoreProvider).asData?.value;
+                                if (storeId == null || storeId.isEmpty) {
+                                  throw Exception('missing_active_store');
+                                }
                                 await ref.read(ownerRepositoryProvider).setStaffActive(
+                                      storeId: storeId,
                                       staffId: s.id,
                                       isActive: false,
                                     );
@@ -514,7 +550,13 @@ class _OwnerStaffScreenState extends ConsumerState<OwnerStaffScreen> {
                                         value: s.isActive,
                                         onChanged: (v) async {
                                           try {
+                                            final storeId =
+                                                ref.read(activeStoreProvider).asData?.value;
+                                            if (storeId == null || storeId.isEmpty) {
+                                              throw Exception('missing_active_store');
+                                            }
                                             await ref.read(ownerRepositoryProvider).setStaffActive(
+                                                  storeId: storeId,
                                                   staffId: s.id,
                                                   isActive: v,
                                                 );

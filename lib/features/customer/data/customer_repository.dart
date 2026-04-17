@@ -53,20 +53,28 @@ class CustomerRepository {
     ),
   ];
 
-  Future<String?> getCustomerIdForAuthUser(String authUserId) async {
+  Future<String?> getCustomerIdForAuthUserInStore(
+    String authUserId,
+    String storeId,
+  ) async {
     final row = await _client
         .from(kTableCustomers)
         .select(kCustomersId)
         .eq(kCustomersAuthUserId, authUserId)
+        .eq(kCustomersStoreId, storeId)
         .maybeSingle();
     return row?[kCustomersId] as String?;
   }
 
-  Future<String?> getCustomerIdByPhone(String phoneE164) async {
+  Future<String?> getCustomerIdByPhone(
+    String phoneE164, {
+    String? storeId,
+  }) async {
     final row = await _client
         .from(kTableCustomers)
         .select(kCustomersId)
         .eq(kCustomersPhone, phoneE164)
+        .match(storeId == null ? const {} : {kCustomersStoreId: storeId})
         .maybeSingle();
     return row?[kCustomersId] as String?;
   }
@@ -101,6 +109,7 @@ class CustomerRepository {
   /// merges by row id, sorts by [kTransactionsCreatedAt] desc, then paginates in memory.
   Future<List<TransactionModel>> getTransactions(
     String customerId, {
+    required String storeId,
     String? typeFilter,
     int page = 0,
     int pageSize = 20,
@@ -108,7 +117,11 @@ class CustomerRepository {
     final userId = _client.auth.currentUser?.id;
 
     Future<List<TransactionModel>> fetchByColumn(String column, String value) async {
-      var query = _client.from(kTableTransactions).select().eq(column, value);
+      var query = _client
+          .from(kTableTransactions)
+          .select()
+          .eq(kTransactionsStoreId, storeId)
+          .eq(column, value);
 
       if (typeFilter != null && typeFilter.isNotEmpty && typeFilter != 'all') {
         if (typeFilter == 'rewards') {
@@ -163,13 +176,16 @@ class CustomerRepository {
     return list.sublist(start, endExclusive);
   }
 
-  Future<List<SubscriptionPlanModel>> getSubscriptionPlans() async {
+  Future<List<SubscriptionPlanModel>> getSubscriptionPlans({
+    required String storeId,
+  }) async {
     try {
-      final rows = await _client
+      var q = _client
           .from(kTableSubscriptionPlans)
           .select()
-          .eq(kSubscriptionPlansIsActive, true)
-          .order(kSubscriptionPlansSortOrder);
+          .eq(kSubscriptionPlansIsActive, true);
+      q = q.eq(kSubscriptionPlansStoreId, storeId);
+      final rows = await q.order(kSubscriptionPlansSortOrder);
       final list = (rows as List)
           .map(
             (e) => SubscriptionPlanModel.fromJson(
@@ -185,12 +201,15 @@ class CustomerRepository {
     }
   }
 
-  Future<QrTokenData> invokeGenerateQrToken() async {
+  Future<QrTokenData> invokeGenerateQrToken({
+    required String storeId,
+  }) async {
     late final FunctionResponse res;
     try {
       res = await _client.functions.invoke(
         kFnGenerateQrToken,
         method: HttpMethod.post,
+        body: {'store_id': storeId},
       );
     } on FunctionException catch (e) {
       final details = _parseFunctionsErrorBody(e.details);

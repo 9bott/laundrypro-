@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../../../core/providers/active_store_provider.dart';
 import '../data/owner_repository.dart';
 import '../../staff/presentation/providers/staff_providers.dart';
 import 'providers/owner_providers.dart';
@@ -152,7 +153,13 @@ class _OwnerDashboardScreenState extends ConsumerState<OwnerDashboardScreen> {
                 onSeeAll: () => context.push('/staff/transactions'),
                 loader: () async {
                   final repo = ref.read(ownerRepositoryProvider);
-                  return repo.fetchTransactionsPage(offset: 0, limit: 5);
+                  final storeId = ref.read(activeStoreProvider).asData?.value;
+                  if (storeId == null || storeId.isEmpty) return [];
+                  return repo.fetchTransactionsPage(
+                    storeId: storeId,
+                    offset: 0,
+                    limit: 5,
+                  );
                 },
               ),
             ],

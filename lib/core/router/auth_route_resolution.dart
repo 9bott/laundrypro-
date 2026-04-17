@@ -2,6 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../constants/app_constants.dart';
+import '../providers/active_store_provider.dart';
 
 /// Post-OTP / cold-start routing from Supabase memberships + [kLoginModePrefKey].
 /// Returns `null` when the caller should run legacy onboarding (e.g. customer name dialog).
@@ -36,6 +37,15 @@ Future<String?> resolveRouteAfterOtp() async {
     return '/store-selector';
   }
 
+  // If we have exactly one store, persist it as the active store for all repos/providers.
+  if (allStores.length == 1) {
+    final only = allStores.first;
+    if (only.isNotEmpty && only != 'null') {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(kActiveStoreIdPrefKey, only);
+    }
+  }
+
   if (smList.isNotEmpty) {
     final role = smList.first['role'] as String? ?? 'staff';
     if (role == 'owner' || role == 'manager') {
@@ -56,5 +66,6 @@ Future<String?> resolveRouteAfterOtp() async {
   if (loginMode == kLoginModeStaff) {
     return '/onboarding/create-store';
   }
-  return null;
+  // New customer with no store yet → go to join flow.
+  return '/customer/my-stores';
 }

@@ -232,6 +232,7 @@ class OwnerRepository {
       OwnerRepository(SupabaseService.client);
 
   Future<OwnerDashboardData> fetchDashboard({
+    required String storeId,
     required DateTime dateFrom,
     required DateTime dateTo,
   }) async {
@@ -240,6 +241,7 @@ class OwnerRepository {
           .invoke(
             kFnGetOwnerDashboard,
             body: {
+              'store_id': storeId,
               'date_from': dateFrom.toUtc().toIso8601String(),
               'date_to': dateTo.toUtc().toIso8601String(),
             },
@@ -257,7 +259,9 @@ class OwnerRepository {
   }
 
   /// Headline stats: total customers (count), today tx count, sales (purchase), cashback sum.
-  Future<OwnerSimpleTodayStats> fetchSimpleTodayStats() async {
+  Future<OwnerSimpleTodayStats> fetchSimpleTodayStats({
+    required String storeId,
+  }) async {
     Future<OwnerSimpleTodayStats> run() async {
       final todayStr = DateTime.now().toIso8601String().substring(0, 10);
       final dayStart = '${todayStr}T00:00:00';
@@ -271,6 +275,7 @@ class OwnerRepository {
         final res = await _client
             .from(kTableCustomers)
             .select(kCustomersId)
+            .eq(kCustomersStoreId, storeId)
             .count(CountOption.exact);
         totalCustomers = res.count;
       } catch (_) {}
@@ -281,6 +286,7 @@ class OwnerRepository {
             .select(
               '$kTransactionsAmount, $kTransactionsCashbackEarned, $kTransactionsType',
             )
+            .eq(kTransactionsStoreId, storeId)
             .gte(kTransactionsCreatedAt, dayStart)
             .eq(kTransactionsIsUndone, false) as List<dynamic>;
         txCount = rows.length;
@@ -310,12 +316,13 @@ class OwnerRepository {
 
   /// Customers list (no join to `transactions`).
   Future<List<CustomerModel>> fetchCustomersDirectory({
+    required String storeId,
     String? search,
     String? tier,
     bool dormantOnly = false,
   }) async {
     try {
-      var q = _client.from(kTableCustomers).select();
+      var q = _client.from(kTableCustomers).select().eq(kCustomersStoreId, storeId);
 
       if (search != null && search.trim().isNotEmpty) {
         final s = '%${search.trim()}%';
@@ -349,6 +356,7 @@ class OwnerRepository {
   }
 
   Future<List<TransactionListRow>> fetchTransactionsPage({
+    required String storeId,
     required int offset,
     required int limit,
     String? search,
@@ -358,6 +366,7 @@ class OwnerRepository {
     DateTime? to,
   }) {
     return _fetchTransactionsFallback(
+      storeId: storeId,
       offset: offset,
       limit: limit,
       search: search,
@@ -369,6 +378,7 @@ class OwnerRepository {
   }
 
   Future<List<TransactionListRow>> _fetchTransactionsFallback({
+    required String storeId,
     required int offset,
     required int limit,
     String? search,
@@ -377,7 +387,7 @@ class OwnerRepository {
     DateTime? from,
     DateTime? to,
   }) async {
-    var q = _client.from(kTableTransactions).select();
+    var q = _client.from(kTableTransactions).select().eq(kTransactionsStoreId, storeId);
     if (typeFilter != null && typeFilter.isNotEmpty) {
       q = q.eq(kTransactionsType, typeFilter);
     }
@@ -405,6 +415,7 @@ class OwnerRepository {
       final cr = await _client
           .from(kTableCustomers)
           .select()
+          .eq(kCustomersStoreId, storeId)
           .inFilter(kCustomersId, cids);
       for (final row in cr as List) {
         final map = Map<String, dynamic>.from(row as Map);
@@ -414,7 +425,11 @@ class OwnerRepository {
     final sMap = <String, String>{};
     if (sids.isNotEmpty) {
       final sr =
-          await _client.from(kTableStaff).select('id, name').inFilter('id', sids);
+          await _client
+              .from(kTableStaff)
+              .select('id, name')
+              .eq(kStaffStoreId, storeId)
+              .inFilter('id', sids);
       for (final row in sr as List) {
         final map = Map<String, dynamic>.from(row as Map);
         sMap[map['id'] as String] = map[kStaffName] as String? ?? '';
@@ -446,11 +461,12 @@ class OwnerRepository {
   }
 
   Future<List<CustomerModel>> fetchCustomers({
+    required String storeId,
     String? search,
     String? tier,
     bool dormantOnly = false,
   }) async {
-    var q = _client.from(kTableCustomers).select();
+    var q = _client.from(kTableCustomers).select().eq(kCustomersStoreId, storeId);
 
     if (search != null && search.trim().isNotEmpty) {
       final s = '%${search.trim()}%';
@@ -476,10 +492,14 @@ class OwnerRepository {
     }).toList();
   }
 
-  Future<List<TransactionModel>> fetchCustomerTransactions(String customerId) async {
+  Future<List<TransactionModel>> fetchCustomerTransactions({
+    required String storeId,
+    required String customerId,
+  }) async {
     final rows = await _client
         .from(kTableTransactions)
         .select()
+        .eq(kTransactionsStoreId, storeId)
         .eq(kTransactionsCustomerId, customerId)
         .order(kTransactionsCreatedAt, ascending: false)
         .limit(200) as List<dynamic>;
@@ -489,6 +509,7 @@ class OwnerRepository {
   }
 
   Future<void> adjustCustomerBalance({
+    required String storeId,
     required String customerId,
     double deltaSubscription = 0,
     double deltaCashback = 0,
@@ -497,6 +518,7 @@ class OwnerRepository {
     final res = await _client.functions.invoke(
       kFnOwnerAdjustBalance,
       body: {
+        'store_id': storeId,
         'customer_id': customerId,
         'delta_subscription': deltaSubscription,
         'delta_cashback': deltaCashback,
@@ -509,6 +531,7 @@ class OwnerRepository {
   }
 
   Future<void> setCustomerBlocked({
+    required String storeId,
     required String customerId,
     required bool blocked,
     String? reason,
@@ -516,6 +539,7 @@ class OwnerRepository {
     final res = await _client.functions.invoke(
       kFnOwnerSetBlocked,
       body: {
+        'store_id': storeId,
         'customer_id': customerId,
         'is_blocked': blocked,
         if (reason != null) 'reason': reason,
@@ -524,17 +548,21 @@ class OwnerRepository {
     if (res.status != 200) throw Exception(_errMsg(res));
   }
 
-  Future<List<StaffDirectoryRow>> fetchStaffDirectory() async {
+  Future<List<StaffDirectoryRow>> fetchStaffDirectory({
+    required String storeId,
+  }) async {
     try {
       final staffRows = await _client
           .from(kTableStaff)
           .select()
+          .eq(kStaffStoreId, storeId)
           .order(kStaffName)
           .timeout(kOwnerQueryTimeout) as List<dynamic>;
       final dayStartIso = _localTodayStartIso();
       final txRows = await _client
           .from(kTableTransactions)
           .select(kTransactionsStaffId)
+          .eq(kTransactionsStoreId, storeId)
           .gte(kTransactionsCreatedAt, dayStartIso)
           .eq(kTransactionsIsUndone, false)
           .timeout(kOwnerQueryTimeout) as List<dynamic>;
@@ -565,10 +593,14 @@ class OwnerRepository {
     }
   }
 
-  Future<List<TransactionListRow>> fetchStaffTransactions(String staffId) async {
+  Future<List<TransactionListRow>> fetchStaffTransactions({
+    required String storeId,
+    required String staffId,
+  }) async {
     final rows = await _client
         .from(kTableTransactions)
         .select()
+        .eq(kTransactionsStoreId, storeId)
         .eq(kTransactionsStaffId, staffId)
         .order(kTransactionsCreatedAt, ascending: false)
         .limit(100) as List<dynamic>;
@@ -582,6 +614,7 @@ class OwnerRepository {
       final cr = await _client
           .from(kTableCustomers)
           .select()
+          .eq(kCustomersStoreId, storeId)
           .inFilter(kCustomersId, cids);
       for (final row in cr as List) {
         final c = CustomerModel.fromJson(Map<String, dynamic>.from(row as Map));
@@ -600,32 +633,37 @@ class OwnerRepository {
   }
 
   Future<void> setStaffActive({
+    required String storeId,
     required String staffId,
     required bool isActive,
   }) async {
     final res = await _client.functions.invoke(
       kFnOwnerStaffActive,
-      body: {'staff_id': staffId, 'is_active': isActive},
+      body: {'store_id': storeId, 'staff_id': staffId, 'is_active': isActive},
     );
     if (res.status != 200) throw Exception(_errMsg(res));
   }
 
   Future<void> inviteStaff({
+    required String storeId,
     required String phoneE164,
     required String name,
     String branch = 'main',
   }) async {
     final res = await _client.functions.invoke(
       kFnOwnerInviteStaff,
-      body: {'phone': phoneE164, 'name': name, 'branch': branch},
+      body: {'store_id': storeId, 'phone': phoneE164, 'name': name, 'branch': branch},
     );
     if (res.status != 200) throw Exception(_errMsg(res));
   }
 
-  Future<List<FraudFlagRow>> fetchFraudFlags() async {
+  Future<List<FraudFlagRow>> fetchFraudFlags({
+    required String storeId,
+  }) async {
     final rows = await _client
         .from(kTableFraudFlags)
         .select()
+        .eq(kFraudFlagsStoreId, storeId)
         .eq(kFraudFlagsResolved, false)
         .order(kFraudFlagsCreatedAt, ascending: false) as List<dynamic>;
 
@@ -651,6 +689,7 @@ class OwnerRepository {
       final sr = await _client
           .from(kTableStaff)
           .select('id, name')
+          .eq(kStaffStoreId, storeId)
           .inFilter(kStaffId, sids);
       for (final row in sr as List) {
         final m = Map<String, dynamic>.from(row as Map);
@@ -662,6 +701,7 @@ class OwnerRepository {
       final cr = await _client
           .from(kTableCustomers)
           .select('id, name, phone')
+          .eq(kCustomersStoreId, storeId)
           .inFilter(kCustomersId, cids);
       for (final row in cr as List) {
         final m = Map<String, dynamic>.from(row as Map);
@@ -676,6 +716,7 @@ class OwnerRepository {
       final tr = await _client
           .from(kTableTransactions)
           .select('id, amount, type')
+          .eq(kTransactionsStoreId, storeId)
           .inFilter(kTransactionsId, tids);
       for (final row in tr as List) {
         final m = Map<String, dynamic>.from(row as Map);
@@ -703,6 +744,7 @@ class OwnerRepository {
   }
 
   Future<void> resolveFraudFlag({
+    required String storeId,
     required String flagId,
     required String action,
     String? notes,
@@ -710,6 +752,7 @@ class OwnerRepository {
     final res = await _client.functions.invoke(
       kFnOwnerFraudResolve,
       body: {
+        'store_id': storeId,
         'flag_id': flagId,
         'action': action,
         if (notes != null) 'notes': notes,

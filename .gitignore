@@ -1,4 +1,5 @@
-﻿# Dart / Flutter
+﻿.env.local
+# Dart / Flutter
 .dart_tool/
 .packages
 build/
@@ -46,6 +47,7 @@ coverage/
 # Android local / Gradle cache (never commit)
 android/.gradle/
 android/local.properties
+android/.kotlin/errors/
 
 # Cursor / Claude local worktrees
 .claude/

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/active_store_provider.dart';
 import '../../../../shared/models/transaction_model.dart';
 import '../../data/customer_repository.dart';
 import 'customer_providers.dart';
@@ -133,8 +134,19 @@ class CustomerHistoryNotifier extends AsyncNotifier<HistoryState> {
         );
       }
 
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        final v = append ? state.value?.items ?? [] : <TransactionModel>[];
+        return HistoryState(
+          items: v,
+          hasMore: false,
+          filter: filter,
+          page: append ? (state.value?.page ?? page) : 0,
+        );
+      }
       final batch = await _repo.getTransactions(
         cid,
+        storeId: storeId,
         typeFilter: _typeFilterForApi(filter),
         page: page,
       );

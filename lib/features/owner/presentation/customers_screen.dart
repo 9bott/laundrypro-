@@ -7,6 +7,7 @@ import '../../../shared/models/customer_model.dart';
 import '../../../shared/models/transaction_model.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/tier_badge.dart';
+import '../../../core/providers/active_store_provider.dart';
 import 'providers/owner_providers.dart';
 
 class OwnerCustomersScreen extends ConsumerStatefulWidget {
@@ -41,8 +42,13 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
     setState(() => _loading = true);
     try {
       final repo = ref.read(ownerRepositoryProvider);
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
       final tier = _tier == 'all' ? null : _tier;
       _list = await repo.fetchCustomersDirectory(
+        storeId: storeId,
         search: _search.text.trim().isEmpty ? null : _search.text.trim(),
         tier: tier,
       );
@@ -58,7 +64,13 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
   Future<void> _openDetail(CustomerModel c) async {
     List<TransactionModel> txs = [];
     try {
-      txs = await ref.read(ownerRepositoryProvider).fetchCustomerTransactions(c.id);
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
+      txs = await ref
+          .read(ownerRepositoryProvider)
+          .fetchCustomerTransactions(storeId: storeId, customerId: c.id);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -543,7 +555,12 @@ class _CustomerDetailSheetState extends ConsumerState<_CustomerDetailSheet> {
       final ds = double.tryParse(subCtl.text.trim()) ?? 0;
       final dc = double.tryParse(cbCtl.text.trim()) ?? 0;
       if (ds == 0 && dc == 0) return;
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
       await ref.read(ownerRepositoryProvider).adjustCustomerBalance(
+            storeId: storeId,
             customerId: widget.customer.id,
             deltaSubscription: ds,
             deltaCashback: dc,
@@ -597,7 +614,12 @@ class _CustomerDetailSheetState extends ConsumerState<_CustomerDetailSheet> {
         },
       );
       if (go != true) return;
+      final storeId = ref.read(activeStoreProvider).asData?.value;
+      if (storeId == null || storeId.isEmpty) {
+        throw Exception('missing_active_store');
+      }
       await ref.read(ownerRepositoryProvider).setCustomerBlocked(
+            storeId: storeId,
             customerId: c.id,
             blocked: !c.isBlocked,
             reason: reasonCtl.text.trim().isEmpty ? null : reasonCtl.text.trim(),

@@ -327,7 +327,32 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         },
         data: (customer) {
           if (customer == null) {
-            return const Center(child: Text('تعذر تحميل بيانات العميل.'));
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'لم يتم اختيار متجر بعد.',
+                      style: TextStyle(fontWeight: FontWeight.w900),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'ادخل كود المتجر أو اختر متجر من قائمة متاجري.',
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    FilledButton(
+                      onPressed: () => context.go('/customer/my-stores'),
+                      style: FilledButton.styleFrom(backgroundColor: _kPointBlue),
+                      child: const Text('متاجري'),
+                    ),
+                  ],
+                ),
+              ),
+            );
           }
 
           final storeAsync = ref.watch(_storeByIdProvider(customer.storeId));

@@ -17,75 +17,77 @@ import 'core/services/notification_service.dart';
 import 'core/services/supabase_service.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  debugPrint('[BOOT] step 1: Flutter binding OK');
-
-  try {
-    if (Firebase.apps.isEmpty) {
-      await Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      );
-    }
-    debugPrint('[BOOT] step 2: Firebase OK');
-  } catch (e) {
-    debugPrint('[BOOT] step 2 FAILED: $e');
-  }
-
-  if (!kIsWeb && Platform.isAndroid) {
-    try {
-      await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: false);
-    } catch (e) {
-      debugPrint('[Firebase Auth] Android setSettings: $e');
-    }
-  }
-
-  try {
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
-    FlutterError.onError = (FlutterErrorDetails details) {
-      debugPrint('[CRASH] Flutter error: ${details.exception}');
-      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-    };
-    PlatformDispatcher.instance.onError = (error, stack) {
-      debugPrint('[CRASH] Platform error: $error');
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-    debugPrint('[BOOT] step 3: Crashlytics OK');
-  } catch (e) {
-    debugPrint('[BOOT] step 3 FAILED: $e');
-  }
-
-  try {
-    await Hive.initFlutter();
-    debugPrint('[BOOT] step 4: Hive OK');
-  } catch (e) {
-    debugPrint('[BOOT] step 4 FAILED: $e');
-  }
-
-  try {
-    if (Env.hasSupabase) {
-      await SupabaseService.init(
-        url: Env.supabaseUrl.trim(),
-        anonKey: Env.supabaseAnonKey.trim(),
-      );
-      debugPrint('[BOOT] step 5: Supabase OK');
-    } else {
-      debugPrint('[BOOT] step 5: Supabase SKIPPED');
-    }
-  } catch (e) {
-    debugPrint('[BOOT] step 5 FAILED: $e');
-  }
-
-  try {
-    await NotificationService.initialize();
-    debugPrint('[BOOT] step 6: Notifications OK');
-  } catch (e) {
-    debugPrint('[BOOT] step 6 FAILED: $e');
-  }
-
-  debugPrint('[BOOT] step 7: starting runApp');
   runZonedGuarded(
-    () => runApp(const ProviderScope(child: LaundryProApp())),
+    () async {
+      WidgetsFlutterBinding.ensureInitialized();
+      debugPrint('[BOOT] step 1: Flutter binding OK');
+
+      try {
+        if (Firebase.apps.isEmpty) {
+          await Firebase.initializeApp(
+            options: DefaultFirebaseOptions.currentPlatform,
+          );
+        }
+        debugPrint('[BOOT] step 2: Firebase OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 2 FAILED: $e');
+      }
+
+      if (!kIsWeb && Platform.isAndroid) {
+        try {
+          await FirebaseAuth.instance.setSettings(forceRecaptchaFlow: false);
+        } catch (e) {
+          debugPrint('[Firebase Auth] Android setSettings: $e');
+        }
+      }
+
+      try {
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(true);
+        FlutterError.onError = (FlutterErrorDetails details) {
+          debugPrint('[CRASH] Flutter error: ${details.exception}');
+          FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+        };
+        PlatformDispatcher.instance.onError = (error, stack) {
+          debugPrint('[CRASH] Platform error: $error');
+          FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+          return true;
+        };
+        debugPrint('[BOOT] step 3: Crashlytics OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 3 FAILED: $e');
+      }
+
+      try {
+        await Hive.initFlutter();
+        debugPrint('[BOOT] step 4: Hive OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 4 FAILED: $e');
+      }
+
+      try {
+        if (Env.hasSupabase) {
+          await SupabaseService.init(
+            url: Env.supabaseUrl.trim(),
+            anonKey: Env.supabaseAnonKey.trim(),
+          );
+          debugPrint('[BOOT] step 5: Supabase OK');
+        } else {
+          debugPrint('[BOOT] step 5: Supabase SKIPPED');
+        }
+      } catch (e) {
+        debugPrint('[BOOT] step 5 FAILED: $e');
+      }
+
+      try {
+        await NotificationService.initialize();
+        debugPrint('[BOOT] step 6: Notifications OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 6 FAILED: $e');
+      }
+
+      debugPrint('[BOOT] step 7: starting runApp');
+      runApp(const ProviderScope(child: LaundryProApp()));
+    },
     (error, stack) {
       debugPrint('[CRASH] Zone error: $error');
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);

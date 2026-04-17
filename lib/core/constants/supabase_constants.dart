@@ -44,6 +44,7 @@ const String kStaffPinHash = 'pin_hash';
 const String kStaffRole = 'role';
 const String kStaffBranch = 'branch';
 const String kStaffIsActive = 'is_active';
+const String kStaffStoreId = 'store_id';
 const String kStaffLastLogin = 'last_login';
 const String kStaffCreatedAt = 'created_at';
 
@@ -56,6 +57,7 @@ const String kTransactionsStaffId = 'staff_id';
 const String kTransactionsType = 'type';
 const String kTransactionsAmount = 'amount';
 const String kTransactionsCashbackEarned = 'cashback_earned';
+const String kTransactionsStoreId = 'store_id';
 const String kTransactionsSubscriptionUsed = 'subscription_used';
 const String kTransactionsCashbackUsed = 'cashback_used';
 const String kTransactionsBalanceBeforeCashback = 'balance_before_cashback';
@@ -80,6 +82,7 @@ const String kSubscriptionPlansCredit = 'credit';
 const String kSubscriptionPlansBonusPercentage = 'bonus_percentage';
 const String kSubscriptionPlansIsActive = 'is_active';
 const String kSubscriptionPlansSortOrder = 'sort_order';
+const String kSubscriptionPlansStoreId = 'store_id';
 
 // —— promotions columns (reference) ——
 const String kPromotionsId = 'id';
@@ -114,6 +117,7 @@ const String kFraudFlagsAutoDetected = 'auto_detected';
 const String kFraudFlagsReviewedBy = 'reviewed_by';
 const String kFraudFlagsResolved = 'resolved';
 const String kFraudFlagsNotes = 'notes';
+const String kFraudFlagsStoreId = 'store_id';
 const String kFraudFlagsCreatedAt = 'created_at';
 
 // —— audit_log columns (reference) ——

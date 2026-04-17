@@ -85,6 +85,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         'len=${persistedSessionStr?.length ?? 0}',
       );
 
+      // Some older builds accidentally persisted the literal string "null".
+      if (loginModeRaw == 'null') {
+        await prefs.remove(kLoginModePrefKey);
+      }
+
       if (!rememberMe) {
         _splashLog('DECISION: sign out + /auth/phone (remember_me false)');
         await ref.read(authRepositoryProvider).signOut();
