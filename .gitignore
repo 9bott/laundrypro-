@@ -41,6 +41,10 @@ tools/google-wallet-class/service-account.json
 .DS_Store
 Thumbs.db
 
+# iOS generated
+ios/Flutter/
+ios/Runner/GeneratedPluginRegistrant.*
+
 # Coverage
 coverage/
 
