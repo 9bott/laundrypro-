@@ -29,6 +29,7 @@ const String kCustomersBirthday = 'birthday';
 const String kCustomersReferralCode = 'referral_code';
 const String kCustomersReferredBy = 'referred_by';
 const String kCustomersDeviceToken = 'device_token';
+const String kCustomersFcmToken = 'fcm_token';
 const String kCustomersPreferredLanguage = 'preferred_language';
 const String kCustomersIsBlocked = 'is_blocked';
 const String kCustomersStoreId = 'store_id';
@@ -46,6 +47,7 @@ const String kStaffBranch = 'branch';
 const String kStaffIsActive = 'is_active';
 const String kStaffStoreId = 'store_id';
 const String kStaffLastLogin = 'last_login';
+const String kStaffFcmToken = 'fcm_token';
 const String kStaffCreatedAt = 'created_at';
 
 // —— transactions columns ——

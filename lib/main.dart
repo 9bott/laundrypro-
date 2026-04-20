@@ -94,5 +94,3 @@ Future<void> main() async {
     },
   );
 }
-
-// (removed unused precache helper)

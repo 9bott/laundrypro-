@@ -4,6 +4,7 @@ import { requireStaff } from "../_shared/auth.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
 import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
+import { sendFCMNotification } from "../_shared/fcm.ts";
 
 type Body = {
   customer_id: string;
@@ -160,6 +161,24 @@ Deno.serve(async (req) => {
     },
     transaction_id: txRow.id as string,
   });
+
+  // FCM push (customer)
+  try {
+    const token = String(customer.fcm_token ?? customer.device_token ?? "");
+    if (token) {
+      await sendFCMNotification({
+        token,
+        title: "بوينت 💙",
+        body: `تم تفعيل باقة ${String(plan.name)}! رصيد الاشتراك: ${subAfter} ر.س`,
+        data: {
+          type: "subscription",
+          plan: String(plan.name),
+        },
+      });
+    }
+  } catch (e) {
+    console.warn("[fcm] customer push failed", e);
+  }
 
   await writeAuditLog(supabase, {
     actor_id: staff_id,

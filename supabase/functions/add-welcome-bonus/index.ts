@@ -3,6 +3,7 @@ import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { requireCustomerId } from "../_shared/auth.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
+import { sendFCMNotification } from "../_shared/fcm.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") return preflight();
@@ -74,6 +75,26 @@ serve(async (req) => {
     }
 
     await trySyncGoogleWalletLoyaltyObject(supabase, customerId);
+
+    // FCM push (welcome)
+    try {
+      const { data: tokRow } = await supabase
+        .from("customers")
+        .select("fcm_token, device_token")
+        .eq("id", customerId)
+        .maybeSingle();
+      const token = String(tokRow?.fcm_token ?? tokRow?.device_token ?? "");
+      if (token) {
+        await sendFCMNotification({
+          token,
+          title: "أهلاً بك في بوينت! 🎉",
+          body: "تم إنشاء حسابك بنجاح. ابدأ بمسح QR المتجر!",
+          data: { type: "welcome" },
+        });
+      }
+    } catch (e) {
+      console.warn("[fcm] welcome push failed", e);
+    }
 
     return json({ success: true, bonus_amount: bonusAmount }, 200);
   } catch (e) {

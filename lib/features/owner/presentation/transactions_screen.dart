@@ -95,7 +95,10 @@ class _OwnerTransactionsScreenState extends ConsumerState<OwnerTransactionsScree
         );
       }
       await SharePlus.instance.share(
-        ShareParams(text: buf.toString(), subject: 'transactions.csv'),
+        ShareParams(
+          text: buf.toString(),
+          subject: 'transactions.csv',
+        ),
       );
     } catch (e) {
       if (mounted) {
