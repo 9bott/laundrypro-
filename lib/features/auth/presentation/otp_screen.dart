@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sms_autofill/sms_autofill.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
@@ -73,7 +74,7 @@ class OtpScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpScreenState extends ConsumerState<OtpScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, CodeAutoFill {
   final _otpController = TextEditingController();
   final _otpFocus = FocusNode();
   late AnimationController _shake;
@@ -106,6 +107,29 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     _otpController.addListener(_onOtpChanged);
     _startResend();
     WidgetsBinding.instance.addPostFrameCallback((_) => _otpFocus.requestFocus());
+
+    // Android: SMS Retriever → suggests & auto-fills OTP (no SMS read permission).
+    // iOS: doesn't use this, relies on oneTimeCode autofill.
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+      listenForCode();
+      SmsAutoFill().getAppSignature.then((sig) {
+        debugPrint('[sms_autofill] app signature: $sig');
+      });
+    }
+  }
+
+  @override
+  void codeUpdated() {
+    final v = code;
+    if (v == null) return;
+    final digits = v.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length != kPhoneOtpCodeLength) return;
+    _otpController.value = TextEditingValue(
+      text: digits,
+      selection: TextSelection.collapsed(offset: digits.length),
+      composing: TextRange.empty,
+    );
+    if (!_busy) _verify();
   }
 
   void _onOtpChanged() {
@@ -155,13 +179,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     return defaultTargetPlatform == TargetPlatform.iOS;
   }
 
-  TextInputType get _otpKeyboardType {
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-      return TextInputType.phone;
-    }
-    return TextInputType.number;
-  }
-
   void _startResend() {
     _resendTimer?.cancel();
     setState(() => _resendSeconds = 60);
@@ -183,6 +200,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     _otpController.removeListener(_onOtpChanged);
     _otpController.dispose();
     _otpFocus.dispose();
+    cancel();
     super.dispose();
   }
 
@@ -209,6 +227,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
             phone: widget.phone,
             token: token,
           );
+      TextInput.finishAutofillContext(shouldSave: false);
 
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) throw Exception('no_user');
@@ -736,10 +755,12 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
               height: 60,
               child: Opacity(
                 opacity: 0.012,
-                child: TextField(
-                  controller: _otpController,
-                  focusNode: _otpFocus,
-                  keyboardType: _otpKeyboardType,
+                child: AutofillGroup(
+                  child: TextField(
+                    controller: _otpController,
+                    focusNode: _otpFocus,
+                    keyboardType: TextInputType.number,
+                    autofillHints: const [AutofillHints.oneTimeCode],
                   keyboardAppearance:
                       Theme.of(context).brightness == Brightness.dark
                           ? Brightness.dark
@@ -762,6 +783,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                     contentPadding: EdgeInsets.zero,
                   ),
                   inputFormatters: const [_OtpCodeFormatter()],
+                  ),
                 ),
               ),
             ),
