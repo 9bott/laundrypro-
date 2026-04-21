@@ -9,7 +9,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/staff/staff_feedback.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../shared/widgets/app_card.dart';
 import '../data/staff_repository.dart';
 import 'providers/staff_providers.dart';
 import 'staff_route_models.dart';
@@ -99,6 +98,9 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
   int _undoSec = 30;
   bool _undoVisible = true;
   bool _undoBusy = false;
+
+  static const Color _kBlue = Color(0xFF185FA5);
+  static const Color _kGreen = Color(0xFF1D9E75);
 
   @override
   void initState() {
@@ -230,7 +232,7 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
     final disableAnim = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
-      backgroundColor: AppColors.successTint,
+      backgroundColor: Colors.white,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -240,102 +242,55 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
               child: Column(
                 children: [
                   const SizedBox(height: 8),
-                  SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: disableAnim
-                        ? CustomPaint(
-                            painter: _SuccessRingPainter(
-                              ringT: 1,
-                              checkT: 1,
-                              strokeColor: AppColors.primary,
-                            ),
-                          )
-                        : AnimatedBuilder(
-                            animation: Listenable.merge([_ring, _check]),
-                            builder: (context, _) {
-                              return CustomPaint(
-                                painter: _SuccessRingPainter(
-                                  ringT: _ring.value,
-                                  checkT: _check.value,
-                                  strokeColor: AppColors.primary,
-                                ),
-                              );
-                            },
-                          ),
-                  ),
+                  _topSuccessHeader(disableAnim: disableAnim),
                   const SizedBox(height: 18),
-                  Text(
-                    l10n.staffTransactionCompleted,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.smsSent,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
                   Expanded(
                     child: SingleChildScrollView(
                       child: _summaryCard(context, p, r),
                     ),
                   ),
+                  const SizedBox(height: 14),
                   if (_undoVisible && p.transactionId.isNotEmpty) ...[
-                    const SizedBox(height: 12),
                     if (_undoBusy)
-                      const CircularProgressIndicator(color: AppColors.primary)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 10),
+                        child: SizedBox(
+                          height: 46,
+                          child: Center(
+                            child: SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          ),
+                        ),
+                      )
                     else
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          TextButton(
-                            onPressed: _undo,
-                            child: Text(
-                              l10n.staffUndoShort,
-                              style: GoogleFonts.cairo(
-                                color: AppColors.error,
-                                fontWeight: FontWeight.w800,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          SizedBox(
-                            width: 32,
-                            height: 32,
-                            child: Stack(
-                              alignment: Alignment.center,
-                              children: [
-                                CircularProgressIndicator(
-                                  value: _undoSec / 30,
-                                  strokeWidth: 2,
-                                  color: AppColors.error,
-                                  backgroundColor: AppColors.errorTint,
-                                ),
-                                Text(
-                                  '$_undoSec',
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 10,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.error,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                      _undoButton(l10n),
+                    const SizedBox(height: 10),
                   ],
+                  SizedBox(
+                    width: double.infinity,
+                    height: 54,
+                    child: ElevatedButton(
+                      onPressed: _goScanner,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _kBlue,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: Text(
+                        'تم',
+                        style: GoogleFonts.cairo(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -352,8 +307,8 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
                       return LinearProgressIndicator(
                         value: 1 - _navBar.value,
                         minHeight: 4,
-                        backgroundColor: AppColors.border,
-                        color: AppColors.primary,
+                        backgroundColor: const Color(0xFFEAEAEA),
+                        color: _kBlue,
                       );
                     },
                   ),
@@ -363,99 +318,200 @@ class _StaffSuccessScreenState extends ConsumerState<StaffSuccessScreen>
     );
   }
 
-  Widget _summaryCard(BuildContext context, StaffSuccessPayload p, Map<String, dynamic> r) {
-    return AppCard(
-      radius: 18,
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      borderColor: AppColors.primary.withValues(alpha: 0.35),
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            left: BorderSide(color: AppColors.primary, width: 3),
+  Widget _topSuccessHeader({required bool disableAnim}) {
+    final ring = disableAnim
+        ? CustomPaint(
+            painter: _SuccessRingPainter(
+              ringT: 1,
+              checkT: 1,
+              strokeColor: Colors.white,
+            ),
+          )
+        : AnimatedBuilder(
+            animation: Listenable.merge([_ring, _check]),
+            builder: (context, _) {
+              return CustomPaint(
+                painter: _SuccessRingPainter(
+                  ringT: _ring.value,
+                  checkT: _check.value,
+                  strokeColor: Colors.white,
+                ),
+              );
+            },
+          );
+
+    return Column(
+      children: [
+        Container(
+          width: 112,
+          height: 112,
+          decoration: BoxDecoration(
+            color: _kGreen,
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: _kGreen.withValues(alpha: 0.28),
+                blurRadius: 22,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.all(6),
+          child: ring,
+        ),
+        const SizedBox(height: 16),
+        Text(
+          'تمت العملية بنجاح!',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.cairo(
+            fontSize: 24,
+            fontWeight: FontWeight.w900,
+            color: const Color(0xFF111111),
           ),
         ),
-        padding: const EdgeInsets.only(left: 12),
-        child: _summary(context, p, r),
+        const SizedBox(height: 8),
+        Text(
+          'تم إرسال SMS للعميل',
+          textAlign: TextAlign.center,
+          style: GoogleFonts.cairo(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: const Color(0xFF8A8A8A),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _undoButton(AppLocalizations l10n) {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: OutlinedButton(
+        onPressed: _undo,
+        style: OutlinedButton.styleFrom(
+          side: const BorderSide(color: AppColors.error, width: 2),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          foregroundColor: AppColors.error,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              l10n.staffUndoShort,
+              style: GoogleFonts.cairo(
+                fontWeight: FontWeight.w900,
+                fontSize: 15,
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    value: _undoSec / 30,
+                    strokeWidth: 2.5,
+                    color: AppColors.error,
+                    backgroundColor: AppColors.errorTint,
+                  ),
+                  Text(
+                    '$_undoSec',
+                    style: GoogleFonts.cairo(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _summary(BuildContext context, StaffSuccessPayload p, Map<String, dynamic> r) {
-    final l10n = AppLocalizations.of(context)!;
-    String amt(double v) => '${v.toStringAsFixed(2)} ${l10n.currencyDisplay}';
+  Widget _summaryCard(BuildContext context, StaffSuccessPayload p, Map<String, dynamic> r) {
     final c = p.customer;
-    switch (p.mode) {
-      case StaffTxnMode.purchase:
-        final paid = p.amount;
-        final cb = _d(r['cashback_earned']);
-        final newCb = _d(r['new_cashback_balance']);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _line(l10n.staffSuccCustomer, c.name),
-            _line(l10n.staffSuccAmountPaid, amt(paid)),
-            _line(l10n.staffSuccCashbackAdded, '+${amt(cb)}',
-                color: AppColors.success),
-            _line(l10n.staffSuccCashbackNow, amt(newCb)),
-          ],
-        );
-      case StaffTxnMode.redeem:
-        final su = _d(r['subscription_used']);
-        final cu = _d(r['cashback_used']);
-        final ns = _d(r['new_subscription_balance']);
-        final nc = _d(r['new_cashback_balance']);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _line(l10n.staffSuccCustomer, c.name),
-            _line(l10n.staffSuccAmountRedeemed, amt(p.amount)),
-            _line(l10n.staffSuccFromSubscription, amt(su)),
-            _line(l10n.staffSuccFromCashback, amt(cu)),
-            _line(l10n.staffSuccSubAfter, amt(ns)),
-            _line(l10n.staffSuccCashbackAfter, amt(nc)),
-          ],
-        );
-      case StaffTxnMode.subscription:
-        final credit = _d(r['credit_applied']);
-        final ns = _d(r['new_subscription_balance']);
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _line(l10n.staffSuccCustomer, c.name),
-            _line(l10n.staffSuccPaidCash, amt(p.amount)),
-            _line(l10n.staffSuccCreditAdded, '+${amt(credit)}',
-                color: AppColors.success),
-            _line(l10n.staffSuccSubNow, amt(ns)),
-          ],
-        );
-    }
-  }
 
-  Widget _line(String k, String v, {Color? color}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Expanded(
-            child: Text(
-              k,
-              style: GoogleFonts.cairo(
-                fontWeight: FontWeight.w700,
-                color: AppColors.textSecondary,
-              ),
-            ),
+    String formatSar(double v) => '${v.toStringAsFixed(2)} ${AppLocalizations.of(context)!.currencyDisplay}';
+
+    final paid = p.amount;
+    final cbAdded = p.mode == StaffTxnMode.purchase
+        ? _d(r['cashback_earned'])
+        : (p.mode == StaffTxnMode.subscription ? _d(r['credit_applied']) : 0.0);
+    final balance = switch (p.mode) {
+      StaffTxnMode.purchase => _d(r['new_cashback_balance']),
+      StaffTxnMode.redeem => _d(r['new_subscription_balance']) + _d(r['new_cashback_balance']),
+      StaffTxnMode.subscription => _d(r['new_subscription_balance']),
+    };
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x12000000),
+            blurRadius: 18,
+            offset: Offset(0, 10),
           ),
-          Text(
-            v,
-            style: GoogleFonts.cairo(
-              fontWeight: FontWeight.w800,
-              fontSize: 16,
-              color: color ?? AppColors.textPrimary,
-            ),
+        ],
+        border: Border.all(color: const Color(0xFFEFEFEF)),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _kv('العميل', c.name),
+          const Divider(height: 18),
+          _kv('المبلغ المدفوع', formatSar(paid)),
+          const Divider(height: 18),
+          _kv(
+            'الكاش باك المضاف',
+            '+${formatSar(cbAdded)}',
+            valueColor: _kGreen,
+          ),
+          const Divider(height: 18),
+          _kv(
+            'الرصيد الحالي',
+            formatSar(balance),
+            valueColor: _kBlue,
           ),
         ],
       ),
+    );
+  }
+
+  Widget _kv(String label, String value, {Color? valueColor}) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: GoogleFonts.cairo(
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF7A7A7A),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          value,
+          textDirection: TextDirection.ltr,
+          style: GoogleFonts.cairo(
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            color: valueColor ?? const Color(0xFF111111),
+          ),
+        ),
+      ],
     );
   }
 }
