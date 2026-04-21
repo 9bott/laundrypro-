@@ -59,6 +59,8 @@ Deno.serve(async (req) => {
     return jsonError("forbidden", "staff_id_mismatch_token", 403);
   }
 
+  const storeId = staffGate.ctx.staff.store_id;
+
   const { data: existing } = await supabase
     .from("transactions")
     .select("*")
@@ -113,6 +115,7 @@ Deno.serve(async (req) => {
       idempotency_key,
       customer_id,
       staff_id,
+      store_id: storeId,
       plan_id,
       type: "subscription",
       amount: price,

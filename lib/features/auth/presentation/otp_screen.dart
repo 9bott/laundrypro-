@@ -533,17 +533,30 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Directionality(
-                                  textDirection: TextDirection.ltr,
-                                  child: Align(
-                                    alignment: Alignment.centerRight,
-                                    child: Text(
-                                      'أُرسل إلى +966${_maskedPhoneLine()}',
-                                      style: TextStyle(
-                                        color: Colors.white.withValues(alpha: 0.92),
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                Align(
+                                  alignment: Alignment.center,
+                                  child: RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      children: [
+                                        const TextSpan(
+                                          text: 'أُرسل إلى ',
+                                          style: TextStyle(
+                                            color: Colors.white70,
+                                            fontSize: 15,
+                                            fontFamily: 'inherit',
+                                          ),
+                                        ),
+                                        TextSpan(
+                                          text: '+966${_maskedPhoneLine()}',
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 1.2,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),

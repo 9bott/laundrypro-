@@ -9,6 +9,7 @@ export type StaffAuth = {
     role: string;
     branch: string;
     is_active: boolean;
+    store_id: string;
   };
 };
 
@@ -33,7 +34,7 @@ export async function requireStaff(
 
   const { data: staff, error: se } = await supabase
     .from("staff")
-    .select("id, phone, name, role, branch, is_active")
+    .select("id, phone, name, role, branch, is_active, store_id")
     .eq("auth_user_id", user.id)
     .maybeSingle();
 
