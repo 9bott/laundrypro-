@@ -88,7 +88,12 @@ class _OwnerTransactionsScreenState extends ConsumerState<OwnerTransactionsScree
           '${t.id}',
         );
       }
-      await Share.share(buf.toString(), subject: 'transactions.csv');
+      await SharePlus.instance.share(
+        ShareParams(
+          text: buf.toString(),
+          subject: 'transactions.csv',
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

@@ -91,17 +91,27 @@ export async function dispatchNotification(
   let delivered = false;
 
   if (wantSms && cust.phone) {
-    const r = await sendUnifonicSms(cust.phone as string, message);
-    delivered = r.ok;
+    try {
+      const r = await sendUnifonicSms(cust.phone as string, message);
+      delivered = r.ok;
+    } catch (e) {
+      console.error("Notification failed (non-fatal):", e);
+      // Don't throw — let transaction complete.
+    }
   }
 
   if (wantPush && cust.device_token) {
-    await sendPushStub(
-      cust.device_token as string,
-      "Point",
-      message,
-    );
-    delivered = true;
+    try {
+      await sendPushStub(
+        cust.device_token as string,
+        "Point",
+        message,
+      );
+      delivered = true;
+    } catch (e) {
+      console.error("Notification failed (non-fatal):", e);
+      // Don't throw — let transaction complete.
+    }
   }
 
   const logChannel = wantSms && wantPush

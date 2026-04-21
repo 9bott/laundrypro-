@@ -481,8 +481,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               OutlinedButton.icon(
                                 onPressed: () {
                                   final code = c.referralCode ?? '';
-                                  Share.share(
-                                    l10n.referralShare(code),
+                                  SharePlus.instance.share(
+                                    ShareParams(text: l10n.referralShare(code)),
                                   );
                                 },
                                 icon: const Icon(Icons.share),

@@ -148,18 +148,23 @@ Deno.serve(async (req) => {
     return jsonError("db_error", ue.message, 500);
   }
 
-  await dispatchNotification(supabase, {
-    customer_id,
-    type: "subscription_charge",
-    channel: "sms",
-    data: {
-      name: customer.name,
-      credit,
-      subscription_balance: subAfter,
-      balance: subAfter,
-    },
-    transaction_id: txRow.id as string,
-  });
+  try {
+    await dispatchNotification(supabase, {
+      customer_id,
+      type: "subscription_charge",
+      channel: "sms",
+      data: {
+        name: customer.name,
+        credit,
+        subscription_balance: subAfter,
+        balance: subAfter,
+      },
+      transaction_id: txRow.id as string,
+    });
+  } catch (e) {
+    console.error("Notification failed (non-fatal):", e);
+    // Don't throw — let transaction complete.
+  }
 
   await writeAuditLog(supabase, {
     actor_id: staff_id,

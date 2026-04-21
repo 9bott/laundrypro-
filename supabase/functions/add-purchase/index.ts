@@ -298,30 +298,40 @@ Deno.serve(async (req) => {
     deviceId: device_id,
   });
 
-  await dispatchNotification(supabase, {
-    customer_id,
-    type: "transaction",
-    channel: "sms",
-    data: {
-      name: customer.name,
-      cashback: cashbackEarned,
-      balance: finalCashback,
-    },
-    transaction_id: purchaseTx.id as string,
-  });
-
-  if (streakBonus > 0) {
+  try {
     await dispatchNotification(supabase, {
       customer_id,
-      type: "streak",
+      type: "transaction",
       channel: "sms",
       data: {
         name: customer.name,
-        streak: streakWeekLabel,
+        cashback: cashbackEarned,
         balance: finalCashback,
       },
-      transaction_id: streakTxId,
+      transaction_id: purchaseTx.id as string,
     });
+  } catch (e) {
+    console.error("Notification failed (non-fatal):", e);
+    // Don't throw — let transaction complete.
+  }
+
+  if (streakBonus > 0) {
+    try {
+      await dispatchNotification(supabase, {
+        customer_id,
+        type: "streak",
+        channel: "sms",
+        data: {
+          name: customer.name,
+          streak: streakWeekLabel,
+          balance: finalCashback,
+        },
+        transaction_id: streakTxId,
+      });
+    } catch (e) {
+      console.error("Notification failed (non-fatal):", e);
+      // Don't throw — let transaction complete.
+    }
   }
 
   await writeAuditLog(supabase, {

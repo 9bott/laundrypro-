@@ -538,7 +538,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
                                   child: Align(
                                     alignment: Alignment.centerRight,
                                     child: Text(
-                                      'أُرسل إلى +966$_maskedPhoneLine()',
+                                      'أُرسل إلى +966${_maskedPhoneLine()}',
                                       style: TextStyle(
                                         color: Colors.white.withValues(alpha: 0.92),
                                         fontSize: 15,
