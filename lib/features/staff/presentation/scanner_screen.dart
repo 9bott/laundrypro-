@@ -6,77 +6,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/env.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/staff/staff_feedback.dart';
-import '../../../core/utils/offline_pending_provider.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/offline_pending_provider.dart';
 import '../../customer/presentation/providers/customer_providers.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/blue_button.dart';
 import '../data/staff_repository.dart';
 import 'providers/staff_providers.dart';
 
-const Color _kPageBg = Color(0xFFF8F9FA);
-const Color _kPointBlue = Color(0xFF185FA5);
-
-String _initials(String name) {
-  final t = name.trim();
-  if (t.isEmpty) return 'مت';
-  final parts = t.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
-  if (parts.isEmpty) return t.characters.take(2).toString();
-  if (parts.length == 1) return parts.first.characters.take(2).toString();
-  return (parts.first.characters.take(1).toString() +
-          parts.last.characters.take(1).toString())
-      .toUpperCase();
-}
-
-class _StaffStoreView {
-  const _StaffStoreView({
-    required this.storeName,
-    required this.logoUrl,
-    required this.role,
-  });
-
-  final String storeName;
-  final String? logoUrl;
-  final String role;
-}
-
-final _staffStoreViewProvider = FutureProvider<_StaffStoreView>((ref) async {
-  if (!Env.hasSupabase) {
-    return const _StaffStoreView(storeName: 'متجري', logoUrl: null, role: 'staff');
-  }
-  final user = Supabase.instance.client.auth.currentUser;
-  if (user == null) {
-    return const _StaffStoreView(storeName: 'متجري', logoUrl: null, role: 'staff');
-  }
-  final mem = await Supabase.instance.client
-      .from('store_memberships')
-      .select('role, store_id')
-      .eq('user_id', user.id)
-      .eq('status', 'active')
-      .limit(1)
-      .maybeSingle();
-  final role = (mem?['role'] as String?)?.toLowerCase() ?? 'staff';
-  final storeId = mem?['store_id'] as String?;
-  if (storeId == null) {
-    return _StaffStoreView(storeName: 'متجري', logoUrl: null, role: role);
-  }
-  final store = await Supabase.instance.client
-      .from('stores')
-      .select('name, logo_url')
-      .eq('id', storeId)
-      .maybeSingle();
-  final name = (store?['name'] as String?)?.trim();
-  final logo = store?['logo_url'] as String?;
-  return _StaffStoreView(
-    storeName: (name == null || name.isEmpty) ? 'متجري' : name,
-    logoUrl: logo,
-    role: role,
-  );
-});
+const Color _scanPrimary = Color(0xFF2563EB);
 
 /// تنظيف ناتج الكاميرا — JWT = نقطة + نقطة؛ نأخذ أول 3 مقاطع كاملة (بدون regex خاطئ لـ `-` داخل `[]`).
 String normalizeScannedQrToken(String raw) {
@@ -137,17 +79,12 @@ class StaffScannerScreen extends ConsumerStatefulWidget {
 class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     with TickerProviderStateMixin {
   late final MobileScannerController _cam;
+  late AnimationController _scanSweep;
   ProviderSubscription<AsyncValue<bool>>? _connSub;
   String? _scanMsg;
   bool _handling = false;
   String? _lastCode;
   DateTime? _lastAt;
-
-  final _phoneCtrl = TextEditingController();
-  final _phoneFocus = FocusNode();
-  bool _phoneBusy = false;
-  List<StaffCustomerView> _phoneResults = [];
-  String? _phoneErr;
 
   @override
   void initState() {
@@ -156,6 +93,10 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
       detectionSpeed: DetectionSpeed.noDuplicates,
       facing: CameraFacing.back,
     );
+    _scanSweep = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _connSub ??= staffListenConnectivityDrainManual(ref);
       unawaited(() async {
@@ -168,9 +109,8 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
   @override
   void dispose() {
     _connSub?.close();
+    _scanSweep.dispose();
     _cam.dispose();
-    _phoneFocus.dispose();
-    _phoneCtrl.dispose();
     super.dispose();
   }
 
@@ -203,13 +143,12 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     _handling = true;
     try {
       final repo = ref.read(staffRepositoryProvider);
-      final storeId = ref.read(staffMemberProvider).value?.storeId ?? '';
       final candidates = qrTokenCandidates(raw).toList();
       StaffApiException? lastErr;
       for (var i = 0; i < candidates.length; i++) {
         final token = candidates[i];
         try {
-          final c = await repo.getCustomerByQr(qrToken: token, storeId: storeId);
+          final c = await repo.getCustomerByQr(token);
           if (!mounted) return;
           staffSuccessSound();
           staffHaptic();
@@ -263,6 +202,406 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     }
   }
 
+  void _openPhoneSheet(BuildContext context) {
+    HapticFeedback.lightImpact();
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const _PhoneLookupSheet(),
+    );
+  }
+
+  static Rect _frameRect(Size size) {
+    final w = size.width * 0.72;
+    final h = w;
+    final left = (size.width - w) / 2;
+    final top = (size.height - h) / 2 - 24;
+    return Rect.fromLTWH(left, top, w, h);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final staffAsync = ref.watch(staffMemberProvider);
+    final staff = staffAsync.value;
+    final name = staff?.name ?? '';
+    final role = (staff?.role ?? 'staff').toLowerCase();
+    final isMgr = role == 'owner' || role == 'manager';
+    final pending = ref.watch(offlinePendingCountProvider);
+    final disableAnim = MediaQuery.disableAnimationsOf(context);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      body: Column(
+        children: [
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              child: AppCard(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                shadow: const [],
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.logout_outlined, color: AppColors.primary, size: 22),
+                      onPressed: _logout,
+                    ),
+                    if (pending > 0)
+                      Container(
+                        margin: const EdgeInsets.only(left: 4, right: 4),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.warningTint,
+                          borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: AppColors.warning.withValues(alpha: 0.5),
+                            ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Tooltip(
+                              message: l10n.pendingOfflineTooltip,
+                              child: Icon(Icons.cloud_sync_outlined, color: AppColors.warning, size: 18),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '$pending',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: AppColors.warning,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            l10n.welcomeUser(name),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: isMgr ? AppColors.goldTint : AppColors.primaryTint,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: isMgr
+                                    ? AppColors.gold.withValues(alpha: 0.35)
+                                    : AppColors.primaryBorder,
+                              ),
+                            ),
+                            child: Text(
+                              isMgr ? l10n.roleManager : l10n.roleStaffMember,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: isMgr ? AppColors.gold : AppColors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  MobileScanner(
+                    controller: _cam,
+                    onDetect: (capture) {
+                      for (final b in capture.barcodes) {
+                        final v = b.rawValue;
+                        if (v != null && v.isNotEmpty) {
+                          unawaited(_onQr(v));
+                          break;
+                        }
+                      }
+                    },
+                  ),
+                  IgnorePointer(
+                    child: LayoutBuilder(
+                      builder: (context, c) {
+                        return CustomPaint(
+                          size: Size(c.maxWidth, c.maxHeight),
+                          painter: _HoleMaskPainter(
+                            frame: _frameRect(Size(c.maxWidth, c.maxHeight)),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: LayoutBuilder(
+                      builder: (context, c) {
+                        return CustomPaint(
+                          size: Size(c.maxWidth, c.maxHeight),
+                          painter: _CornerBracketsPainter(
+                            frame: _frameRect(Size(c.maxWidth, c.maxHeight)),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  if (!disableAnim)
+                    IgnorePointer(
+                      child: AnimatedBuilder(
+                        animation: _scanSweep,
+                        builder: (context, c) {
+                          return LayoutBuilder(
+                            builder: (context, cons) {
+                              return CustomPaint(
+                                size: Size(cons.maxWidth, cons.maxHeight),
+                                painter: _ScanLinePainter(
+                                  t: _scanSweep.value,
+                                  frame: _frameRect(Size(cons.maxWidth, cons.maxHeight)),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      ),
+                    ),
+                  Positioned(
+                    left: 0,
+                    right: 0,
+                    bottom: 100,
+                    child: Text(
+                      l10n.staffScanCustomerQr,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black.withValues(alpha: 0.85),
+                            blurRadius: 8,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (_scanMsg != null)
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                        child: Material(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(12),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            child: Text(
+                              _scanMsg!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.paddingOf(context).bottom + 16),
+            child: SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  elevation: 0,
+                  backgroundColor: AppColors.surface,
+                  foregroundColor: AppColors.primary,
+                  side: const BorderSide(color: AppColors.primary, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                ),
+                onPressed: () => _openPhoneSheet(context),
+                icon: const Icon(Icons.phone_outlined, size: 22),
+                label: Text(
+                  l10n.staffSearchByPhone,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HoleMaskPainter extends CustomPainter {
+  _HoleMaskPainter({required this.frame});
+
+  final Rect frame;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final outer = Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final inner = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(frame, const Radius.circular(16)),
+      );
+    final hole = Path.combine(PathOperation.difference, outer, inner);
+    canvas.drawPath(
+      hole,
+      Paint()..color = Colors.black.withValues(alpha: 0.55),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _HoleMaskPainter oldDelegate) => oldDelegate.frame != frame;
+}
+
+class _CornerBracketsPainter extends CustomPainter {
+  _CornerBracketsPainter({required this.frame});
+
+  final Rect frame;
+  static const double _corner = 40;
+  static const double _stroke = 3;
+  static const double _r = 4;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = _scanPrimary
+      ..strokeWidth = _stroke
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    void lTopLeft() {
+      final path = Path()
+        ..moveTo(frame.left, frame.top + _corner)
+        ..lineTo(frame.left, frame.top + _r)
+        ..quadraticBezierTo(frame.left, frame.top, frame.left + _r, frame.top)
+        ..lineTo(frame.left + _corner, frame.top);
+      canvas.drawPath(path, paint);
+    }
+
+    void lTopRight() {
+      final path = Path()
+        ..moveTo(frame.right - _corner, frame.top)
+        ..lineTo(frame.right - _r, frame.top)
+        ..quadraticBezierTo(frame.right, frame.top, frame.right, frame.top + _r)
+        ..lineTo(frame.right, frame.top + _corner);
+      canvas.drawPath(path, paint);
+    }
+
+    void lBottomLeft() {
+      final path = Path()
+        ..moveTo(frame.left, frame.bottom - _corner)
+        ..lineTo(frame.left, frame.bottom - _r)
+        ..quadraticBezierTo(frame.left, frame.bottom, frame.left + _r, frame.bottom)
+        ..lineTo(frame.left + _corner, frame.bottom);
+      canvas.drawPath(path, paint);
+    }
+
+    void lBottomRight() {
+      final path = Path()
+        ..moveTo(frame.right - _corner, frame.bottom)
+        ..lineTo(frame.right - _r, frame.bottom)
+        ..quadraticBezierTo(frame.right, frame.bottom, frame.right, frame.bottom - _r)
+        ..lineTo(frame.right, frame.bottom - _corner);
+      canvas.drawPath(path, paint);
+    }
+
+    lTopLeft();
+    lTopRight();
+    lBottomLeft();
+    lBottomRight();
+  }
+
+  @override
+  bool shouldRepaint(covariant _CornerBracketsPainter oldDelegate) => oldDelegate.frame != frame;
+}
+
+class _ScanLinePainter extends CustomPainter {
+  _ScanLinePainter({required this.t, required this.frame});
+
+  final double t;
+  final Rect frame;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final lineWidth = frame.width * 0.8;
+    final left = frame.left + (frame.width - lineWidth) / 2;
+    final y = frame.top + 8 + (frame.height - 16) * t;
+    final grad = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.centerLeft,
+        end: Alignment.centerRight,
+        colors: [
+          Colors.transparent,
+          _scanPrimary.withValues(alpha: 0.95),
+          Colors.transparent,
+        ],
+        stops: const [0.0, 0.5, 1.0],
+      ).createShader(Rect.fromLTWH(left, y - 1, lineWidth, 2));
+    canvas.drawRect(Rect.fromLTWH(left, y - 1, lineWidth, 2), grad);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScanLinePainter oldDelegate) =>
+      oldDelegate.t != t || oldDelegate.frame != frame;
+}
+
+class _PhoneLookupSheet extends ConsumerStatefulWidget {
+  const _PhoneLookupSheet();
+
+  @override
+  ConsumerState<_PhoneLookupSheet> createState() => _PhoneLookupSheetState();
+}
+
+class _PhoneLookupSheetState extends ConsumerState<_PhoneLookupSheet> {
+  final _ctrl = TextEditingController();
+  final _focus = FocusNode();
+  bool _busy = false;
+  List<StaffCustomerView> _results = [];
+  String? _err;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focus.requestFocus();
+    });
+  }
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
   String? _toE164(String nine) {
     final d = nine.replaceAll(RegExp(r'\D'), '');
     if (d.length == 9) return '+966$d';
@@ -270,456 +609,145 @@ class _StaffScannerScreenState extends ConsumerState<StaffScannerScreen>
     return null;
   }
 
-  Future<void> _searchByPhone() async {
+  Future<void> _search() async {
     final l10n = AppLocalizations.of(context)!;
-    final e164 = _toE164(_phoneCtrl.text);
+    final e164 = _toE164(_ctrl.text);
     if (e164 == null) {
-      setState(() => _phoneErr = l10n.staffEnterNineDigits);
+      setState(() => _err = l10n.staffEnterNineDigits);
       return;
     }
     setState(() {
-      _phoneBusy = true;
-      _phoneErr = null;
-      _phoneResults = [];
+      _busy = true;
+      _err = null;
+      _results = [];
     });
     try {
-      final storeId = ref.read(staffMemberProvider).value?.storeId ?? '';
-      final list = await ref
-          .read(staffRepositoryProvider)
-          .getCustomerByPhone(phoneE164: e164, storeId: storeId);
+      final list =
+          await ref.read(staffRepositoryProvider).getCustomerByPhone(e164);
       if (!mounted) return;
       setState(() {
-        _phoneResults = list;
+        _results = list;
         if (list.isEmpty) {
-          _phoneErr = l10n.staffNoCustomerForPhone;
+          _err = l10n.staffNoCustomerForPhone;
         }
       });
       if (list.length == 1) {
         staffSuccessSound();
         staffHaptic();
         ref.read(staffCustomerProvider.notifier).select(list.single);
-        if (!mounted) return;
+        Navigator.pop(context);
         context.go('/staff/customer-card');
       }
     } catch (e) {
-      if (mounted) setState(() => _phoneErr = '$e');
+      if (mounted) setState(() => _err = '$e');
     } finally {
-      if (mounted) setState(() => _phoneBusy = false);
+      if (mounted) setState(() => _busy = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final pending = ref.watch(offlinePendingCountProvider);
-    final storeAsync = ref.watch(_staffStoreViewProvider);
-
-    final roleLabel = storeAsync.asData?.value.role == 'owner'
-        ? l10n.roleOwnerLabel
-        : (storeAsync.asData?.value.role == 'manager'
-            ? l10n.roleManager
-            : l10n.roleStaffMember);
-
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _kPageBg,
-        appBar: AppBar(
-          backgroundColor: _kPageBg,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          titleSpacing: 0,
-          title: storeAsync.when(
-            loading: () => const Text('...'),
-            error: (_, __) => const Text('المتجر'),
-            data: (s) {
-              return Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    clipBehavior: Clip.antiAlias,
-                    child: (s.logoUrl == null || s.logoUrl!.isEmpty)
-                        ? Center(
-                            child: Text(
-                              _initials(s.storeName),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 12,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
-                          )
-                        : Image.network(
-                            s.logoUrl!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Center(
-                              child: Text(
-                                _initials(s.storeName),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 12,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
-                            ),
-                          ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          s.storeName,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                            color: Color(0xFF111827),
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEFF6FF),
-                            borderRadius: BorderRadius.circular(999),
-                            border: Border.all(color: const Color(0xFFBFDBFE)),
-                          ),
-                          child: Text(
-                            roleLabel,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
-                              color: _kPointBlue,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-          actions: [
-            if (pending > 0)
-              Padding(
-                padding: const EdgeInsets.only(left: 6, right: 6),
-                child: Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7ED),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFFED7AA)),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.cloud_sync_outlined,
-                          color: AppColors.warning,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          '$pending',
-                          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 12),
-                        ),
-                      ],
-                    ),
+    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(bottom: bottom),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.borderDark,
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
               ),
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout_rounded, color: _kPointBlue),
-              tooltip: l10n.logout,
-            ),
-          ],
-        ),
-        body: ListView(
-          padding: EdgeInsets.fromLTRB(20, 8, 20, MediaQuery.paddingOf(context).bottom + 20),
-          children: [
-            _CameraCard(
-              cam: _cam,
-              scanMsg: _scanMsg,
-              onDetect: (v) => unawaited(_onQr(v)),
-            ),
-            const SizedBox(height: 14),
-            Center(
-              child: Text(
-                '──── أو ────',
-                style: TextStyle(
-                  color: Colors.grey.shade600,
+              const SizedBox(height: 16),
+              Text(
+                l10n.staffFindCustomer,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _ctrl,
+                focusNode: _focus,
+                keyboardType: TextInputType.phone,
+                textDirection: TextDirection.ltr,
+                autofocus: true,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w700,
                 ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'رقم الجوال',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF111827),
-                    ),
-                    textAlign: TextAlign.right,
+                decoration: InputDecoration(
+                  labelText: l10n.mobilePhone,
+                  labelStyle: const TextStyle(color: AppColors.textSecondary),
+                  prefixText: '+966 ',
+                  prefixStyle: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w800,
                   ),
-                  const SizedBox(height: 10),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFE5E7EB)),
-                          ),
-                          child: const Text(
-                            '🇸🇦  +966',
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: TextField(
-                            controller: _phoneCtrl,
-                            focusNode: _phoneFocus,
-                            textDirection: TextDirection.ltr,
-                            keyboardType: TextInputType.phone,
-                            maxLength: 9,
-                            decoration: InputDecoration(
-                              counterText: '',
-                              hintText: '5XXXXXXXX',
-                              filled: true,
-                              fillColor: const Color(0xFFF8F9FA),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(color: _kPointBlue, width: 1.8),
-                              ),
-                            ),
-                            onSubmitted: (_) => _searchByPhone(),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        SizedBox(
-                          height: 52,
-                          child: FilledButton(
-                            onPressed: _phoneBusy ? null : _searchByPhone,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: _kPointBlue,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: _phoneBusy
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                                  )
-                                : const Text('بحث', style: TextStyle(fontWeight: FontWeight.w900)),
-                          ),
-                        ),
-                      ],
-                    ),
+                  hintText: '5XXXXXXXX',
+                  hintStyle: TextStyle(
+                    color: AppColors.textHint.withValues(alpha: 0.9),
                   ),
-                  if (_phoneErr != null) ...[
-                    const SizedBox(height: 10),
-                    Text(
-                      _phoneErr!,
-                      style: const TextStyle(color: AppColors.error, fontWeight: FontWeight.w700),
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
-                  if (_phoneResults.length > 1) ...[
-                    const SizedBox(height: 14),
-                    Text(
-                      l10n.staffPickCustomer,
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF111827)),
-                      textAlign: TextAlign.right,
-                    ),
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: _phoneResults.map((c) {
-                        return ActionChip(
-                          label: Text(c.name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                          onPressed: () {
-                            HapticFeedback.lightImpact();
-                            staffSuccessSound();
-                            ref.read(staffCustomerProvider.notifier).select(c);
-                            context.go('/staff/customer-card');
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ],
+                ),
+                onFieldSubmitted: (_) {
+                  HapticFeedback.lightImpact();
+                  unawaited(_search());
+                },
               ),
-            ),
-          ],
+              if (_err != null) ...[
+                const SizedBox(height: 8),
+                Text(_err!, style: const TextStyle(color: AppColors.error)),
+              ],
+              const SizedBox(height: 12),
+              BlueButton(
+                label: l10n.search,
+                loading: _busy,
+                onTap: _busy ? null : _search,
+              ),
+              if (_results.length > 1) ...[
+                const SizedBox(height: 16),
+                Text(
+                  l10n.staffPickCustomer,
+                  style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textPrimary),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: _results.map((c) {
+                    return ActionChip(
+                      label: Text(c.name, style: const TextStyle(fontSize: 16)),
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                        staffSuccessSound();
+                        ref.read(staffCustomerProvider.notifier).select(c);
+                        Navigator.pop(context);
+                        context.go('/staff/customer-card');
+                      },
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
   }
-}
-
-class _CameraCard extends StatelessWidget {
-  const _CameraCard({
-    required this.cam,
-    required this.onDetect,
-    required this.scanMsg,
-  });
-
-  final MobileScannerController cam;
-  final void Function(String raw) onDetect;
-  final String? scanMsg;
-
-  static Rect _frameRect(Size size) {
-    const dim = 200.0;
-    final left = (size.width - dim) / 2;
-    final top = (size.height - dim) / 2;
-    return Rect.fromLTWH(left, top, dim, dim);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final disableAnim = MediaQuery.disableAnimationsOf(context);
-
-    return Container(
-      height: 280,
-      decoration: BoxDecoration(
-        color: Colors.black,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          MobileScanner(
-            controller: cam,
-            onDetect: (capture) {
-              for (final b in capture.barcodes) {
-                final v = b.rawValue;
-                if (v != null && v.isNotEmpty) {
-                  onDetect(v);
-                  break;
-                }
-              }
-            },
-          ),
-          IgnorePointer(
-            child: LayoutBuilder(
-              builder: (context, c) {
-                return CustomPaint(
-                  size: Size(c.maxWidth, c.maxHeight),
-                  painter: _CornerOnlyPainter(frame: _frameRect(Size(c.maxWidth, c.maxHeight))),
-                );
-              },
-            ),
-          ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 18,
-            child: Text(
-              l10n.staffScanCustomerQr,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                shadows: [Shadow(color: Colors.black87, blurRadius: 8)],
-              ),
-            ),
-          ),
-          if (scanMsg != null)
-            Align(
-              alignment: Alignment.topCenter,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 0),
-                child: Material(
-                  color: AppColors.error,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    child: Text(
-                      scanMsg!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          if (disableAnim)
-            const SizedBox.shrink(),
-        ],
-      ),
-    );
-  }
-}
-
-class _CornerOnlyPainter extends CustomPainter {
-  _CornerOnlyPainter({required this.frame});
-
-  final Rect frame;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round;
-
-    const corner = 28.0;
-
-    // Top-left
-    canvas.drawLine(Offset(frame.left, frame.top), Offset(frame.left + corner, frame.top), paint);
-    canvas.drawLine(Offset(frame.left, frame.top), Offset(frame.left, frame.top + corner), paint);
-    // Top-right
-    canvas.drawLine(Offset(frame.right, frame.top), Offset(frame.right - corner, frame.top), paint);
-    canvas.drawLine(Offset(frame.right, frame.top), Offset(frame.right, frame.top + corner), paint);
-    // Bottom-left
-    canvas.drawLine(Offset(frame.left, frame.bottom), Offset(frame.left + corner, frame.bottom), paint);
-    canvas.drawLine(Offset(frame.left, frame.bottom), Offset(frame.left, frame.bottom - corner), paint);
-    // Bottom-right
-    canvas.drawLine(Offset(frame.right, frame.bottom), Offset(frame.right - corner, frame.bottom), paint);
-    canvas.drawLine(Offset(frame.right, frame.bottom), Offset(frame.right, frame.bottom - corner), paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _CornerOnlyPainter oldDelegate) => oldDelegate.frame != frame;
 }

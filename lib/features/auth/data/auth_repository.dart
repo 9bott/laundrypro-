@@ -86,7 +86,7 @@ class AuthRepository {
       );
 
       return completer.future;
-    } catch (e) {
+    } catch (e, stack) {
       debugPrint('[AUTH] signInWithPhoneOtp FAILED: $e');
       rethrow;
     }

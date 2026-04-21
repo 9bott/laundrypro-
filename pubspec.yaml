@@ -1,7 +1,7 @@
 name: laundrypro
 description: Point - Loyalty Wallet App
 publish_to: "none"
-version: 1.0.0+37
+version: 1.0.0+33
 
 environment:
   sdk: ^3.9.0
@@ -23,9 +23,6 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_messaging: ^15.2.10
   firebase_crashlytics: ^4.3.10
-
-  # OTP AutoFill (Android SMS Retriever)
-  sms_autofill: ^2.3.0
 
   # QR
   qr_flutter: ^4.1.0

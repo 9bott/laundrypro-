@@ -15,7 +15,6 @@ class StaffMember {
     required this.branch,
     this.pinHash,
     required this.isActive,
-    required this.storeId,
   });
 
   final String id;
@@ -25,7 +24,6 @@ class StaffMember {
   final String branch;
   final String? pinHash;
   final bool isActive;
-  final String storeId;
 
   factory StaffMember.fromRow(Map<String, dynamic> m) {
     return StaffMember(
@@ -36,7 +34,6 @@ class StaffMember {
       branch: m[kStaffBranch] as String? ?? 'main',
       pinHash: m[kStaffPinHash] as String?,
       isActive: m[kStaffIsActive] as bool? ?? true,
-      storeId: m[kStaffStoreId] as String? ?? '',
     );
   }
 }
@@ -188,15 +185,11 @@ class StaffRepository {
     return pinMatchesStoredHash(staff, pin);
   }
 
-  Future<StaffCustomerView?> getCustomerById({
-    required String id,
-    required String storeId,
-  }) async {
+  Future<StaffCustomerView?> getCustomerById(String id) async {
     final row = await _client
         .from(kTableCustomers)
         .select()
         .eq(kCustomersId, id)
-        .eq(kCustomersStoreId, storeId)
         .maybeSingle();
     if (row == null) return null;
     final m = Map<String, dynamic>.from(row);
@@ -265,10 +258,7 @@ class StaffRepository {
     return null;
   }
 
-  Future<StaffCustomerView> getCustomerByQr({
-    required String qrToken,
-    required String storeId,
-  }) async {
+  Future<StaffCustomerView> getCustomerByQr(String qrToken) async {
     // Ensure we send a fresh staff JWT; function will reject missing/expired tokens.
     final initialSession = _client.auth.currentSession;
     if (initialSession == null) {
@@ -294,10 +284,7 @@ class StaffRepository {
         headers: {
           'Authorization': 'Bearer $token',
         },
-        body: {
-          'qr_token': qrToken,
-          'store_id': storeId,
-        },
+        body: {'qr_token': qrToken},
       );
     } catch (e) {
       throw StaffApiException(
@@ -320,7 +307,6 @@ class StaffRepository {
         .from(kTableCustomers)
         .select()
         .eq(kCustomersId, v.id)
-        .eq(kCustomersStoreId, storeId)
         .maybeSingle();
     if (full == null) return v;
     final merged = StaffCustomerView.fromCustomerRow(
@@ -349,15 +335,11 @@ class StaffRepository {
   }
 
   /// Exact phone match +966XXXXXXXXX
-  Future<List<StaffCustomerView>> getCustomerByPhone({
-    required String phoneE164,
-    required String storeId,
-  }) async {
+  Future<List<StaffCustomerView>> getCustomerByPhone(String phoneE164) async {
     final rows = await _client
         .from(kTableCustomers)
         .select()
-        .eq(kCustomersPhone, phoneE164)
-        .eq(kCustomersStoreId, storeId);
+        .eq(kCustomersPhone, phoneE164);
     final list = rows as List;
     return list
         .map(
@@ -372,7 +354,6 @@ class StaffRepository {
   Future<Map<String, dynamic>> addPurchase({
     required String customerId,
     required String staffId,
-    required String storeId,
     required double amount,
     required String idempotencyKey,
     String? deviceId,
@@ -382,7 +363,6 @@ class StaffRepository {
       body: {
         'customer_id': customerId,
         'staff_id': staffId,
-        'store_id': storeId,
         'amount': amount,
         'idempotency_key': idempotencyKey,
         if (deviceId != null) 'device_id': deviceId,
@@ -395,7 +375,6 @@ class StaffRepository {
   Future<Map<String, dynamic>> redeemBalance({
     required String customerId,
     required String staffId,
-    required String storeId,
     required double amount,
     required String idempotencyKey,
   }) async {
@@ -404,7 +383,6 @@ class StaffRepository {
       body: {
         'customer_id': customerId,
         'staff_id': staffId,
-        'store_id': storeId,
         'amount': amount,
         'idempotency_key': idempotencyKey,
       },
@@ -416,7 +394,6 @@ class StaffRepository {
   Future<Map<String, dynamic>> addSubscription({
     required String customerId,
     required String staffId,
-    required String storeId,
     required String planId,
     required String idempotencyKey,
   }) async {
@@ -425,7 +402,6 @@ class StaffRepository {
       body: {
         'customer_id': customerId,
         'staff_id': staffId,
-        'store_id': storeId,
         'plan_id': planId,
         'idempotency_key': idempotencyKey,
       },
@@ -437,14 +413,12 @@ class StaffRepository {
   Future<Map<String, dynamic>> undoTransaction({
     required String transactionId,
     required String staffId,
-    required String storeId,
   }) async {
     final res = await _client.functions.invoke(
       kFnUndoTransaction,
       body: {
         'transaction_id': transactionId,
         'staff_id': staffId,
-        'store_id': storeId,
       },
     );
     _throwIfBad(res);

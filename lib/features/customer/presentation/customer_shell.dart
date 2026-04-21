@@ -15,15 +15,14 @@ class CustomerShell extends ConsumerWidget {
 
   static const _iconsOutlined = [
     Icons.home_outlined,
-    Icons.layers_outlined,
-    Icons.store_outlined,
+    Icons.account_balance_outlined,
     Icons.person_outline,
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = context.l10n;
-    final labels = [l10n.navHome, l10n.navPlans, 'متاجري', l10n.profile];
+    final labels = [l10n.navHome, l10n.navPlans, l10n.profile];
 
     return OfflineBanner(
       child: Scaffold(
@@ -50,7 +49,7 @@ class CustomerShell extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: List.generate(4, (i) {
+                children: List.generate(3, (i) {
                   final sel = navigationShell.currentIndex == i;
                   return Expanded(
                     child: InkWell(

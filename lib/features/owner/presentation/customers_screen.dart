@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../l10n/app_localizations.dart';
@@ -7,7 +8,6 @@ import '../../../shared/models/customer_model.dart';
 import '../../../shared/models/transaction_model.dart';
 import '../../../shared/widgets/app_card.dart';
 import '../../../shared/widgets/tier_badge.dart';
-import '../../../core/providers/active_store_provider.dart';
 import 'providers/owner_providers.dart';
 
 class OwnerCustomersScreen extends ConsumerStatefulWidget {
@@ -21,10 +21,9 @@ class OwnerCustomersScreen extends ConsumerStatefulWidget {
 class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
   final _search = TextEditingController();
   String _tier = 'all';
+  bool _dormant = false;
   bool _loading = false;
   List<CustomerModel> _list = [];
-  static const _kPageBg = Color(0xFFF8F9FA);
-  static const _kPointBlue = Color(0xFF185FA5);
 
   @override
   void initState() {
@@ -42,15 +41,11 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
     setState(() => _loading = true);
     try {
       final repo = ref.read(ownerRepositoryProvider);
-      final storeId = ref.read(activeStoreProvider).asData?.value;
-      if (storeId == null || storeId.isEmpty) {
-        throw Exception('missing_active_store');
-      }
       final tier = _tier == 'all' ? null : _tier;
       _list = await repo.fetchCustomersDirectory(
-        storeId: storeId,
         search: _search.text.trim().isEmpty ? null : _search.text.trim(),
         tier: tier,
+        dormantOnly: _dormant,
       );
     } catch (e) {
       if (mounted) {
@@ -64,13 +59,7 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
   Future<void> _openDetail(CustomerModel c) async {
     List<TransactionModel> txs = [];
     try {
-      final storeId = ref.read(activeStoreProvider).asData?.value;
-      if (storeId == null || storeId.isEmpty) {
-        throw Exception('missing_active_store');
-      }
-      txs = await ref
-          .read(ownerRepositoryProvider)
-          .fetchCustomerTransactions(storeId: storeId, customerId: c.id);
+      txs = await ref.read(ownerRepositoryProvider).fetchCustomerTransactions(c.id);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -162,102 +151,88 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
   }
 
   Widget _customerTile(CustomerModel c, AppLocalizations l10n) {
-    final initials = _initials(c.name);
+    final lv = c.lastVisitDate;
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+      child: AppCard(
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
           onTap: () => _openDetail(c),
+          borderRadius: BorderRadius.circular(16),
           child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
+            padding: const EdgeInsets.all(4),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Color(0xFFEFF6FF),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    initials,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      color: _kPointBlue,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              c.name.isEmpty ? '—' : c.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 15,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          TierBadge(
-                            tier: c.tier,
-                            activePlanName: c.activePlanName,
-                            activePlanNameAr: c.activePlanNameAr,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Directionality(
-                        textDirection: TextDirection.ltr,
-                        child: Text(
-                          c.phone.isEmpty ? '—' : c.phone,
-                          style: const TextStyle(
-                            fontSize: 12.5,
-                            color: Color(0xFF64748B),
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Directionality(
-                      textDirection: TextDirection.ltr,
+                    Expanded(
                       child: Text(
-                        '${(c.cashbackBalance + c.subscriptionBalance).toStringAsFixed(0)} ر.س',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w900,
-                          color: Color(0xFF085041),
-                          fontSize: 14,
+                        c.name,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    TierBadge(
+                      tier: c.tier,
+                      activePlanName: c.activePlanName,
+                      activePlanNameAr: c.activePlanNameAr,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  c.phone.isEmpty ? '—' : c.phone,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                  textDirection: TextDirection.ltr,
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 6,
+                  children: [
                     Text(
-                      l10n.cashbackBalance,
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700,
+                      '${l10n.cashbackBalance}: '
+                      '${c.cashbackBalance.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    Text(
+                      '${l10n.filterSubscription}: '
+                      '${c.subscriptionBalance.toStringAsFixed(2)}',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.tertiary,
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${l10n.visits}: ${c.visitCount}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${l10n.lastVisit}: '
+                  '${lv == null ? '—' : '${lv.toLocal()}'.split('.').first}',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
               ],
             ),
@@ -267,136 +242,77 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
     );
   }
 
-  String _initials(String name) {
-    final p = name.trim().split(RegExp(r'\s+'));
-    if (p.isEmpty) return '؟';
-    if (p.length == 1) return p[0].isEmpty ? '؟' : p[0][0].toUpperCase();
-    final a = p.first.isEmpty ? '' : p.first[0];
-    final b = p.last.isEmpty ? '' : p.last[0];
-    final r = '$a$b';
-    return r.isEmpty ? '؟' : r.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Scaffold(
-      backgroundColor: _kPageBg,
       appBar: AppBar(
-        backgroundColor: _kPageBg,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'العملاء',
-                style: TextStyle(fontWeight: FontWeight.w900),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFEFF6FF),
-                borderRadius: BorderRadius.circular(999),
-                border: Border.all(color: const Color(0xFFBFDBFE)),
-              ),
-              child: Text(
-                '${_list.length}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: _kPointBlue,
-                ),
-              ),
-            ),
-          ],
-        ),
+        title: Text(l10n.customersTitle),
       ),
       body: Column(
         children: [
-          const SizedBox(height: 10),
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: TextField(
+              controller: _search,
+              decoration: InputDecoration(
+                hintText: l10n.searchHint,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: _reload,
+                ),
               ),
-              child: Row(
-                children: [
-                  const Icon(Icons.search_rounded, color: Color(0xFF94A3B8)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextField(
-                      controller: _search,
-                      decoration: const InputDecoration(
-                        hintText: 'ابحث بالاسم أو رقم الجوال',
-                        border: InputBorder.none,
-                      ),
-                      textInputAction: TextInputAction.search,
-                      onSubmitted: (_) => _reload(),
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: _reload,
-                    icon: const Icon(Icons.tune_rounded, color: _kPointBlue),
-                    tooltip: l10n.search,
-                  ),
-                ],
-              ),
+              onSubmitted: (_) => _reload(),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                _TierChip(
-                  label: 'الكل',
-                  selected: _tier == 'all',
-                  onTap: () {
-                    setState(() => _tier = 'all');
-                    _reload();
-                  },
-                ),
-                _TierChip(
-                  label: 'ذهبي',
-                  selected: _tier == 'gold',
-                  onTap: () {
-                    setState(() => _tier = 'gold');
-                    _reload();
-                  },
-                ),
-                _TierChip(
-                  label: 'فضي',
-                  selected: _tier == 'silver',
-                  onTap: () {
-                    setState(() => _tier = 'silver');
-                    _reload();
-                  },
-                ),
-                _TierChip(
-                  label: 'برونزي',
-                  selected: _tier == 'bronze',
-                  onTap: () {
-                    setState(() => _tier = 'bronze');
-                    _reload();
-                  },
-                ),
-                _TierChip(
-                  label: 'ماسي',
-                  selected: _tier == 'diamond',
-                  onTap: () {
-                    setState(() => _tier = 'diamond');
-                    _reload();
-                  },
-                ),
-              ],
-            ),
+          Wrap(
+            spacing: 6,
+            children: [
+              ChoiceChip(
+                label: Text(l10n.filterAll),
+                selected: _tier == 'all' && !_dormant,
+                onSelected: (_) {
+                  setState(() {
+                    _tier = 'all';
+                    _dormant = false;
+                  });
+                  _reload();
+                },
+              ),
+              ChoiceChip(
+                label: Text(l10n.bronze),
+                selected: _tier == 'bronze',
+                onSelected: (_) {
+                  setState(() => _tier = 'bronze');
+                  _reload();
+                },
+              ),
+              ChoiceChip(
+                label: Text(l10n.silver),
+                selected: _tier == 'silver',
+                onSelected: (_) {
+                  setState(() => _tier = 'silver');
+                  _reload();
+                },
+              ),
+              ChoiceChip(
+                label: Text(l10n.gold),
+                selected: _tier == 'gold',
+                onSelected: (_) {
+                  setState(() => _tier = 'gold');
+                  _reload();
+                },
+              ),
+              ChoiceChip(
+                label: Text(l10n.filterDormant),
+                selected: _dormant,
+                onSelected: (v) {
+                  setState(() => _dormant = v);
+                  _reload();
+                },
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
           Expanded(
             child: _loading
                 ? ListView(
@@ -407,7 +323,7 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
                     ],
                   )
                 : RefreshIndicator(
-                    color: _kPointBlue,
+                    color: AppColors.primary,
                     onRefresh: _reload,
                     child: _list.isEmpty
                         ? ListView(
@@ -430,48 +346,6 @@ class _OwnerCustomersScreenState extends ConsumerState<OwnerCustomersScreen> {
                   ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TierChip extends StatelessWidget {
-  const _TierChip({
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 8),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(999),
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFF185FA5) : Colors.white,
-            borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: selected ? const Color(0xFF185FA5) : const Color(0xFFE5E7EB),
-            ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 12,
-              color: selected ? Colors.white : const Color(0xFF0F172A),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -555,12 +429,7 @@ class _CustomerDetailSheetState extends ConsumerState<_CustomerDetailSheet> {
       final ds = double.tryParse(subCtl.text.trim()) ?? 0;
       final dc = double.tryParse(cbCtl.text.trim()) ?? 0;
       if (ds == 0 && dc == 0) return;
-      final storeId = ref.read(activeStoreProvider).asData?.value;
-      if (storeId == null || storeId.isEmpty) {
-        throw Exception('missing_active_store');
-      }
       await ref.read(ownerRepositoryProvider).adjustCustomerBalance(
-            storeId: storeId,
             customerId: widget.customer.id,
             deltaSubscription: ds,
             deltaCashback: dc,
@@ -614,12 +483,7 @@ class _CustomerDetailSheetState extends ConsumerState<_CustomerDetailSheet> {
         },
       );
       if (go != true) return;
-      final storeId = ref.read(activeStoreProvider).asData?.value;
-      if (storeId == null || storeId.isEmpty) {
-        throw Exception('missing_active_store');
-      }
       await ref.read(ownerRepositoryProvider).setCustomerBlocked(
-            storeId: storeId,
             customerId: c.id,
             blocked: !c.isBlocked,
             reason: reasonCtl.text.trim().isEmpty ? null : reasonCtl.text.trim(),

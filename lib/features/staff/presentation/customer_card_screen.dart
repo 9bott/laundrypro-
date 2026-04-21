@@ -2,21 +2,19 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/staff/staff_feedback.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../shared/widgets/app_logo_loader.dart';
+import '../../../shared/widgets/tier_badge.dart';
 import '../../customer/presentation/widgets/customer_history_content.dart';
-import '../data/staff_repository.dart';
 import 'providers/staff_providers.dart';
 import 'staff_route_models.dart';
 
 class StaffCustomerCardScreen extends ConsumerWidget {
   const StaffCustomerCardScreen({super.key});
-
-  static const _kPageBg = Color(0xFFF8F9FA);
-  static const _kPointBlue = Color(0xFF185FA5);
 
   String _initials(String name) {
     final p = name.trim().split(RegExp(r'\s+'));
@@ -31,6 +29,8 @@ class StaffCustomerCardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final localeTag = Localizations.localeOf(context).toLanguageTag();
     final c = ref.watch(staffCustomerProvider);
     if (c == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -40,98 +40,361 @@ class StaffCustomerCardScreen extends ConsumerWidget {
       return const Scaffold(body: SizedBox.shrink());
     }
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: _kPageBg,
-        appBar: AppBar(
-          backgroundColor: _kPageBg,
-          elevation: 0,
-          surfaceTintColor: Colors.transparent,
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            onPressed: () {
-              staffHaptic();
-              ref.read(staffCustomerProvider.notifier).select(null);
-              context.go(staffShellScannerPathForRef(ref));
-            },
-          ),
-          title: const Text(
-            'بطاقة العميل',
-            style: TextStyle(fontWeight: FontWeight.w900),
-          ),
+    final dateStr = c.lastVisitDate != null
+        ? DateFormat.yMMMd(localeTag).format(c.lastVisitDate!)
+        : '—';
+    final createdStr =
+        c.createdAt != null ? DateFormat.yMMMd(localeTag).format(c.createdAt!) : '—';
+    final birthStr =
+        c.birthday != null ? DateFormat.yMMMd(localeTag).format(c.birthday!) : '—';
+
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () {
+            staffHaptic();
+            ref.read(staffCustomerProvider.notifier).select(null);
+            context.go(staffShellScannerPathForRef(ref));
+          },
         ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+        title: Text(l10n.customerCardTitle),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+          Row(
             children: [
-              _TopCustomerCard(customer: c, initials: _initials(c.name)),
-              const SizedBox(height: 14),
-              Row(
+              CircleAvatar(
+                radius: 44,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                child: ClipOval(
+                  child: c.avatarUrl != null && c.avatarUrl!.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: c.avatarUrl!,
+                          width: 88,
+                          height: 88,
+                          fit: BoxFit.cover,
+                          memCacheWidth: 176,
+                          memCacheHeight: 176,
+                        )
+                      : Text(
+                          _initials(c.name),
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      c.name,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            color: AppColors.textPrimary,
+                          ),
+                    ),
+                    const SizedBox(height: 8),
+                    TierBadge(
+                      tier: c.tier,
+                      activePlanName: c.activePlanName,
+                      activePlanNameAr: c.activePlanNameAr,
+                      dense: false,
+                    ),
+                    if (c.isBlocked) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorTint,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: AppColors.error.withValues(alpha: 0.45),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.block_rounded,
+                              color: AppColors.error,
+                              size: 18,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              l10n.blockedBadge,
+                              style: const TextStyle(
+                                color: AppColors.error,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _balanceCard(
+                  context,
+                  title: l10n.subscriptionBalance,
+                  value: c.subscriptionBalance,
+                  color: AppColors.success,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _balanceCard(
+                  context,
+                  title: l10n.cashbackBalance,
+                  value: c.cashbackBalance,
+                  color: AppColors.gold,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _infoCard(
+            context,
+            title: l10n.customerInformation,
+            children: [
+              _infoRow(l10n.mobilePhone, _prettyPhone(c.phoneE164)),
+              _infoRow(
+                l10n.totalSpentLabel,
+                '${c.totalSpent.toStringAsFixed(2)}${l10n.sarSuffix}',
+              ),
+              _infoRow(l10n.visits, '${c.visitCount}'),
+              _infoRow(l10n.streakLabel, '${c.streakCount}'),
+              _infoRow(l10n.birthday, birthStr),
+              _infoRow(l10n.language, c.preferredLanguage ?? '—'),
+              _infoRow(l10n.registeredOn, createdStr),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            l10n.visitNumber(c.visitCount),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '${l10n.lastVisit}: $dateStr',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 16),
+          ),
+          const SizedBox(height: 28),
+          SizedBox(
+            height: 72,
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () {
+                staffHaptic();
+                ref
+                    .read(staffTxnModeProvider.notifier)
+                    .setMode(StaffTxnMode.purchase);
+                context.push('/staff/amount-entry');
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: _BalanceCard2(
-                      title: 'كاش باك',
-                      amount: c.cashbackBalance,
-                      bg: const Color(0xFFFAEEDA),
-                      fg: const Color(0xFF633806),
-                      amountSize: 28,
-                    ),
+                  Text(
+                    l10n.recordPurchase,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _BalanceCard2(
-                      title: 'رصيد الاشتراك',
-                      amount: c.subscriptionBalance,
-                      bg: const Color(0xFFE1F5EE),
-                      fg: const Color(0xFF085041),
-                      amountSize: 32,
-                    ),
+                  Text(
+                    l10n.addsCashback,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
-              _ActionButton(
-                label: 'شراء',
-                icon: Icons.shopping_bag_outlined,
-                bg: _kPointBlue,
-                fg: Colors.white,
-                onTap: () {
-                  staffHaptic();
-                  ref.read(staffTxnModeProvider.notifier).setMode(StaffTxnMode.purchase);
-                  context.push('/staff/amount-entry');
-                },
-              ),
-              const SizedBox(height: 12),
-              _ActionButton(
-                label: 'استرداد',
-                icon: Icons.call_made_rounded,
-                bg: const Color(0xFFFAEEDA),
-                fg: const Color(0xFF633806),
-                onTap: () {
-                  staffHaptic();
-                  ref.read(staffTxnModeProvider.notifier).setMode(StaffTxnMode.redeem);
-                  context.push('/staff/amount-entry');
-                },
-              ),
-              const SizedBox(height: 12),
-              _ActionButton(
-                label: 'باقة اشتراك',
-                icon: Icons.credit_card_rounded,
-                bg: const Color(0xFFEEEDFE),
-                fg: const Color(0xFF3C3489),
-                onTap: () {
-                  staffHaptic();
-                  ref.read(staffSelectedPlanIdProvider.notifier).setSelectedPlanId(null);
-                  context.push('/staff/add-subscription');
-                },
-              ),
-              const SizedBox(height: 18),
-              _transactionsCard(context, ref, customerId: c.id),
-            ],
+            ),
           ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 72,
+            width: double.infinity,
+            child: FilledButton.tonal(
+              style: FilledButton.styleFrom(
+                minimumSize: const Size.fromHeight(72),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () {
+                staffHaptic();
+                ref
+                    .read(staffTxnModeProvider.notifier)
+                    .setMode(StaffTxnMode.redeem);
+                context.push('/staff/amount-entry');
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n.redeemBalance,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    l10n.deductsFromBalance,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            height: 72,
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary, width: 2),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14)),
+              ),
+              onPressed: () {
+                staffHaptic();
+                ref
+                    .read(staffSelectedPlanIdProvider.notifier)
+                    .setSelectedPlanId(null);
+                context.push('/staff/add-subscription');
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    l10n.addSubscription,
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+                  ),
+                  Text(
+                    l10n.topUpWithCash,
+                    style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 18),
+          _transactionsCard(context, ref, customerId: c.id),
+        ],
         ),
+      ),
+    );
+  }
+
+  Widget _balanceCard(
+    BuildContext context, {
+    required String title,
+    required double value,
+    required Color color,
+  }) {
+    final l10n = AppLocalizations.of(context)!;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '${value.toStringAsFixed(2)}${l10n.sarSuffix}',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w900,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  static String _prettyPhone(String raw) {
+    final s = raw.trim();
+    return s.isEmpty ? '—' : s;
+  }
+
+  Widget _infoCard(
+    BuildContext context, {
+    required String title,
+    required List<Widget> children,
+  }) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
+              textAlign: TextAlign.start,
+            ),
+            const SizedBox(height: 10),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              value,
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -215,201 +478,6 @@ class StaffCustomerCardScreen extends ConsumerWidget {
             fontWeight: FontWeight.w900,
             color: AppColors.textSecondary,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TopCustomerCard extends StatelessWidget {
-  const _TopCustomerCard({required this.customer, required this.initials});
-
-  final StaffCustomerView customer;
-  final String initials;
-
-  @override
-  Widget build(BuildContext context) {
-    final tier = customer.tier.toLowerCase();
-    final pill = _tierPill(tier);
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: const Color(0xFF185FA5),
-            child: ClipOval(
-              child: customer.avatarUrl != null && customer.avatarUrl!.isNotEmpty
-                  ? CachedNetworkImage(
-                      imageUrl: customer.avatarUrl!,
-                      width: 80,
-                      height: 80,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 160,
-                      memCacheHeight: 160,
-                    )
-                  : Text(
-                      initials,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                      ),
-                    ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            customer.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(
-              customer.phoneE164.isEmpty ? '—' : customer.phoneE164,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: pill.bg,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Text(
-              pill.label,
-              style: TextStyle(color: pill.fg, fontWeight: FontWeight.w900, fontSize: 12),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  ({Color bg, Color fg, String label}) _tierPill(String tier) {
-    switch (tier) {
-      case 'gold':
-        return (bg: const Color(0xFFFFE8B6), fg: const Color(0xFF8A5A00), label: 'ذهبي ⭐');
-      case 'silver':
-        return (bg: const Color(0xFFE9ECEF), fg: const Color(0xFF343A40), label: 'فضي');
-      case 'diamond':
-        return (bg: const Color(0xFFE7E0FF), fg: const Color(0xFF3A2A7A), label: 'ماسي');
-      default:
-        return (bg: const Color(0xFFFFD6B8), fg: const Color(0xFF7A3A00), label: 'برونزي');
-    }
-  }
-}
-
-class _BalanceCard2 extends StatelessWidget {
-  const _BalanceCard2({
-    required this.title,
-    required this.amount,
-    required this.bg,
-    required this.fg,
-    required this.amountSize,
-  });
-
-  final String title;
-  final double amount;
-  final Color bg;
-  final Color fg;
-  final double amountSize;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              color: fg.withValues(alpha: 0.9),
-            ),
-            textAlign: TextAlign.right,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'ر.س',
-                style: TextStyle(fontWeight: FontWeight.w800, color: fg.withValues(alpha: 0.9)),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                amount.toStringAsFixed(2),
-                style: TextStyle(
-                  fontSize: amountSize,
-                  fontWeight: FontWeight.w900,
-                  color: fg,
-                  height: 1.0,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.label,
-    required this.icon,
-    required this.bg,
-    required this.fg,
-    required this.onTap,
-  });
-
-  final String label;
-  final IconData icon;
-  final Color bg;
-  final Color fg;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 54,
-      child: ElevatedButton.icon(
-        onPressed: onTap,
-        icon: Icon(icon, color: fg),
-        label: Text(
-          label,
-          style: TextStyle(fontWeight: FontWeight.w900, color: fg, fontSize: 16),
-        ),
-        style: ElevatedButton.styleFrom(
-          elevation: 0,
-          backgroundColor: bg,
-          foregroundColor: fg,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         ),
       ),
     );

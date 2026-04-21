@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendUnifonicSms } from "./sms.ts";
-import { sendFCMNotification } from "./fcm.ts";
 
 export type NotifyType =
   | "transaction"
@@ -43,18 +42,18 @@ function templateMessage(
   }
 }
 
-async function sendPush(
-  token: string | undefined,
+async function sendPushStub(
+  deviceToken: string | undefined,
   title: string,
   body: string,
-  data?: Record<string, string>,
 ): Promise<void> {
-  if (!token) return;
-  try {
-    await sendFCMNotification({ token, title, body, data });
-  } catch (e) {
-    console.warn("[fcm] send failed", e);
+  const serverKey = Deno.env.get("FCM_SERVER_KEY");
+  if (!deviceToken || !serverKey) {
+    if (!serverKey) console.warn("[fcm] FCM_SERVER_KEY not set — push skipped");
+    return;
   }
+  // Legacy HTTP v1 uses OAuth2 — placeholder: log until you wire FCM v1 with a service account.
+  console.log("[fcm] would send to device", { deviceToken, title, body });
 }
 
 /**
@@ -72,7 +71,7 @@ export async function dispatchNotification(
 ): Promise<void> {
   const { data: cust, error } = await supabase
     .from("customers")
-    .select("phone, name, device_token, fcm_token, preferred_language")
+    .select("phone, name, device_token, preferred_language")
     .eq("id", input.customer_id)
     .maybeSingle();
 
@@ -97,11 +96,11 @@ export async function dispatchNotification(
   }
 
   if (wantPush && cust.device_token) {
-    const token = (cust.fcm_token ?? cust.device_token) as string | undefined;
-    await sendPush(token, "Point", message, {
-      type: input.type,
-      transaction_id: String(input.transaction_id ?? ""),
-    });
+    await sendPushStub(
+      cust.device_token as string,
+      "Point",
+      message,
+    );
     delivered = true;
   }
 

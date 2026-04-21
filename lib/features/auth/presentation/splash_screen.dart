@@ -6,7 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
-import '../../../core/router/auth_route_resolution.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
@@ -84,11 +83,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         'present=${persistedSessionStr != null} '
         'len=${persistedSessionStr?.length ?? 0}',
       );
-
-      // Some older builds accidentally persisted the literal string "null".
-      if (loginModeRaw == 'null') {
-        await prefs.remove(kLoginModePrefKey);
-      }
 
       if (!rememberMe) {
         _splashLog('DECISION: sign out + /auth/phone (remember_me false)');
@@ -190,18 +184,11 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         }
       }
 
-      final resolved = await resolveRouteAfterOtp();
-      if (resolved != null && resolved != '/auth/phone') {
-        _splashLog('DECISION: resolveRouteAfterOtp → $resolved');
-        if (mounted) await _navigate(resolved);
-        return;
-      }
-
       if (loginMode == kLoginModeStaff) {
-        _splashLog('DECISION: route → /staff/app (login_mode=staff, fallback)');
+        _splashLog('DECISION: route → /staff/app (login_mode=staff)');
         if (mounted) await _navigate('/staff/app');
       } else if (loginMode == kLoginModeCustomer) {
-        _splashLog('DECISION: route → /customer/home (login_mode=customer, fallback)');
+        _splashLog('DECISION: route → /customer/home (login_mode=customer)');
         if (mounted) await _navigate('/customer/home');
       }
     } catch (e, st) {

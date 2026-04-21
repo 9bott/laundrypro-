@@ -7,23 +7,16 @@ import '../config/env.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/auth/presentation/splash_screen.dart';
-import '../../features/auth/presentation/store_selector_screen.dart';
 import '../../features/customer/presentation/customer_shell.dart';
 import '../../features/customer/presentation/branch_screen.dart';
 import '../../features/customer/presentation/home_screen.dart';
 import '../../features/customer/presentation/profile_screen.dart';
 import '../../features/customer/presentation/subscription_screen.dart';
 import '../../features/customer/presentation/wallet_screen.dart';
-import '../../features/customer/presentation/my_stores_screen.dart';
-import '../../features/customer/presentation/customer_full_qr_screen.dart';
 import '../../features/customer/presentation/providers/customer_providers.dart';
-import '../../features/owner/presentation/create_store_screen.dart';
 import '../../features/owner/presentation/customers_screen.dart';
 import '../../features/owner/presentation/dashboard_screen.dart';
 import '../../features/owner/presentation/fraud_screen.dart';
-import '../../features/owner/presentation/staff_screen.dart';
-import '../../features/owner/presentation/store_settings_screen.dart';
-import '../../features/owner/presentation/subscription_plans_screen.dart';
 import '../../features/owner/presentation/transactions_screen.dart';
 import '../../features/staff/presentation/add_subscription_screen.dart';
 import '../../features/staff/presentation/amount_entry_screen.dart';
@@ -34,8 +27,6 @@ import '../../features/staff/presentation/staff_profile_screen.dart';
 import '../../features/staff/presentation/staff_route_models.dart';
 import '../../features/staff/presentation/success_screen.dart';
 import '../../features/staff/presentation/unified_staff_shell.dart';
-
-export 'auth_route_resolution.dart' show resolveRouteAfterOtp;
 
 final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>(
   debugLabel: 'root',
@@ -56,9 +47,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (loc == '/owner/login') {
           return '/auth/phone';
         }
-        if (loc == '/owner/plans' || loc == '/owner/settings') {
-          return null;
-        }
         final rest = loc.substring('/owner/'.length);
         return '/staff/$rest';
       }
@@ -77,18 +65,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       }
 
       if (loc.startsWith('/staff/')) {
-        final session = Supabase.instance.client.auth.currentSession;
-        if (session == null) {
-          return '/auth/phone';
-        }
-      }
-
-      if (loc.startsWith('/onboarding/') ||
-          loc == '/store-selector' ||
-          loc == '/owner/plans' ||
-          loc == '/owner/settings' ||
-          loc == '/customer/my-stores' ||
-          loc == '/customer/qr') {
         final session = Supabase.instance.client.auth.currentSession;
         if (session == null) {
           return '/auth/phone';
@@ -155,15 +131,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/customer/my-stores',
-                name: 'customer-my-stores',
-                builder: (context, state) => const MyStoresScreen(),
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
                 path: '/customer/profile',
                 name: 'customer-profile',
                 builder: (context, state) => const ProfileScreen(),
@@ -183,42 +150,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/customer/wallet',
         name: 'customer-wallet',
         builder: (context, state) => const CustomerWalletScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/onboarding/create-store',
-        name: 'onboarding-create-store',
-        builder: (context, state) => const CreateStoreScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/store-selector',
-        name: 'store-selector',
-        builder: (context, state) => const StoreSelectorScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/owner/plans',
-        name: 'owner-plans',
-        builder: (context, state) => const SubscriptionPlansScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/owner/settings',
-        name: 'owner-settings',
-        builder: (context, state) => const StoreSettingsScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/owner/staff',
-        name: 'owner-staff',
-        builder: (context, state) => const OwnerStaffScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: '/customer/qr',
-        name: 'customer-qr',
-        builder: (context, state) => const CustomerFullQrScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {

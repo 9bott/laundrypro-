@@ -4,7 +4,6 @@ import { requireStaff } from "../_shared/auth.ts";
 import { writeAuditLog } from "../_shared/audit.ts";
 import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
-import { sendFCMNotification } from "../_shared/fcm.ts";
 
 type Body = {
   customer_id: string;
@@ -146,27 +145,6 @@ Deno.serve(async (req) => {
     },
     transaction_id: txRow.id as string,
   });
-
-  // FCM push (customer)
-  try {
-    const token = String(customer.fcm_token ?? customer.device_token ?? "");
-    if (token) {
-      const remaining = Math.round((subAfter + cbAfter) * 100) / 100;
-      await sendFCMNotification({
-        token,
-        title: "بوينت 💙",
-        body:
-          `تم استخدام ${amt} ر.س من رصيدك. ` +
-          `الرصيد المتبقي: ${remaining} ر.س`,
-        data: {
-          type: "redeem",
-          amount: String(amt),
-        },
-      });
-    }
-  } catch (e) {
-    console.warn("[fcm] customer push failed", e);
-  }
 
   await writeAuditLog(supabase, {
     actor_id: staff_id,

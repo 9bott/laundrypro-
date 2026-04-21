@@ -1,8 +1,6 @@
 import Flutter
 import UIKit
 import FirebaseAuth
-import FirebaseMessaging
-import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -11,8 +9,6 @@ import UserNotifications
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
-    UNUserNotificationCenter.current().delegate = self
-    application.registerForRemoteNotifications()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -26,7 +22,6 @@ import UserNotifications
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     Auth.auth().setAPNSToken(deviceToken, type: .unknown)
-    Messaging.messaging().apnsToken = deviceToken
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 
@@ -41,14 +36,6 @@ import UserNotifications
       return
     }
     super.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
-  }
-
-  override func userNotificationCenter(
-    _ center: UNUserNotificationCenter,
-    willPresent notification: UNNotification,
-    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
-  ) {
-    completionHandler([.banner, .sound, .badge])
   }
 
   /// Handle reCAPTCHA redirect URL (fallback path if silent push is unavailable).

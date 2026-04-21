@@ -1,97 +1,45 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kDebugMode, kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart' hide TextDirection;
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-import '../../../core/config/env.dart';
-import '../../../core/constants/app_assets.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../core/formatting/arabic_numbers.dart';
 import '../../../core/services/notification_service.dart';
-import '../../../core/services/supabase_service.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../../l10n/context_l10n.dart';
+import '../../../core/services/supabase_service.dart';
 import '../../../shared/models/customer_model.dart';
-import '../../../shared/models/transaction_model.dart';
+import '../../../shared/widgets/animated_bg.dart';
+import '../../../shared/widgets/app_card.dart';
+import '../../../shared/widgets/tier_badge.dart';
 import 'providers/customer_providers.dart';
-import 'transaction_type_labels.dart';
 import 'widgets/customer_history_content.dart';
+import 'widgets/wallet_add_buttons.dart';
 
-const Color _kPageBg = Color(0xFFF8F9FA);
-const Color _kPointBlue = Color(0xFF185FA5);
-const Color _kTeal = Color(0xFF1D9E75);
-const Color _kAmber = Color(0xFFEF9F27);
-
-Color _parseHexColor(String? hex, {Color fallback = _kPointBlue}) {
-  if (hex == null) return fallback;
-  var h = hex.trim();
-  if (h.isEmpty) return fallback;
-  if (h.startsWith('#')) h = h.substring(1);
-  if (h.length == 6) h = 'FF$h';
-  if (h.length != 8) return fallback;
-  final v = int.tryParse(h, radix: 16);
-  if (v == null) return fallback;
-  return Color(v);
+String _westernDigitsToArabic(String s) {
+  // Requirement: always show Western (English) digits.
+  return s;
 }
 
-String _initials(String name) {
-  final t = name.trim();
-  if (t.isEmpty) return 'مت';
-  final parts = t.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
-  if (parts.isEmpty) return t.characters.take(2).toString();
-  if (parts.length == 1) return parts.first.characters.take(2).toString();
-  return (parts.first.characters.take(1).toString() +
-          parts.last.characters.take(1).toString())
-      .toUpperCase();
-}
-
-({Color bg, Color fg, String label}) _tierPill(String tier) {
-  switch (tier) {
-    case 'gold':
-      return (bg: const Color(0xFFFFE8B6), fg: const Color(0xFF8A5A00), label: 'ذهبي ⭐');
-    case 'silver':
-      return (bg: const Color(0xFFE9ECEF), fg: const Color(0xFF343A40), label: 'فضي');
-    case 'diamond':
-      return (bg: const Color(0xFFE7E0FF), fg: const Color(0xFF3A2A7A), label: 'ماسي');
-    default:
-      return (bg: const Color(0xFFFFD6B8), fg: const Color(0xFF7A3A00), label: 'برونزي');
+String _formatPhoneForDisplay(String phone, {required bool arabicDigits}) {
+  if (!phone.startsWith('+966')) {
+    return arabicDigits ? _westernDigitsToArabic(phone) : phone;
   }
-}
-
-class _StoreView {
-  const _StoreView({
-    required this.name,
-    required this.logoUrl,
-    required this.brandColor,
-  });
-
-  final String name;
-  final String? logoUrl;
-  final Color brandColor;
-}
-
-final _storeByIdProvider = FutureProvider.family<_StoreView, String>((ref, storeId) async {
-  if (!Env.hasSupabase) {
-    return const _StoreView(name: 'متجري', logoUrl: null, brandColor: _kPointBlue);
+  final rest = phone.substring(4).replaceAll(RegExp(r'\D'), '');
+  if (rest.length >= 9) {
+    final a = '${rest.substring(0, 2)} ${rest.substring(2, 5)} ${rest.substring(5)}';
+    final out = '+966 $a';
+    return arabicDigits ? _westernDigitsToArabic(out) : out;
   }
-  final row = await Supabase.instance.client
-      .from('stores')
-      .select('name, logo_url, brand_color')
-      .eq('id', storeId)
-      .maybeSingle();
-  final name = (row?['name'] as String?)?.trim();
-  final logo = row?['logo_url'] as String?;
-  final color = _parseHexColor(row?['brand_color'] as String?, fallback: _kPointBlue);
-  return _StoreView(name: (name == null || name.isEmpty) ? 'متجري' : name, logoUrl: logo, brandColor: color);
-});
+  return phone;
+}
 
 class CustomerHomeScreen extends ConsumerStatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -261,7 +209,7 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _scroll = ScrollController();
+    _scroll = ScrollController()..addListener(_onScrollLoadMore);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       unawaited(() async {
         try {
@@ -270,169 +218,157 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
         } catch (_) {}
       }());
       unawaited(_showWelcomeIfNeeded(context));
-      unawaited(() async {
-        // Prime recent transactions once on first open.
-        try {
-          await ref.read(customerHistoryProvider.notifier).refresh();
-        } catch (_) {}
-      }());
     });
+  }
+
+  void _onScrollLoadMore() {
+    if (!_scroll.hasClients) return;
+    final pos = _scroll.position;
+    if (pos.pixels > pos.maxScrollExtent - 120) {
+      ref.read(customerHistoryProvider.notifier).loadMore();
+    }
   }
 
   @override
   void dispose() {
+    _scroll.removeListener(_onScrollLoadMore);
     _scroll.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final arabicDigits = useArabicDigits(context);
     final customerAsync = ref.watch(customerStreamProvider);
+    final topPad = MediaQuery.paddingOf(context).top;
 
     return Scaffold(
-      backgroundColor: _kPageBg,
-      body: customerAsync.when(
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: _kPointBlue),
-        ),
-        error: (err, stack) {
-          if (kDebugMode) {
-            debugPrint('[HOME ERROR] $err');
-            debugPrint('[HOME STACK] $stack');
-          }
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline_rounded, color: AppColors.error, size: 44),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'تعذر تحميل البيانات. حاول مرة أخرى.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const SizedBox(height: 18),
-                  FilledButton(
-                    onPressed: () => ref.invalidate(customerStreamProvider),
-                    style: FilledButton.styleFrom(backgroundColor: _kPointBlue),
-                    child: const Text('إعادة المحاولة'),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-        data: (customer) {
-          if (customer == null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'لم يتم اختيار متجر بعد.',
-                      style: TextStyle(fontWeight: FontWeight.w900),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    const Text(
-                      'ادخل كود المتجر أو اختر متجر من قائمة متاجري.',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      onPressed: () => context.go('/customer/my-stores'),
-                      style: FilledButton.styleFrom(backgroundColor: _kPointBlue),
-                      child: const Text('متاجري'),
-                    ),
-                  ],
-                ),
-              ),
+      backgroundColor: Colors.transparent,
+      body: AnimatedBackground(
+        extraOrbs: true,
+        child: customerAsync.when(
+          loading: () => _HomeLoadingTimeout(
+            onRetry: () => ref.invalidate(customerStreamProvider),
+            child: const _HomeLoadingSkeleton(),
+          ),
+          error: (err, stack) {
+            if (kDebugMode) {
+              debugPrint('[HOME ERROR] $err');
+              debugPrint('[HOME STACK] $stack');
+            }
+            return _HomeErrorState(
+              message: l10n.homeLoadErrorMessage,
+              onRetry: () => ref.invalidate(customerStreamProvider),
             );
-          }
-
-          final storeAsync = ref.watch(_storeByIdProvider(customer.storeId));
-          final histAsync = ref.watch(customerHistoryProvider);
-
-          return RefreshIndicator(
-            color: _kPointBlue,
-            onRefresh: () async {
-              ref.invalidate(customerStreamProvider);
-              await ref.read(customerHistoryProvider.notifier).refresh();
-              await Future<void>.delayed(const Duration(milliseconds: 250));
-            },
-            child: SafeArea(
-              child: SingleChildScrollView(
+          },
+          data: (customer) {
+            if (customer == null) {
+              return Center(
+                child: Text(
+                  l10n.error,
+                  style: GoogleFonts.plusJakartaSans(color: AppColors.textPrimary),
+                ),
+              );
+            }
+            return RefreshIndicator(
+              color: AppColors.primary,
+              onRefresh: () async {
+                ref.invalidate(customerStreamProvider);
+                await ref.read(customerHistoryProvider.notifier).refresh();
+                await Future<void>.delayed(const Duration(milliseconds: 400));
+              },
+              child: CustomScrollView(
                 controller: _scroll,
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                child: storeAsync.when(
-                  loading: () => _HomeBody(
-                    customer: customer,
-                    arabicDigits: arabicDigits,
-                    store: const _StoreView(name: '...', logoUrl: null, brandColor: _kPointBlue),
-                    histAsync: histAsync,
-                    onViewAll: () => _openAllTransactions(context),
-                  ),
-                  error: (_, __) => _HomeBody(
-                    customer: customer,
-                    arabicDigits: arabicDigits,
-                    store: const _StoreView(name: 'متجري', logoUrl: null, brandColor: _kPointBlue),
-                    histAsync: histAsync,
-                    onViewAll: () => _openAllTransactions(context),
-                  ),
-                  data: (store) => _HomeBody(
-                    customer: customer,
-                    arabicDigits: arabicDigits,
-                    store: store,
-                    histAsync: histAsync,
-                    onViewAll: () => _openAllTransactions(context),
-                  ),
-                ),
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  void _openAllTransactions(BuildContext context) {
-    HapticFeedback.lightImpact();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.88,
-          minChildSize: 0.5,
-          maxChildSize: 0.96,
-          builder: (context, controller) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: CustomScrollView(
-                controller: controller,
-                slivers: const [
+                slivers: [
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(20, 12, 20, 6),
-                      child: Center(
-                        child: SizedBox(
-                          width: 42,
-                          height: 5,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: Color(0xFFE9ECEF),
-                              borderRadius: BorderRadius.all(Radius.circular(999)),
+                      padding: EdgeInsets.fromLTRB(16, topPad + 8, 16, 0),
+                      child: AppCard(
+                        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                        radius: 18,
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    l10n.welcomeUser(customer.name),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    l10n.homeBalanceReady,
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 12,
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
+                            const SizedBox(width: 12),
+                            Container(
+                              width: 42,
+                              height: 42,
+                              decoration: BoxDecoration(
+                                color: AppColors.surfaceAlt,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: AppColors.primary.withValues(alpha: 0.35),
+                                ),
+                              ),
+                              child: IconButton(
+                                padding: EdgeInsets.zero,
+                                onPressed: () => HapticFeedback.lightImpact(),
+                                icon: const Icon(
+                                  Icons.notifications_active_outlined,
+                                  color: AppColors.primaryLight,
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                      child: _WalletGradientCard(
+                        customer: customer,
+                        arabicDigits: arabicDigits,
+                        onOpenWallet: () => context.push('/customer/wallet'),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: _HomeQrSection(customerId: customer.id),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                      child: Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          _formatPhoneForDisplay(
+                            customer.phone,
+                            arabicDigits: arabicDigits,
+                          ),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: AppColors.textHint,
                           ),
                         ),
                       ),
@@ -440,747 +376,465 @@ class _CustomerHomeScreenState extends ConsumerState<CustomerHomeScreen> {
                   ),
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: EdgeInsets.fromLTRB(20, 8, 20, 6),
+                      padding: const EdgeInsets.fromLTRB(20, 24, 20, 4),
                       child: Text(
-                        'كل المعاملات',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
-                        textAlign: TextAlign.right,
+                        l10n.transactions,
+                        style: GoogleFonts.cairo(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
                   ),
-                  SliverToBoxAdapter(child: CustomerHistoryChips()),
-                  CustomerHistorySliverList(),
-                  SliverToBoxAdapter(child: SizedBox(height: 24)),
+                  SliverToBoxAdapter(
+                    child: const CustomerHistoryChips(),
+                  ),
+                  const CustomerHistorySliverList(),
+                  const SliverToBoxAdapter(child: SizedBox(height: 110)),
                 ],
               ),
             );
           },
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeLoadingTimeout extends StatelessWidget {
+  const _HomeLoadingTimeout({required this.onRetry, required this.child});
+
+  final VoidCallback onRetry;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return FutureBuilder<void>(
+      future: Future<void>.delayed(const Duration(seconds: 12)),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return child;
+        }
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                l10n.loadingTakingLong,
+                style: GoogleFonts.cairo(color: AppColors.textSecondary),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: onRetry,
+                child: Text(l10n.retry, style: GoogleFonts.cairo()),
+              ),
+            ],
+          ),
         );
       },
     );
   }
 }
 
-class _HomeBody extends StatelessWidget {
-  const _HomeBody({
+class _WalletGradientCard extends StatelessWidget {
+  const _WalletGradientCard({
     required this.customer,
     required this.arabicDigits,
-    required this.store,
-    required this.histAsync,
-    required this.onViewAll,
+    required this.onOpenWallet,
   });
 
   final CustomerModel customer;
   final bool arabicDigits;
-  final _StoreView store;
-  final AsyncValue<HistoryState> histAsync;
-  final VoidCallback onViewAll;
+  final VoidCallback onOpenWallet;
 
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TopBar(customerName: customer.name, store: store),
-        const SizedBox(height: 16),
-        _HeroWalletCard(
-          customer: customer,
-          store: store,
-          arabicDigits: arabicDigits,
-          onOpenQr: () => context.push('/customer/qr'),
-        ),
-        const SizedBox(height: 14),
-        const _WalletButtonsRow(),
-        const SizedBox(height: 16),
-        _QuickStatsRow(
-          totalSpent: customer.totalSpent,
-          visitCount: customer.visitCount,
-          tier: customer.tier,
-          arabicDigits: arabicDigits,
-        ),
-        const SizedBox(height: 22),
-        _RecentTransactionsSection(
-          histAsync: histAsync,
-          arabicDigits: arabicDigits,
-          onViewAll: onViewAll,
-        ),
-        const SizedBox(height: 110),
-      ],
-    );
+  String _amt(double v) {
+    final s = v.toStringAsFixed(2);
+    return arabicDigits ? _westernDigitsToArabic(s) : s;
   }
-}
-
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.customerName, required this.store});
-
-  final String customerName;
-  final _StoreView store;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        _OutlinedIconButton(
-          icon: Icons.notifications_none_rounded,
-          onPressed: () => HapticFeedback.lightImpact(),
-        ),
-        const Spacer(),
-        Expanded(
-          flex: 6,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+    final l10n = AppLocalizations.of(context)!;
+    final disableAnim = MediaQuery.disableAnimationsOf(context);
+    final sub = customer.subscriptionBalance;
+    final cb = customer.cashbackBalance;
+
+    return Hero(
+      tag: 'customer_balance_hero_card',
+      flightShuttleBuilder: (_, animation, flightDirection, fromContext, toContext) {
+        final shuttleHero = toContext.widget as Hero;
+        return shuttleHero.child;
+      },
+      child: _PressableScale(
+        enableAnim: !disableAnim,
+        onTap: onOpenWallet,
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: AppColors.blueGradient,
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: AppColors.primaryLight.withValues(alpha: 0.35),
+              width: 1.5,
+            ),
+            boxShadow: AppColors.blueShadow,
+          ),
+          child: Stack(
             children: [
-              Text(
-                'مرحباً، $customerName',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF111827),
+              Positioned(
+                top: -30,
+                right: -30,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    store.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF6B7280),
-                    ),
+              Positioned(
+                bottom: -20,
+                left: -20,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.05),
                   ),
-                  const SizedBox(width: 8),
-                  _StoreMiniLogo(store: store),
-                ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TierBadge(
+                          tier: customer.tier,
+                          activePlanName: customer.activePlanName,
+                          activePlanNameAr: customer.activePlanNameAr,
+                          onDarkBackground: true,
+                          dense: false,
+                        ),
+                        Text(
+                          l10n.myBalance,
+                          style: GoogleFonts.cairo(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    IntrinsicHeight(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  l10n.subscriptionShort,
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _amt(sub),
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.currencyDisplay,
+                                  style: GoogleFonts.cairo(
+                                    color: Colors.white.withValues(alpha: 0.65),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Container(
+                            width: 1,
+                            color: Colors.white24,
+                            margin: const EdgeInsets.symmetric(horizontal: 8),
+                          ),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Text(
+                                  l10n.cashbackBalance,
+                                  style: GoogleFonts.cairo(
+                                    color: AppColors.goldLight,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _amt(cb),
+                                  style: GoogleFonts.cairo(
+                                    color: AppColors.goldLight,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                Text(
+                                  l10n.currencyDisplay,
+                                  style: GoogleFonts.cairo(
+                                    color: AppColors.gold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
         ),
-      ],
-    );
-  }
-}
-
-class _StoreMiniLogo extends StatelessWidget {
-  const _StoreMiniLogo({required this.store});
-
-  final _StoreView store;
-
-  @override
-  Widget build(BuildContext context) {
-    final initials = _initials(store.name);
-    return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: (store.logoUrl == null || store.logoUrl!.isEmpty)
-          ? Center(
-              child: Text(
-                initials,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 12,
-                  color: Color(0xFF374151),
-                ),
-              ),
-            )
-          : Image.network(
-              store.logoUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Center(
-                child: Text(
-                  initials,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    color: Color(0xFF374151),
-                  ),
-                ),
-              ),
-            ),
-    );
-  }
-}
-
-class _HeroWalletCard extends StatelessWidget {
-  const _HeroWalletCard({
-    required this.customer,
-    required this.store,
-    required this.arabicDigits,
-    required this.onOpenQr,
-  });
-
-  final CustomerModel customer;
-  final _StoreView store;
-  final bool arabicDigits;
-  final VoidCallback onOpenQr;
-
-  String _money(double v) => formatMoneyAr(v, arabicDigits: arabicDigits);
-
-  @override
-  Widget build(BuildContext context) {
-    final pill = _tierPill(customer.tier);
-    return Container(
-      width: double.infinity,
-      height: 200,
-      decoration: BoxDecoration(
-        color: store.brandColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.10),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: pill.bg,
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    pill.label,
-                    style: TextStyle(
-                      color: pill.fg,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: (store.logoUrl == null || store.logoUrl!.isEmpty)
-                      ? Center(
-                          child: Text(
-                            _initials(store.name),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 14,
-                              color: Color(0xFF111827),
-                            ),
-                          ),
-                        )
-                      : Image.network(
-                          store.logoUrl!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Center(
-                            child: Text(
-                              _initials(store.name),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 14,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
-                          ),
-                        ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'كاش باك',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_money(customer.cashbackBalance)} ر.س',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _kAmber,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'رصيد الاشتراك',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.85),
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_money(customer.subscriptionBalance)} ر.س',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Row(
-              children: [
-                _OutlinedCircle(
-                  icon: Icons.qr_code_rounded,
-                  onPressed: onOpenQr,
-                ),
-                const Spacer(),
-                Text(
-                  customer.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.92),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
 }
 
-class _WalletButtonsRow extends ConsumerStatefulWidget {
-  const _WalletButtonsRow();
+/// QR ثابت = `customers.id` (نفس قيمة الباركود في Google/Apple Wallet).
+class _HomeQrSection extends StatelessWidget {
+  const _HomeQrSection({required this.customerId});
 
-  @override
-  ConsumerState<_WalletButtonsRow> createState() => _WalletButtonsRowState();
-}
-
-class _WalletButtonsRowState extends ConsumerState<_WalletButtonsRow> {
-  bool _busy = false;
-
-  bool get _isIOS {
-    if (kIsWeb) return false;
-    return defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS;
-  }
-
-  bool get _isAndroid {
-    if (kIsWeb) return false;
-    return defaultTargetPlatform == TargetPlatform.android;
-  }
-
-  Future<void> _openWallet(BuildContext context) async {
-    if (_busy) return;
-    final messenger = ScaffoldMessenger.of(context);
-    setState(() => _busy = true);
-    try {
-      // Reuse existing wallet generation behavior.
-      final map = await ref.read(customerRepositoryProvider).invokeGeneratePasskitWalletUrls();
-
-      if (_isIOS) {
-        final url = map['applePassUrl'] as String?;
-        if (url == null || url.isEmpty) throw Exception('apple_pass_url_missing');
-        final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        if (!ok) {
-          messenger.showSnackBar(
-            const SnackBar(content: Text('تعذر فتح المحفظة. حاول مرة أخرى.')),
-          );
-        }
-      } else {
-        final url = map['landingUrl'] as String?;
-        if (url == null || url.isEmpty) throw Exception('wallet_landing_url_missing');
-        final ok = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        if (!ok) {
-          messenger.showSnackBar(
-            const SnackBar(content: Text('تعذر فتح المحفظة. حاول مرة أخرى.')),
-          );
-        }
-      }
-    } catch (e) {
-      messenger.showSnackBar(
-        SnackBar(content: Text('تعذر إنشاء البطاقة. حاول مرة أخرى.\n$e')),
-      );
-    } finally {
-      if (mounted) setState(() => _busy = false);
-    }
-  }
+  final String customerId;
 
   @override
   Widget build(BuildContext context) {
-    if (!_isIOS && !_isAndroid) {
-      return const SizedBox.shrink();
-    }
-
-    if (_isIOS) {
-      return SizedBox(
-        height: 46,
-        child: ElevatedButton.icon(
-          onPressed: _busy ? null : () => _openWallet(context),
-          icon: _busy
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Image.asset(AppAssets.appleWalletIcon, width: 22, height: 22),
-          label: const Text(
-            'إضافة إلى Apple Wallet',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.black,
-            foregroundColor: Colors.white,
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      height: 46,
-      child: OutlinedButton.icon(
-        onPressed: _busy ? null : () => _openWallet(context),
-        icon: _busy
-            ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              )
-            : Image.asset(AppAssets.googleWalletIcon, width: 22, height: 22),
-        label: const Text(
-          'إضافة إلى Google Wallet',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: const Color(0xFF111827),
-          side: const BorderSide(color: Color(0xFFE5E7EB)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          backgroundColor: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickStatsRow extends StatelessWidget {
-  const _QuickStatsRow({
-    required this.totalSpent,
-    required this.visitCount,
-    required this.tier,
-    required this.arabicDigits,
-  });
-
-  final double totalSpent;
-  final int visitCount;
-  final String tier;
-  final bool arabicDigits;
-
-  @override
-  Widget build(BuildContext context) {
-    final pill = _tierPill(tier);
-    return Row(
-      children: [
-        Expanded(
-          child: _StatCard(
-            title: 'إجمالي الإنفاق',
-            value: '${formatMoneyAr(totalSpent, arabicDigits: arabicDigits)} ر.س',
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatCard(
-            title: 'عدد الزيارات',
-            value: formatIntAr(visitCount, arabicDigits: arabicDigits),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: _StatCard(
-            title: 'المستوى',
-            value: pill.label.replaceAll(' ⭐', ''),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({required this.title, required this.value});
-
-  final String title;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF111827),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecentTransactionsSection extends StatelessWidget {
-  const _RecentTransactionsSection({
-    required this.histAsync,
-    required this.arabicDigits,
-    required this.onViewAll,
-  });
-
-  final AsyncValue<HistoryState> histAsync;
-  final bool arabicDigits;
-  final VoidCallback onViewAll;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
+    final l10n = AppLocalizations.of(context)!;
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      radius: 20,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              TextButton(
-                onPressed: onViewAll,
-                child: const Text(
-                  'عرض الكل',
-                  style: TextStyle(fontWeight: FontWeight.w800, color: _kPointBlue),
+          Text(
+            l10n.showQrToStaff,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: AppColors.border.withValues(alpha: 0.55),
+                  ),
+                ),
+                child: QrImageView(
+                  data: customerId,
+                  size: 196,
+                  errorCorrectionLevel: QrErrorCorrectLevel.M,
+                  backgroundColor: Colors.white,
+                  eyeStyle: const QrEyeStyle(
+                    eyeShape: QrEyeShape.square,
+                    color: Color(0xFF0F172A),
+                  ),
+                  dataModuleStyle: const QrDataModuleStyle(
+                    dataModuleShape: QrDataModuleShape.square,
+                    color: Color(0xFF0F172A),
+                  ),
                 ),
               ),
-              const Spacer(),
-              const Text(
-                'آخر المعاملات',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            l10n.staticLoyaltyQrHint,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.cairo(
+              fontSize: 11,
+              color: AppColors.textHint,
+            ),
+          ),
+          const WalletAddButtons(compact: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeLoadingSkeleton extends StatelessWidget {
+  const _HomeLoadingSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBackground(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+        child: Shimmer.fromColors(
+          baseColor: AppColors.surface,
+          highlightColor: AppColors.surfaceAlt,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                height: 200,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Container(
+                height: 280,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          histAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 18),
-              child: Center(child: CircularProgressIndicator(color: _kPointBlue)),
-            ),
-            error: (_, __) => const _TxEmptyState(),
-            data: (state) {
-              final items = state.items.take(5).toList(growable: false);
-              if (items.isEmpty) return const _TxEmptyState();
-              return Column(
-                children: items.map((tx) => _TxRow(tx: tx, arabicDigits: arabicDigits)).toList(),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TxEmptyState extends StatelessWidget {
-  const _TxEmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 20),
-      child: Column(
-        children: [
-          Icon(Icons.receipt_long_rounded, size: 44, color: _kPointBlue.withValues(alpha: 0.35)),
-          const SizedBox(height: 10),
-          const Text(
-            'لا توجد معاملات بعد',
-            style: TextStyle(fontWeight: FontWeight.w700, color: Color(0xFF6B7280)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TxRow extends StatelessWidget {
-  const _TxRow({required this.tx, required this.arabicDigits});
-
-  final TransactionModel tx;
-  final bool arabicDigits;
-
-  @override
-  Widget build(BuildContext context) {
-    final localeTag = Localizations.localeOf(context).toLanguageTag();
-    final dt = DateFormat.yMMMd(localeTag).format(tx.createdAt.toLocal());
-
-    final isRedemption = tx.type == 'redemption';
-    final typeLabel = transactionTypeLocalized(context, tx.type);
-
-    final mainAmount = isRedemption ? (tx.subscriptionUsed + tx.cashbackUsed) : tx.amount;
-    final amountPrefix = isRedemption ? '-' : '+';
-    final amountColor = isRedemption ? const Color(0xFFF97316) : _kTeal;
-
-    final icon = isRedemption ? Icons.call_made_rounded : Icons.call_received_rounded;
-    final iconColor = amountColor;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        children: [
-          Text(
-            '$amountPrefix${formatMoneyAr(mainAmount, arabicDigits: arabicDigits)}',
-            style: TextStyle(fontWeight: FontWeight.w900, color: amountColor, fontSize: 15),
-          ),
-          const Spacer(),
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  typeLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  dt,
-                  style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 18),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _OutlinedIconButton extends StatelessWidget {
-  const _OutlinedIconButton({required this.icon, required this.onPressed});
-
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: 44,
-      height: 44,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          side: const BorderSide(color: Color(0xFFE5E7EB)),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          backgroundColor: Colors.white,
         ),
-        child: Icon(icon, color: const Color(0xFF111827)),
       ),
     );
   }
 }
 
-class _OutlinedCircle extends StatelessWidget {
-  const _OutlinedCircle({required this.icon, required this.onPressed});
+class _HomeErrorState extends StatelessWidget {
+  const _HomeErrorState({
+    required this.message,
+    required this.onRetry,
+  });
 
-  final IconData icon;
-  final VoidCallback onPressed;
+  final String message;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 32,
-      height: 32,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          padding: EdgeInsets.zero,
-          side: BorderSide(color: Colors.white.withValues(alpha: 0.35)),
-          shape: const CircleBorder(),
-          backgroundColor: Colors.white.withValues(alpha: 0.10),
+    final l10n = AppLocalizations.of(context)!;
+    return AnimatedBackground(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AppCard(
+              padding: const EdgeInsets.all(20),
+              borderColor: AppColors.error.withValues(alpha: 0.4),
+              child: Column(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: AppColors.error, size: 40),
+                  const SizedBox(height: 12),
+                  Text(
+                    message,
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.cairo(
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: BorderSide(color: AppColors.error.withValues(alpha: 0.8)),
+                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () {
+                HapticFeedback.lightImpact();
+                onRetry();
+              },
+              child: Text(
+                l10n.retry,
+                style: GoogleFonts.cairo(fontWeight: FontWeight.w700),
+              ),
+            ),
+            ],
+          ),
         ),
-        child: Icon(icon, color: Colors.white, size: 18),
+      ),
+    );
+  }
+}
+
+class _PressableScale extends StatefulWidget {
+  const _PressableScale({
+    required this.child,
+    required this.onTap,
+    this.enableAnim = true,
+  });
+
+  final Widget child;
+  final VoidCallback onTap;
+  final bool enableAnim;
+
+  @override
+  State<_PressableScale> createState() => _PressableScaleState();
+}
+
+class _PressableScaleState extends State<_PressableScale> {
+  double _scale = 1;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) {
+        if (widget.enableAnim) setState(() => _scale = 0.97);
+      },
+      onTapUp: (_) {
+        if (widget.enableAnim) setState(() => _scale = 1);
+        HapticFeedback.lightImpact();
+        widget.onTap();
+      },
+      onTapCancel: () {
+        if (widget.enableAnim) setState(() => _scale = 1);
+      },
+      child: AnimatedScale(
+        scale: _scale,
+        duration: const Duration(milliseconds: 100),
+        curve: Curves.easeOut,
+        child: widget.child,
       ),
     );
   }

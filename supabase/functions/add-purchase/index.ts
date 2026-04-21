@@ -14,8 +14,6 @@ import {
 import { writeAuditLog } from "../_shared/audit.ts";
 import { dispatchNotification } from "../_shared/dispatch_notification.ts";
 import { trySyncGoogleWalletLoyaltyObject } from "../_shared/google_wallet_loyalty.ts";
-import { sendFCMNotification } from "../_shared/fcm.ts";
-import { notifyOwner } from "../_shared/owner_notify.ts";
 
 type Body = {
   customer_id: string;
@@ -117,15 +115,6 @@ async function runFraudChecks(
 
   if (flags.length) {
     await supabase.from("fraud_flags").insert(flags);
-    // Best-effort: notify owner about suspicious activity.
-    await notifyOwner(supabase, {
-      title: "⚠️ تنبيه احتيال",
-      body: "عملية مشبوهة تحتاج مراجعة فورية",
-      data: {
-        type: "fraud",
-        transaction_id: opts.transactionId,
-      },
-    });
   }
 }
 
@@ -202,7 +191,6 @@ Deno.serve(async (req) => {
 
   const cbBefore = Number(customer.cashback_balance);
   const subBefore = Number(customer.subscription_balance);
-  const wasNewCustomer = Number(customer.visit_count ?? 0) === 0;
   const cashbackEarned = Math.round(amount * kCashbackRate * 100) / 100;
 
   const lastVisit = customer.last_visit_date
@@ -321,41 +309,6 @@ Deno.serve(async (req) => {
     },
     transaction_id: purchaseTx.id as string,
   });
-
-  // FCM push (customer)
-  try {
-    const token = String(customer.fcm_token ?? customer.device_token ?? "");
-    if (token) {
-      await sendFCMNotification({
-        token,
-        title: "بوينت 💙",
-        body:
-          `تم إضافة ${cashbackEarned} ر.س كاش باك! ` +
-          `رصيدك الجديد: ${finalCashback} ر.س`,
-        data: {
-          type: "purchase",
-          amount: String(amount),
-        },
-      });
-    }
-  } catch (e) {
-    console.warn("[fcm] customer push failed", e);
-  }
-
-  // Owner notification when a new customer joins (first visit/purchase).
-  if (wasNewCustomer) {
-    try {
-      const { count } = await supabase
-        .from("customers")
-        .select("id", { count: "exact", head: true });
-      await notifyOwner(supabase, {
-        title: "بوينت - متجرك 🏪",
-        body: `عميل جديد انضم للمتجر! إجمالي العملاء: ${count ?? 0}`,
-      });
-    } catch (e) {
-      console.warn("[owner_notify] failed", e);
-    }
-  }
 
   if (streakBonus > 0) {
     await dispatchNotification(supabase, {

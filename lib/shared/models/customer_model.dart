@@ -24,7 +24,6 @@ class CustomerModel {
     this.deviceToken,
     required this.preferredLanguage,
     required this.isBlocked,
-    required this.storeId,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -50,7 +49,6 @@ class CustomerModel {
   final String? deviceToken;
   final String preferredLanguage;
   final bool isBlocked;
-  final String storeId;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -79,7 +77,6 @@ class CustomerModel {
       preferredLanguage:
           json[kCustomersPreferredLanguage] as String? ?? 'ar',
       isBlocked: modelParseBool(json[kCustomersIsBlocked]),
-      storeId: json[kCustomersStoreId]! as String,
       createdAt: modelParseDateTime(json[kCustomersCreatedAt])!,
       updatedAt: modelParseDateTime(json[kCustomersUpdatedAt])!,
     );
@@ -112,7 +109,6 @@ class CustomerModel {
       kCustomersDeviceToken: deviceToken,
       kCustomersPreferredLanguage: preferredLanguage,
       kCustomersIsBlocked: isBlocked,
-      kCustomersStoreId: storeId,
       kCustomersCreatedAt: createdAt.toUtc().toIso8601String(),
       kCustomersUpdatedAt: updatedAt.toUtc().toIso8601String(),
     };
@@ -143,7 +139,6 @@ class CustomerModel {
     String? deviceToken,
     String? preferredLanguage,
     bool? isBlocked,
-    String? storeId,
     DateTime? createdAt,
     DateTime? updatedAt,
     bool clearAuthUserId = false,
@@ -183,7 +178,6 @@ class CustomerModel {
       deviceToken: clearDeviceToken ? null : (deviceToken ?? this.deviceToken),
       preferredLanguage: preferredLanguage ?? this.preferredLanguage,
       isBlocked: isBlocked ?? this.isBlocked,
-      storeId: storeId ?? this.storeId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

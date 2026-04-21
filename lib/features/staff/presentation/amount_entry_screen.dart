@@ -3,12 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
-import '../../../core/config/env.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/staff/staff_feedback.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../shared/widgets/app_card.dart';
 import 'providers/staff_providers.dart';
 import 'staff_route_models.dart';
 
@@ -21,16 +20,21 @@ class StaffAmountEntryScreen extends ConsumerStatefulWidget {
 }
 
 class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen> {
-  static const _kPageBg = Color(0xFFF8F9FA);
-  static const _kPointBlue = Color(0xFF185FA5);
-  static const _kAmber = Color(0xFFEF9F27);
-
   String _raw = '';
   String? _pressedKey;
 
   double get _value {
     if (_raw.isEmpty || _raw == '.') return 0;
     return double.tryParse(_raw) ?? 0;
+  }
+
+  void _setQuick(double v) {
+    HapticFeedback.lightImpact();
+    staffHaptic();
+    setState(() {
+      _raw = v.toStringAsFixed(v == v.roundToDouble() ? 0 : 2);
+    });
+    ref.read(staffEntryAmountProvider.notifier).setAmount(v);
   }
 
   void _append(String ch) {
@@ -66,6 +70,16 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
     ref.read(staffEntryAmountProvider.notifier).setAmount(_value);
   }
 
+  bool _quickSelected(double n) {
+    if (_raw.isEmpty) return false;
+    final v = double.tryParse(_raw);
+    if (v == null) return false;
+    if ((v - n).abs() > 0.001) return false;
+    final expect =
+        n == n.roundToDouble() ? n.toStringAsFixed(0) : n.toStringAsFixed(2);
+    return _raw == expect || _raw == n.toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final mode = ref.watch(staffTxnModeProvider);
@@ -85,16 +99,14 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
 
     final l10n = AppLocalizations.of(context)!;
     final purchase = mode == StaffTxnMode.purchase;
-    final title = switch (mode) {
-      StaffTxnMode.purchase => 'شراء',
-      StaffTxnMode.redeem => 'استرداد',
-      StaffTxnMode.subscription => 'باقة',
-    };
+    final title = purchase ? l10n.recordPurchase : l10n.redeemBalance;
     final totalBal = c.totalWalletBalance;
-    final over = mode == StaffTxnMode.redeem && _value > totalBal + 0.001;
+    final over = !purchase && _value > totalBal + 0.001;
+    final cbPreview = _value * 0.20;
+    const quickAmounts = [10.0, 20.0, 30.0, 50.0, 100.0, 150.0, 200.0];
 
     return Scaffold(
-      backgroundColor: _kPageBg,
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -103,83 +115,163 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
             context.pop();
           },
         ),
-        backgroundColor: _kPageBg,
-        elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        title: _OpBadge(mode: mode, title: title),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
-        child: Column(
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                c.name,
-                style: const TextStyle(
-                  color: Color(0xFF6B7280),
-                  fontWeight: FontWeight.w700,
-                ),
+            Text(title),
+            Text(
+              c.name,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textSecondary,
               ),
             ),
-            const SizedBox(height: 10),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
-              ),
+          ],
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        child: Column(
+          children: [
+            AppCard(
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  Text(
-                    '${_value.toStringAsFixed(2)} ر.س',
-                    key: ValueKey<String>(_raw.isEmpty ? '0' : _raw),
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.cairo(
-                      fontSize: 52,
-                      fontWeight: FontWeight.w900,
-                      color: _kPointBlue,
-                      height: 1.05,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  FutureBuilder<double>(
-                    future: _cashbackRate(),
-                    builder: (context, snap) {
-                      final rate = snap.data ?? 0.20;
-                      final cbPreview = _value * rate;
-                      return AnimatedOpacity(
-                        opacity: purchase ? 1 : 0,
-                        duration: const Duration(milliseconds: 180),
-                        child: Text(
-                          'كاش باك سيُضاف: ${cbPreview.toStringAsFixed(2)} ر.س',
-                          style: GoogleFonts.cairo(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: purchase ? _kAmber : const Color(0xFF9CA3AF),
-                          ),
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 220),
+                    transitionBuilder: (child, anim) {
+                      return FadeTransition(
+                        opacity: anim,
+                        child: ScaleTransition(
+                          scale: Tween<double>(begin: 0.96, end: 1).animate(anim),
+                          child: child,
                         ),
                       );
                     },
+                    child: Text(
+                      l10n.staffAmountSar(_value.toStringAsFixed(2)),
+                      key: ValueKey<String>(_raw.isEmpty ? '0' : _raw),
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.cairo(
+                        fontSize: 56,
+                        fontWeight: FontWeight.w800,
+                        color: purchase ? AppColors.primary : AppColors.warning,
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.staffSaudiRiyal,
+                    style: GoogleFonts.cairo(
+                      fontSize: 14,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                  if (!purchase) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.successTint,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        l10n.staffAvailableSar(totalBal.toStringAsFixed(2)),
+                        style: GoogleFonts.cairo(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
-            const SizedBox(height: 14),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              child: purchase && _value > 0
+                  ? Padding(
+                      padding: const EdgeInsets.only(top: 12),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.goldTint,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: AppColors.gold),
+                          boxShadow: AppColors.cardShadow,
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.auto_awesome, color: AppColors.gold),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                l10n.staffCashbackPreviewPlus(cbPreview.toStringAsFixed(2)),
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.gold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 48,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: quickAmounts.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 8),
+                itemBuilder: (context, i) {
+                  final n = quickAmounts[i];
+                  final sel = _quickSelected(n);
+                  return GestureDetector(
+                    onTap: () => _setQuick(n),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 250),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: sel ? AppColors.primary : AppColors.surface,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: AppColors.border),
+                        boxShadow: sel ? AppColors.cardShadow : null,
+                      ),
+                      child: Center(
+                        child: Text(
+                          '${n.round()}',
+                          style: GoogleFonts.cairo(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: sel ? Colors.white : AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
             Expanded(child: _numPad()),
             const SizedBox(height: 12),
             SizedBox(
               height: 52,
               width: double.infinity,
               child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: _kPointBlue,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: _kPointBlue.withValues(alpha: 0.45),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                ),
+                style: over
+                    ? FilledButton.styleFrom(backgroundColor: AppColors.error)
+                    : null,
                 onPressed: (_value <= 0 || over)
                     ? null
                     : () {
@@ -188,9 +280,9 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
                         context.push('/staff/confirm');
                       },
                 child: Text(
-                  over ? l10n.insufficientBalance : 'تأكيد',
+                  over ? l10n.insufficientBalance : l10n.next,
                   style: GoogleFonts.cairo(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -200,29 +292,6 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
         ),
       ),
     );
-  }
-
-  Future<double> _cashbackRate() async {
-    if (!Env.hasSupabase) return 0.20;
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return 0.20;
-    final mem = await Supabase.instance.client
-        .from('store_memberships')
-        .select('store_id')
-        .eq('user_id', user.id)
-        .eq('status', 'active')
-        .limit(1)
-        .maybeSingle();
-    final storeId = mem?['store_id'] as String?;
-    if (storeId == null) return 0.20;
-    final store = await Supabase.instance.client
-        .from('stores')
-        .select('cashback_rate')
-        .eq('id', storeId)
-        .maybeSingle();
-    final r = store?['cashback_rate'];
-    if (r is num) return r.toDouble();
-    return double.tryParse('$r') ?? 0.20;
   }
 
   Widget _numPad() {
@@ -236,7 +305,7 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
       itemCount: 12,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 3,
-        mainAxisExtent: 72,
+        mainAxisExtent: 68,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
       ),
@@ -252,15 +321,15 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 120),
               decoration: BoxDecoration(
-                color: pressed ? const Color(0xFFEFF6FF) : Colors.white,
+                color: pressed ? AppColors.primaryTint : AppColors.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                border: Border.all(color: AppColors.border),
               ),
-              child: const Center(
+              child: Center(
                 child: Icon(
                   Icons.backspace_outlined,
                   size: 28,
-                  color: Color(0xFFEF4444),
+                  color: AppColors.error,
                 ),
               ),
             ),
@@ -274,51 +343,23 @@ class _StaffAmountEntryScreenState extends ConsumerState<StaffAmountEntryScreen>
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             decoration: BoxDecoration(
-              color: pressed ? const Color(0xFFEFF6FF) : Colors.white,
+              color: pressed ? AppColors.primaryTint : AppColors.surface,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE5E7EB)),
+              border: Border.all(color: AppColors.border),
             ),
             child: Center(
               child: Text(
                 k,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF111827),
+                style: GoogleFonts.cairo(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
           ),
         );
       },
-    );
-  }
-}
-
-class _OpBadge extends StatelessWidget {
-  const _OpBadge({required this.mode, required this.title});
-
-  final StaffTxnMode mode;
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    final (bg, fg) = switch (mode) {
-      StaffTxnMode.purchase => (const Color(0xFFEFF6FF), const Color(0xFF185FA5)),
-      StaffTxnMode.redeem => (const Color(0xFFFFF7ED), const Color(0xFF9A3412)),
-      StaffTxnMode.subscription => (const Color(0xFFEEEDFE), const Color(0xFF3C3489)),
-    };
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: fg.withValues(alpha: 0.2)),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(color: fg, fontWeight: FontWeight.w900),
-      ),
     );
   }
 }

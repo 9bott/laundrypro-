@@ -66,11 +66,8 @@ class StaffSelectedPlanIdNotifier extends Notifier<String?> {
 /// Latest transactions for a given customer (used in staff customer details).
 final staffCustomerTransactionsProvider =
     FutureProvider.family<List<TransactionModel>, String>((ref, customerId) async {
-  final staff = ref.watch(staffMemberProvider).asData?.value;
-  final storeId = staff?.storeId ?? '';
   return ref.read(customerRepositoryProvider).getTransactions(
         customerId,
-        storeId: storeId,
         page: 0,
         pageSize: 20,
       );
@@ -79,13 +76,11 @@ final staffCustomerTransactionsProvider =
 final staffOfflineSyncProvider = Provider<StaffQueueSync>((ref) {
   final sync = StaffQueueSync((tx) async {
     final repo = ref.read(staffRepositoryProvider);
-    final storeId = ref.read(staffMemberProvider).asData?.value?.storeId ?? '';
     switch (tx.kind) {
       case 'add_purchase':
         await repo.addPurchase(
           customerId: tx.customerId,
           staffId: tx.staffId,
-          storeId: storeId,
           amount: tx.amount ?? 0,
           idempotencyKey: tx.idempotencyKey,
           deviceId: tx.deviceId,
@@ -95,7 +90,6 @@ final staffOfflineSyncProvider = Provider<StaffQueueSync>((ref) {
         await repo.redeemBalance(
           customerId: tx.customerId,
           staffId: tx.staffId,
-          storeId: storeId,
           amount: tx.amount ?? 0,
           idempotencyKey: tx.idempotencyKey,
         );
@@ -104,7 +98,6 @@ final staffOfflineSyncProvider = Provider<StaffQueueSync>((ref) {
         await repo.addSubscription(
           customerId: tx.customerId,
           staffId: tx.staffId,
-          storeId: storeId,
           planId: tx.planId ?? '',
           idempotencyKey: tx.idempotencyKey,
         );
