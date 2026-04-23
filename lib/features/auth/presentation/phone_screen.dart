@@ -247,6 +247,9 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
         kLoginModePrefKey,
         _asStaff ? kLoginModeStaff : kLoginModeCustomer,
       );
+      debugPrint(
+        '[PhoneScreen] persisted login_mode=${_asStaff ? kLoginModeStaff : kLoginModeCustomer} (before OTP send)',
+      );
       await ref.read(authRepositoryProvider).signInWithPhoneOtp(phone);
       if (!mounted) return;
       context.pushReplacement('/auth/otp', extra: phone);
@@ -338,16 +341,18 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                         context,
                                         label: isAr ? 'عميل' : 'Customer',
                                         selected: !_asStaff,
-                                        onTap: () async {
-                                          final p =
-                                              await SharedPreferences.getInstance();
-                                          await p.setString(
-                                            kLoginModePrefKey,
-                                            kLoginModeCustomer,
-                                          );
-                                          if (mounted) {
-                                            setState(() => _asStaff = false);
-                                          }
+                                        onTap: () {
+                                          // Set state first to avoid racing the Sign in button.
+                                          if (mounted) setState(() => _asStaff = false);
+                                          SharedPreferences.getInstance().then((p) async {
+                                            await p.setString(
+                                              kLoginModePrefKey,
+                                              kLoginModeCustomer,
+                                            );
+                                            debugPrint(
+                                              '[PhoneScreen] persisted login_mode=$kLoginModeCustomer (tab=customer)',
+                                            );
+                                          });
                                         },
                                       ),
                                     ),
@@ -357,16 +362,18 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                         context,
                                         label: isAr ? 'متجر' : 'Store',
                                         selected: _asStaff,
-                                        onTap: () async {
-                                          final p =
-                                              await SharedPreferences.getInstance();
-                                          await p.setString(
-                                            kLoginModePrefKey,
-                                            kLoginModeStaff,
-                                          );
-                                          if (mounted) {
-                                            setState(() => _asStaff = true);
-                                          }
+                                        onTap: () {
+                                          // Set state first to avoid racing the Sign in button.
+                                          if (mounted) setState(() => _asStaff = true);
+                                          SharedPreferences.getInstance().then((p) async {
+                                            await p.setString(
+                                              kLoginModePrefKey,
+                                              kLoginModeStaff,
+                                            );
+                                            debugPrint(
+                                              '[PhoneScreen] persisted login_mode=$kLoginModeStaff (tab=store)',
+                                            );
+                                          });
                                         },
                                       ),
                                     ),
