@@ -11,14 +11,14 @@ export async function notifyOwner(
 ): Promise<void> {
   const { data: owners, error } = await supabase
     .from("staff")
-    .select("fcm_token")
+    .select("fcm_token, device_token")
     .eq("role", "owner")
     .eq("is_active", true);
 
   if (error || !owners?.length) return;
 
   const tokens = owners
-    .map((o) => o.fcm_token as string | null)
+    .map((o) => (o.fcm_token as string | null) ?? (o.device_token as string | null))
     .filter((t): t is string => !!t && t.length > 0);
 
   await Promise.allSettled(

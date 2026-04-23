@@ -44,12 +44,15 @@ abstract final class NotificationService {
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       final messaging = FirebaseMessaging.instance;
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      if (!kIsWeb) {
+        debugPrint('[FCM] requesting permission (platform=$defaultTargetPlatform)');
         await messaging.requestPermission(
           alert: true,
           badge: true,
           sound: true,
         );
+        final settings = await messaging.getNotificationSettings();
+        debugPrint('[FCM] permission status: ${settings.authorizationStatus}');
       }
 
       // Foreground: show an in-app banner (SnackBar) to avoid silent delivery.
@@ -92,6 +95,7 @@ abstract final class NotificationService {
       if (token == null || token.isEmpty) return;
       await Supabase.instance.client.from(kTableCustomers).update({
         kCustomersDeviceToken: token,
+        'fcm_token': token,
       }).eq(kCustomersId, customerId);
       _lastSyncedToken = token;
     } catch (e) {
@@ -109,6 +113,7 @@ abstract final class NotificationService {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token == null || token.isEmpty) return;
+      debugPrint('[FCM] token: $token');
       if (!force && _lastSyncedToken == token) return;
 
       final prefs = await SharedPreferences.getInstance();
@@ -119,15 +124,18 @@ abstract final class NotificationService {
           // Keep schema-compatible with the clean baseline.
           // If the staff table has a token column, it's named `device_token`.
           'device_token': token,
+          'fcm_token': token,
         }).eq(kStaffAuthUserId, user.id);
       } else {
         // Default to customer (covers owner/customer without pref).
         await Supabase.instance.client.from(kTableCustomers).update({
           kCustomersDeviceToken: token,
+          'fcm_token': token,
         }).eq(kCustomersAuthUserId, user.id);
       }
 
       _lastSyncedToken = token;
+      debugPrint('[FCM] token saved to Supabase (mode=${loginMode ?? 'customer'})');
     } catch (e) {
       debugPrint('[fcm_token] $e');
     }

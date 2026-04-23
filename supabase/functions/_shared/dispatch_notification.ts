@@ -71,7 +71,7 @@ export async function dispatchNotification(
 ): Promise<void> {
   const { data: cust, error } = await supabase
     .from("customers")
-    .select("phone, name, device_token, preferred_language")
+    .select("phone, name, device_token, fcm_token, preferred_language")
     .eq("id", input.customer_id)
     .maybeSingle();
 
@@ -100,10 +100,13 @@ export async function dispatchNotification(
     }
   }
 
-  if (wantPush && cust.device_token) {
+  const pushToken = (cust as { fcm_token?: string | null; device_token?: string | null }).fcm_token ??
+    (cust as { device_token?: string | null }).device_token;
+
+  if (wantPush && pushToken) {
     try {
       await sendPushStub(
-        cust.device_token as string,
+        pushToken as string,
         "Point",
         message,
       );
