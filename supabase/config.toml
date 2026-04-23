@@ -69,3 +69,6 @@ verify_jwt = false
 
 [functions.generate-passkit-wallet-url]
 verify_jwt = false
+
+[functions.notify-owner]
+verify_jwt = false
