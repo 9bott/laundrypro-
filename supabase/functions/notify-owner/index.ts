@@ -2,11 +2,13 @@ import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
 import { requireServiceRole } from "../_shared/auth.ts";
 import { notifyOwner } from "../_shared/owner_notify.ts";
+import { sendFCMNotification } from "../_shared/fcm.ts";
 
 type Body = {
   title: string;
   body: string;
   data?: Record<string, string>;
+  fcm_token?: string; // optional direct token
 };
 
 Deno.serve(async (req) => {
@@ -28,11 +30,26 @@ Deno.serve(async (req) => {
   }
 
   const supabase = serviceClient();
-  await notifyOwner(supabase, {
-    title: body.title,
-    body: body.body,
-    data: body.data,
-  });
+  if (body.fcm_token) {
+    // Send directly to provided token
+    try {
+      await sendFCMNotification({
+        token: body.fcm_token,
+        title: body.title,
+        body: body.body,
+        data: body.data,
+      });
+    } catch (e) {
+      console.error("[notify-owner] FCM failed:", e);
+    }
+  } else {
+    // Fall back to notifyOwner (staff table lookup)
+    await notifyOwner(supabase, {
+      title: body.title,
+      body: body.body,
+      data: body.data,
+    });
+  }
 
   return json({ success: true });
 });
