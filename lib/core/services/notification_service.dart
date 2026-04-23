@@ -118,20 +118,31 @@ abstract final class NotificationService {
 
       final prefs = await SharedPreferences.getInstance();
       final loginMode = prefs.getString(kLoginModePrefKey);
+      debugPrint('[FCM] login_mode=$loginMode user_id=${user.id}');
 
       if (loginMode == kLoginModeStaff) {
-        await Supabase.instance.client.from(kTableStaff).update({
-          // Keep schema-compatible with the clean baseline.
-          // If the staff table has a token column, it's named `device_token`.
-          'device_token': token,
-          'fcm_token': token,
-        }).eq(kStaffAuthUserId, user.id);
+        try {
+          // NOTE: Remote schema has `staff.fcm_token` but may not have `staff.device_token`.
+          await Supabase.instance.client.from(kTableStaff).update({
+            'fcm_token': token,
+          }).eq(kStaffAuthUserId, user.id);
+          debugPrint('[FCM] staff token update OK');
+        } catch (e) {
+          debugPrint('[FCM] staff token update FAILED: $e');
+          rethrow;
+        }
       } else {
         // Default to customer (covers owner/customer without pref).
-        await Supabase.instance.client.from(kTableCustomers).update({
-          kCustomersDeviceToken: token,
-          'fcm_token': token,
-        }).eq(kCustomersAuthUserId, user.id);
+        try {
+          await Supabase.instance.client.from(kTableCustomers).update({
+            kCustomersDeviceToken: token,
+            'fcm_token': token,
+          }).eq(kCustomersAuthUserId, user.id);
+          debugPrint('[FCM] customer token update OK');
+        } catch (e) {
+          debugPrint('[FCM] customer token update FAILED: $e');
+          rethrow;
+        }
       }
 
       _lastSyncedToken = token;

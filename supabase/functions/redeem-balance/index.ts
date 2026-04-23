@@ -141,7 +141,7 @@ Deno.serve(async (req) => {
     await dispatchNotification(supabase, {
       customer_id,
       type: "transaction",
-      channel: "sms",
+      channel: "both",
       data: {
         name: customer.name,
         cashback: 0,

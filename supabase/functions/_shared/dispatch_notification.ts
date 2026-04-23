@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { sendUnifonicSms } from "./sms.ts";
+import { sendFCMNotification } from "./fcm.ts";
 
 export type NotifyType =
   | "transaction"
@@ -40,20 +41,6 @@ function templateMessage(
     default:
       return String(data.fallback_message ?? "Point notification");
   }
-}
-
-async function sendPushStub(
-  deviceToken: string | undefined,
-  title: string,
-  body: string,
-): Promise<void> {
-  const serverKey = Deno.env.get("FCM_SERVER_KEY");
-  if (!deviceToken || !serverKey) {
-    if (!serverKey) console.warn("[fcm] FCM_SERVER_KEY not set — push skipped");
-    return;
-  }
-  // Legacy HTTP v1 uses OAuth2 — placeholder: log until you wire FCM v1 with a service account.
-  console.log("[fcm] would send to device", { deviceToken, title, body });
 }
 
 /**
@@ -105,11 +92,12 @@ export async function dispatchNotification(
 
   if (wantPush && pushToken) {
     try {
-      await sendPushStub(
-        pushToken as string,
-        "Point",
-        message,
-      );
+      await sendFCMNotification({
+        token: pushToken as string,
+        title: "Point",
+        body: message,
+        data: {},
+      });
       delivered = true;
     } catch (e) {
       console.error("Notification failed (non-fatal):", e);

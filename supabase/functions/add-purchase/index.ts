@@ -306,7 +306,7 @@ Deno.serve(async (req) => {
     await dispatchNotification(supabase, {
       customer_id,
       type: "transaction",
-      channel: "sms",
+      channel: "both",
       data: {
         name: customer.name,
         cashback: cashbackEarned,
@@ -324,7 +324,7 @@ Deno.serve(async (req) => {
       await dispatchNotification(supabase, {
         customer_id,
         type: "streak",
-        channel: "sms",
+        channel: "both",
         data: {
           name: customer.name,
           streak: streakWeekLabel,
