@@ -175,6 +175,7 @@ abstract final class NotificationService {
       final prefs = await SharedPreferences.getInstance();
       final loginMode = prefs.getString(kLoginModePrefKey);
       debugPrint('[FCM] login_mode=$loginMode user_id=${user.id}');
+      await prefs.setString('debug_fcm_token', token);
 
       if (loginMode == kLoginModeStaff) {
         try {

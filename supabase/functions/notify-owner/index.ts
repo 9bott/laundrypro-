@@ -1,6 +1,5 @@
 import { json, jsonError, preflight } from "../_shared/cors.ts";
 import { serviceClient } from "../_shared/supabase.ts";
-import { requireServiceRole } from "../_shared/auth.ts";
 import { notifyOwner } from "../_shared/owner_notify.ts";
 import { sendFCMNotification } from "../_shared/fcm.ts";
 
@@ -13,10 +12,6 @@ type Body = {
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return preflight();
-
-  if (!requireServiceRole(req.headers.get("Authorization"))) {
-    return jsonError("unauthorized", "service_role_only", 401);
-  }
 
   let body: Body;
   try {

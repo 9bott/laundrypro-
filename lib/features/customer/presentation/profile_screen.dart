@@ -9,6 +9,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
@@ -34,6 +35,25 @@ class ProfileScreen extends ConsumerStatefulWidget {
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notif = true;
+  String? _fcmToken;
+  bool _fcmLoading = false;
+
+  String _shortToken(String t) => t.length <= 20 ? t : t.substring(0, 20);
+
+  Future<void> _loadFcmToken() async {
+    if (_fcmLoading) return;
+    setState(() => _fcmLoading = true);
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (!mounted) return;
+      setState(() => _fcmToken = token);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _fcmToken = null);
+    } finally {
+      if (mounted) setState(() => _fcmLoading = false);
+    }
+  }
 
   String _initial(String name) {
     final t = name.trim();
@@ -120,6 +140,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         setState(() => _notif = p.getBool(_kNotifPref) ?? true);
       }
     });
+    // Fire-and-forget: show token on screen for iOS debugging.
+    Future.microtask(_loadFcmToken);
   }
 
   Future<void> _pickAndUpload(String customerId) async {
@@ -448,6 +470,56 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+
+                      _sectionTitle(context, 'FCM Token (Debug)'),
+                      Card(
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(22),
+                          side: BorderSide(color: AppColors.border),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(14),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: SelectableText(
+                                  _fcmLoading
+                                      ? 'Loading...'
+                                      : (_fcmToken == null || _fcmToken!.isEmpty)
+                                          ? '—'
+                                          : _shortToken(_fcmToken!),
+                                  textDirection: TextDirection.ltr,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Copy',
+                                onPressed: (_fcmToken == null || _fcmToken!.isEmpty)
+                                    ? null
+                                    : () async {
+                                        await Clipboard.setData(
+                                          ClipboardData(text: _fcmToken!),
+                                        );
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Copied FCM token')),
+                                        );
+                                      },
+                                icon: const Icon(Icons.copy_rounded),
+                              ),
+                              IconButton(
+                                tooltip: 'Refresh',
+                                onPressed: _fcmLoading ? null : _loadFcmToken,
+                                icon: const Icon(Icons.refresh_rounded),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
 
