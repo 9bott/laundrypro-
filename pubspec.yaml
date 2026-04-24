@@ -23,6 +23,7 @@ dependencies:
   firebase_core: ^3.6.0
   firebase_messaging: ^15.2.10
   firebase_crashlytics: ^4.3.10
+  flutter_local_notifications: ^17.2.2
 
   # OTP AutoFill (Android SMS Retriever)
   sms_autofill: ^2.3.0

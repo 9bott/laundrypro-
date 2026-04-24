@@ -2,25 +2,76 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'dart:convert';
+
 import '../constants/app_constants.dart';
 import '../constants/supabase_constants.dart';
 import '../router/app_router.dart';
+
+final FlutterLocalNotificationsPlugin _flutterLocalNotifications =
+    FlutterLocalNotificationsPlugin();
+
+const AndroidNotificationChannel _pointChannel = AndroidNotificationChannel(
+  'point_channel',
+  'Point Notifications',
+  importance: Importance.max,
+  playSound: true,
+);
+
+bool _didInitLocalNotifications = false;
+
+Future<void> _ensureLocalNotificationsInitialized() async {
+  if (_didInitLocalNotifications) return;
+  _didInitLocalNotifications = true;
+
+  const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+  const iosInit = DarwinInitializationSettings();
+  const settings = InitializationSettings(android: androidInit, iOS: iosInit);
+
+  await _flutterLocalNotifications.initialize(
+    settings,
+    onDidReceiveNotificationResponse: (resp) {
+      final payload = resp.payload;
+      if (payload == null || payload.isEmpty) return;
+      try {
+        final raw = jsonDecode(payload);
+        if (raw is Map<String, dynamic>) {
+          NotificationService._handlePayload(raw);
+        }
+      } catch (_) {}
+    },
+  );
+
+  final android =
+      _flutterLocalNotifications.resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin>();
+  await android?.createNotificationChannel(_pointChannel);
+}
 
 /// FCM + local notification hooks.
 /// TODO: Add `FirebaseOptions` from `google-services.json` / `GoogleService-Info.plist`
 /// via `flutterfire configure` — without it, Firebase may fail on real devices.
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
   try {
     if (Firebase.apps.isEmpty) {
       await Firebase.initializeApp();
     }
   } catch (e) {
     debugPrint('[Firebase] skipped: $e');
+  }
+
+  try {
+    await _ensureLocalNotificationsInitialized();
+    await NotificationService._showLocalNotification(message);
+  } catch (e) {
+    debugPrint('[fcm_background] $e');
   }
 }
 
@@ -41,6 +92,7 @@ abstract final class NotificationService {
     }
 
     try {
+      await _ensureLocalNotificationsInitialized();
       FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
       final messaging = FirebaseMessaging.instance;
@@ -55,9 +107,9 @@ abstract final class NotificationService {
         debugPrint('[FCM] permission status: ${settings.authorizationStatus}');
       }
 
-      // Foreground: show an in-app banner (SnackBar) to avoid silent delivery.
+      // Foreground: show a real notification banner.
       FirebaseMessaging.onMessage.listen((msg) {
-        _showForegroundBanner(msg);
+        _showLocalNotification(msg);
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((msg) {
@@ -152,35 +204,38 @@ abstract final class NotificationService {
     }
   }
 
-  static void _showForegroundBanner(RemoteMessage msg) {
-    final ctx = rootNavigatorKey.currentContext;
-    if (ctx == null) return;
+  static Future<void> _showLocalNotification(RemoteMessage msg) async {
+    if (kIsWeb) return;
+    await _ensureLocalNotificationsInitialized();
 
-    // Prefer notification title/body, fall back to known payload types.
     final title = msg.notification?.title ?? 'Point';
     final body = msg.notification?.body ??
         (msg.data['body'] as String?) ??
         (msg.data['type'] != null ? 'لديك إشعار جديد' : 'Notification');
 
-    try {
-      final messenger = ScaffoldMessenger.maybeOf(ctx);
-      if (messenger == null) return;
-      messenger.hideCurrentSnackBar();
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text('$title\n$body'),
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: (Localizations.localeOf(ctx).languageCode == 'ar')
-                ? 'فتح'
-                : 'Open',
-            onPressed: () => _handlePayload(msg.data),
-          ),
+    final id = (msg.messageId ?? '${DateTime.now().millisecondsSinceEpoch}')
+        .hashCode;
+
+    await _flutterLocalNotifications.show(
+      id,
+      title,
+      body,
+      const NotificationDetails(
+        android: AndroidNotificationDetails(
+          'point_channel',
+          'Point Notifications',
+          importance: Importance.max,
+          priority: Priority.high,
+          showWhen: true,
         ),
-      );
-    } catch (e) {
-      debugPrint('[fcm_foreground] $e');
-    }
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      ),
+      payload: jsonEncode(msg.data),
+    );
   }
 
   static void _handlePayload(Map<String, dynamic> data) {
