@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import '../constants/app_constants.dart';
 import '../constants/supabase_constants.dart';
@@ -109,6 +110,16 @@ abstract final class NotificationService {
         );
         final settings = await messaging.getNotificationSettings();
         debugPrint('[FCM] permission status: ${settings.authorizationStatus}');
+      }
+
+      if (!kIsWeb && Platform.isIOS) {
+        String? apnsToken;
+        for (int i = 0; i < 10; i++) {
+          apnsToken = await FirebaseMessaging.instance.getAPNSToken();
+          if (apnsToken != null) break;
+          await Future.delayed(const Duration(seconds: 1));
+        }
+        debugPrint('[FCM] APNs token after wait: $apnsToken');
       }
 
       // Foreground: show a real notification banner.

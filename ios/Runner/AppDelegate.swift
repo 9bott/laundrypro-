@@ -1,13 +1,15 @@
 import Flutter
 import UIKit
 import FirebaseAuth
+import FirebaseMessaging
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    Messaging.messaging().delegate = self
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
@@ -22,6 +24,7 @@ import FirebaseAuth
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     Auth.auth().setAPNSToken(deviceToken, type: .unknown)
+    Messaging.messaging().apnsToken = deviceToken
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 
@@ -48,5 +51,10 @@ import FirebaseAuth
       return true
     }
     return super.application(app, open: url, options: options)
+  }
+
+  // MARK: - MessagingDelegate
+  func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    debugPrint("FCM token: \(fcmToken ?? \"nil\")")
   }
 }
