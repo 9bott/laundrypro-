@@ -36,6 +36,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool _notif = true;
   String? _fcmToken;
+  String? _apnsToken;
   bool _fcmLoading = false;
 
   String _shortToken(String t) => t.length <= 20 ? t : t.substring(0, 20);
@@ -45,11 +46,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     setState(() => _fcmLoading = true);
     try {
       final token = await FirebaseMessaging.instance.getToken();
+      final apns = await FirebaseMessaging.instance.getAPNSToken();
       if (!mounted) return;
-      setState(() => _fcmToken = token);
+      setState(() {
+        _fcmToken = token;
+        _apnsToken = apns;
+      });
     } catch (_) {
       if (!mounted) return;
-      setState(() => _fcmToken = null);
+      setState(() {
+        _fcmToken = null;
+        _apnsToken = null;
+      });
     } finally {
       if (mounted) setState(() => _fcmLoading = false);
     }
@@ -473,7 +481,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         ),
                       ),
 
-                      _sectionTitle(context, 'FCM Token (Debug)'),
+                      _sectionTitle(context, 'Push Tokens (Debug)'),
                       Card(
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -485,21 +493,31 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           child: Row(
                             children: [
                               Expanded(
-                                child: SelectableText(
-                                  _fcmLoading
-                                      ? 'Loading...'
-                                      : (_fcmToken == null || _fcmToken!.isEmpty)
-                                          ? '—'
-                                          : _shortToken(_fcmToken!),
-                                  textDirection: TextDirection.ltr,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textPrimary,
-                                  ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'FCM: ${_fcmLoading ? 'Loading...' : (_fcmToken == null || _fcmToken!.isEmpty) ? '—' : _shortToken(_fcmToken!)}',
+                                      textDirection: TextDirection.ltr,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      'APNS: ${_fcmLoading ? 'Loading...' : (_apnsToken == null || _apnsToken!.isEmpty) ? '—' : _shortToken(_apnsToken!)}',
+                                      textDirection: TextDirection.ltr,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                               IconButton(
-                                tooltip: 'Copy',
+                                tooltip: 'Copy FCM',
                                 onPressed: (_fcmToken == null || _fcmToken!.isEmpty)
                                     ? null
                                     : () async {
@@ -512,6 +530,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                         );
                                       },
                                 icon: const Icon(Icons.copy_rounded),
+                              ),
+                              IconButton(
+                                tooltip: 'Copy APNS',
+                                onPressed: (_apnsToken == null || _apnsToken!.isEmpty)
+                                    ? null
+                                    : () async {
+                                        await Clipboard.setData(
+                                          ClipboardData(text: _apnsToken!),
+                                        );
+                                        if (!mounted) return;
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('Copied APNS token')),
+                                        );
+                                      },
+                                icon: const Icon(Icons.copy_all_rounded),
                               ),
                               IconButton(
                                 tooltip: 'Refresh',

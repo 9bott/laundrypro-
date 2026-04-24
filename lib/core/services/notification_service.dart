@@ -167,7 +167,18 @@ abstract final class NotificationService {
     if (user == null) return;
 
     try {
-      final token = await FirebaseMessaging.instance.getToken();
+      String? token;
+      try {
+        token = await FirebaseMessaging.instance.getToken();
+        debugPrint('[FCM] raw token result: $token');
+        if (token == null) {
+          debugPrint('[FCM] token is NULL - APNs may not be configured');
+          final apns = await FirebaseMessaging.instance.getAPNSToken();
+          debugPrint('[FCM] APNS token: $apns');
+        }
+      } catch (e) {
+        debugPrint('[FCM] getToken FAILED: $e');
+      }
       if (token == null || token.isEmpty) return;
       debugPrint('[FCM] token: $token');
       if (!force && _lastSyncedToken == token) return;
