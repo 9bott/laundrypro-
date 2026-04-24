@@ -174,6 +174,12 @@ abstract final class NotificationService {
 
       if (loginMode == kLoginModeStaff) {
         try {
+          // Clear from customers first (token may be reused on same device).
+          await Supabase.instance.client.from(kTableCustomers).update({
+            'fcm_token': null,
+            kCustomersDeviceToken: null,
+          }).eq('fcm_token', token);
+
           // NOTE: Remote schema has `staff.fcm_token` but may not have `staff.device_token`.
           await Supabase.instance.client.from(kTableStaff).update({
             'fcm_token': token,
@@ -186,6 +192,11 @@ abstract final class NotificationService {
       } else {
         // Default to customer (covers owner/customer without pref).
         try {
+          // Clear from staff first (token may be reused on same device).
+          await Supabase.instance.client.from(kTableStaff).update({
+            'fcm_token': null,
+          }).eq('fcm_token', token);
+
           await Supabase.instance.client.from(kTableCustomers).update({
             kCustomersDeviceToken: token,
             'fcm_token': token,
