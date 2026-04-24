@@ -68,6 +68,10 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   }
 
   try {
+    // Avoid duplicates: if message includes a `notification` payload, Android/iOS
+    // will typically display it automatically while app is background/terminated.
+    // We only render a local notification for data-only pushes.
+    if (message.notification != null) return;
     await _ensureLocalNotificationsInitialized();
     await NotificationService._showLocalNotification(message);
   } catch (e) {
@@ -178,7 +182,7 @@ abstract final class NotificationService {
           await Supabase.instance.client.from(kTableCustomers).update({
             'fcm_token': null,
             kCustomersDeviceToken: null,
-          }).eq('fcm_token', token);
+          }).or('fcm_token.eq.$token,${kCustomersDeviceToken}.eq.$token');
 
           // NOTE: Remote schema has `staff.fcm_token` but may not have `staff.device_token`.
           await Supabase.instance.client.from(kTableStaff).update({

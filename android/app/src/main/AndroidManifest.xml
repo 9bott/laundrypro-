@@ -24,6 +24,10 @@
         android:name="${applicationName}"
         android:roundIcon="@mipmap/ic_launcher"
         android:icon="@mipmap/ic_launcher">
+        <!-- Default channel used by FCM when app is background/terminated -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="point_channel"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
