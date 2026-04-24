@@ -55,6 +55,6 @@ import FirebaseMessaging
 
   // MARK: - MessagingDelegate
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-    debugPrint("FCM token: \(fcmToken ?? \"nil\")")
+    debugPrint("FCM token: \(fcmToken ?? "nil")")
   }
 }
