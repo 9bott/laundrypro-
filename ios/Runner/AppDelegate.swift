@@ -1,16 +1,18 @@
 import Flutter
 import UIKit
 import FirebaseAuth
+import FirebaseMessaging
 import PushNotifications
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
   let pushNotifications = PushNotifications.shared
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    Messaging.messaging().delegate = self
     self.pushNotifications.start(instanceId: "1ae09655-a129-4f6c-b1a7-d943f815b992")
     self.pushNotifications.registerForRemoteNotifications()
     GeneratedPluginRegistrant.register(with: self)
@@ -27,6 +29,7 @@ import PushNotifications
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     Auth.auth().setAPNSToken(deviceToken, type: .unknown)
+    Messaging.messaging().apnsToken = deviceToken
     self.pushNotifications.registerDeviceToken(deviceToken)
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
@@ -57,4 +60,8 @@ import PushNotifications
     return super.application(app, open: url, options: options)
   }
 
+  // MARK: - MessagingDelegate
+  func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
+    debugPrint("FCM token: \(fcmToken ?? "nil")")
+  }
 }
