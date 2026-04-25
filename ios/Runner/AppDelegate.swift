@@ -28,7 +28,7 @@ import PushNotifications
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    Auth.auth().setAPNSToken(deviceToken, type: .unknown)
+    Auth.auth().setAPNSToken(deviceToken, type: .prod)
     Messaging.messaging().apnsToken = deviceToken
     self.pushNotifications.registerDeviceToken(deviceToken)
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
