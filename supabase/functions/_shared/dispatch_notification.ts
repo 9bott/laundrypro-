@@ -87,8 +87,9 @@ export async function dispatchNotification(
     }
   }
 
-  const pushToken = (cust as { fcm_token?: string | null; device_token?: string | null }).fcm_token ??
-    (cust as { device_token?: string | null }).device_token;
+  // Pusher Beams: publish to an "interest" string.
+  // Per app client subscription, we target `user-<customer_id>`.
+  const pushToken = `user-${input.customer_id}`;
 
   if (wantPush && pushToken) {
     try {

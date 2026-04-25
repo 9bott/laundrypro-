@@ -24,6 +24,7 @@ dependencies:
   firebase_messaging: ^15.2.10
   firebase_crashlytics: ^4.3.10
   flutter_local_notifications: ^17.2.2
+  pusher_beams: ^1.1.2
 
   # OTP AutoFill (Android SMS Retriever)
   sms_autofill: ^2.3.0
@@ -57,6 +58,9 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.1
   image: ^4.8.0
+
+dependency_overrides:
+  uuid: ^4.5.1
 
 flutter:
   uses-material-design: true
