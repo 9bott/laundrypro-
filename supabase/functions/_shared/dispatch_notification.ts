@@ -87,9 +87,8 @@ export async function dispatchNotification(
     }
   }
 
-  // Pusher Beams: publish to an "interest" string.
-  // Per app client subscription, we target `user-<customer_id>`.
-  const pushToken = `user-${input.customer_id}`;
+  // Firebase FCM: send directly to the customer's FCM token.
+  const pushToken = (cust as { fcm_token?: string | null }).fcm_token;
 
   if (wantPush && pushToken) {
     try {
