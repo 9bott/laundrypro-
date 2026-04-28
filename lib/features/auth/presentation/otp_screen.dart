@@ -481,8 +481,6 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
-
     return Directionality(
       textDirection: TextDirection.rtl,
       child: OfflineBanner(
@@ -493,178 +491,188 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
             builder: (context, constraints) {
               final h = constraints.maxHeight;
               final topH = h * 0.38;
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Column(
-                    children: [
-                      Container(
-                        height: topH,
-                        width: double.infinity,
-                        color: _kPointBlue,
-                        child: SafeArea(
-                          bottom: false,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () => context.go('/auth/phone'),
-                                      icon: const Icon(
-                                        Icons.close_rounded,
-                                        color: Colors.white,
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Column(
+                          children: [
+                            Container(
+                              height: topH,
+                              width: double.infinity,
+                              color: _kPointBlue,
+                              child: SafeArea(
+                                bottom: false,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          IconButton(
+                                            onPressed: () => context.go('/auth/phone'),
+                                            icon: const Icon(
+                                              Icons.close_rounded,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const Spacer(),
+                                      const Align(
+                                        alignment: Alignment.centerRight,
+                                        child: Text(
+                                          'أدخل الرمز',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 26,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Align(
+                                        alignment: Alignment.center,
+                                        child: Text.rich(
+                                          TextSpan(
+                                            children: [
+                                              const TextSpan(
+                                                text: 'أُرسل إلى ',
+                                                style: TextStyle(
+                                                  color: Colors.white70,
+                                                  fontSize: 15,
+                                                  fontFamily: 'inherit',
+                                                ),
+                                              ),
+                                              TextSpan(
+                                                text: '+966${_maskedPhoneLine()}',
+                                                style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.bold,
+                                                  letterSpacing: 1.2,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const Expanded(child: SizedBox()),
+                          ],
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          top: topH - 24,
+                          bottom: 0,
+                          child: Material(
+                            color: Colors.white,
+                            elevation: 10,
+                            shadowColor: Colors.black26,
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(24),
+                            ),
+                            clipBehavior: Clip.antiAlias,
+                            child: Padding(
+                              // Don't include bottom inset here; scroll view handles keyboard space.
+                              padding: const EdgeInsets.fromLTRB(16, 28, 16, 16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (_busy)
+                                    const SizedBox(
+                                      height: 120,
+                                      child: Center(
+                                        child: SizedBox(
+                                          width: 40,
+                                          height: 40,
+                                          child: CircularProgressIndicator(
+                                            color: _kPointBlue,
+                                            strokeWidth: 3,
+                                          ),
+                                        ),
+                                      ),
+                                    )
+                                  else
+                                    _buildOtpBoxes(),
+                                  if (_needsOtpDeleteButton && !_busy) ...[
+                                    const SizedBox(height: 8),
+                                    Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: TextButton.icon(
+                                        onPressed: _busy ? null : _deleteOtpBackward,
+                                        icon: Icon(
+                                          Icons.backspace_outlined,
+                                          size: 18,
+                                          color: _kPointBlue.withValues(alpha: _busy ? 0.4 : 1),
+                                        ),
+                                        label: Text(
+                                          'حذف',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: _kPointBlue.withValues(alpha: _busy ? 0.4 : 1),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ],
-                                ),
-                                const Spacer(),
-                                const Align(
-                                  alignment: Alignment.centerRight,
-                                  child: Text(
-                                    'أدخل الرمز',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 26,
-                                      fontWeight: FontWeight.bold,
+                                  if (_error != null) ...[
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _error!,
+                                      style: const TextStyle(
+                                        color: AppColors.error,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 14,
+                                      ),
+                                      textAlign: TextAlign.center,
                                     ),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Align(
-                                  alignment: Alignment.center,
-                                  child: RichText(
-                                    textAlign: TextAlign.center,
-                                    text: TextSpan(
-                                      children: [
-                                        const TextSpan(
-                                          text: 'أُرسل إلى ',
-                                          style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 15,
-                                            fontFamily: 'inherit',
-                                          ),
+                                  ],
+                                  const Spacer(),
+                                  if (_resendSeconds > 0)
+                                    Text(
+                                      'إعادة الإرسال خلال $_resendSeconds ثانية',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    )
+                                  else
+                                    TextButton(
+                                      onPressed: _resend,
+                                      child: const Text(
+                                        'إعادة إرسال الرمز',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 15,
+                                          color: _kPointBlue,
                                         ),
-                                        TextSpan(
-                                          text: '+966${_maskedPhoneLine()}',
-                                          style: const TextStyle(
-                                            color: Colors.white,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.bold,
-                                            letterSpacing: 1.2,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
-                                  ),
-                                ),
-                                const Spacer(),
-                              ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                      const Expanded(child: SizedBox()),
-                    ],
-                  ),
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    top: topH - 24,
-                    bottom: 0,
-                    child: Material(
-                      color: Colors.white,
-                      elevation: 10,
-                      shadowColor: Colors.black26,
-                      borderRadius: const BorderRadius.vertical(
-                        top: Radius.circular(24),
-                      ),
-                      clipBehavior: Clip.antiAlias,
-                      child: Padding(
-                        padding: EdgeInsets.fromLTRB(16, 28, 16, 16 + bottomInset),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            if (_busy)
-                              const SizedBox(
-                                height: 120,
-                                child: Center(
-                                  child: SizedBox(
-                                    width: 40,
-                                    height: 40,
-                                    child: CircularProgressIndicator(
-                                      color: _kPointBlue,
-                                      strokeWidth: 3,
-                                    ),
-                                  ),
-                                ),
-                              )
-                            else
-                              _buildOtpBoxes(),
-                            if (_needsOtpDeleteButton && !_busy) ...[
-                              const SizedBox(height: 8),
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: TextButton.icon(
-                                  onPressed: _busy ? null : _deleteOtpBackward,
-                                  icon: Icon(
-                                    Icons.backspace_outlined,
-                                    size: 18,
-                                    color: _kPointBlue.withValues(alpha: _busy ? 0.4 : 1),
-                                  ),
-                                  label: Text(
-                                    'حذف',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: _kPointBlue.withValues(alpha: _busy ? 0.4 : 1),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                            if (_error != null) ...[
-                              const SizedBox(height: 12),
-                              Text(
-                                _error!,
-                                style: const TextStyle(
-                                  color: AppColors.error,
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 14,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                            const Spacer(),
-                            if (_resendSeconds > 0)
-                              Text(
-                                'إعادة الإرسال خلال $_resendSeconds ثانية',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey.shade700,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              )
-                            else
-                              TextButton(
-                                onPressed: _resend,
-                                child: const Text(
-                                  'إعادة إرسال الرمز',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 15,
-                                    color: _kPointBlue,
-                                  ),
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               );
             },
           ),
@@ -730,54 +738,57 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
               builder: (context, _) {
                 final value = _otpController.value;
                 final text = value.text;
-                return Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(kPhoneOtpCodeLength, (i) {
-                    final ch = i < text.length ? text[i] : '';
-                    final focused = _otpFocus.hasFocus;
-                    final lastIdx = kPhoneOtpCodeLength - 1;
-                    final active = focused &&
-                        (i == text.length ||
-                            (i == lastIdx && text.length == kPhoneOtpCodeLength));
-                    final filled = i < text.length;
-                    return Padding(
-                      padding: EdgeInsets.only(left: i < lastIdx ? 8 : 0),
-                      child: GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: () {
-                          _otpFocus.requestFocus();
-                          final len = text.length;
-                          final off = i > len ? len : i;
-                          _otpController.selection =
-                              TextSelection.collapsed(offset: off);
-                        },
-                        child: Container(
-                          width: 52,
-                          height: 60,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            color: filled ? _kOtpBoxFill : Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: active || filled
-                                  ? _kPointBlue
-                                  : const Color(0xFFE0E0E0),
-                              width: filled || active ? 1.8 : 1.5,
+                return FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(kPhoneOtpCodeLength, (i) {
+                      final ch = i < text.length ? text[i] : '';
+                      final focused = _otpFocus.hasFocus;
+                      final lastIdx = kPhoneOtpCodeLength - 1;
+                      final active = focused &&
+                          (i == text.length ||
+                              (i == lastIdx && text.length == kPhoneOtpCodeLength));
+                      final filled = i < text.length;
+                      return Padding(
+                        padding: EdgeInsets.only(left: i < lastIdx ? 8 : 0),
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            _otpFocus.requestFocus();
+                            final len = text.length;
+                            final off = i > len ? len : i;
+                            _otpController.selection =
+                                TextSelection.collapsed(offset: off);
+                          },
+                          child: Container(
+                            width: 52,
+                            height: 60,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: filled ? _kOtpBoxFill : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: active || filled
+                                    ? _kPointBlue
+                                    : const Color(0xFFE0E0E0),
+                                width: filled || active ? 1.8 : 1.5,
+                              ),
                             ),
-                          ),
-                          child: Text(
-                            ch,
-                            style: const TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF222222),
-                              height: 1.1,
+                            child: Text(
+                              ch,
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF222222),
+                                height: 1.1,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  }),
+                      );
+                    }),
+                  ),
                 );
               },
             ),
