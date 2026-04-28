@@ -1,7 +1,7 @@
 name: laundrypro
 description: Point - Loyalty Wallet App
 publish_to: "none"
-version: 1.2.1+45
+version: 1.2.1+46
 
 environment:
   sdk: ^3.9.0
