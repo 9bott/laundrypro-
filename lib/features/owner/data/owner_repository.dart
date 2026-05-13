@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/services/secure_function_invoker.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../shared/models/customer_model.dart';
 import '../../../shared/models/transaction_model.dart';
@@ -494,7 +495,7 @@ class OwnerRepository {
     double deltaCashback = 0,
     required String reason,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnOwnerAdjustBalance,
       body: {
         'customer_id': customerId,
@@ -513,7 +514,7 @@ class OwnerRepository {
     required bool blocked,
     String? reason,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnOwnerSetBlocked,
       body: {
         'customer_id': customerId,
@@ -603,7 +604,7 @@ class OwnerRepository {
     required String staffId,
     required bool isActive,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnOwnerStaffActive,
       body: {'staff_id': staffId, 'is_active': isActive},
     );
@@ -615,7 +616,7 @@ class OwnerRepository {
     required String name,
     String branch = 'main',
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnOwnerInviteStaff,
       body: {'phone': phoneE164, 'name': name, 'branch': branch},
     );
@@ -707,7 +708,7 @@ class OwnerRepository {
     required String action,
     String? notes,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnOwnerFraudResolve,
       body: {
         'flag_id': flagId,

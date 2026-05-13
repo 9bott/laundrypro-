@@ -4,6 +4,7 @@ import 'package:crypto/crypto.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/services/secure_function_invoker.dart';
 import '../../../core/services/supabase_service.dart';
 
 class StaffMember {
@@ -278,7 +279,7 @@ class StaffRepository {
 
     late final FunctionResponse res;
     try {
-      res = await _client.functions.invoke(
+      res = await SecureFunctions.invoke(
         kFnGetCustomerByQr,
         method: HttpMethod.post,
         headers: {
@@ -358,7 +359,7 @@ class StaffRepository {
     required String idempotencyKey,
     String? deviceId,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnAddPurchase,
       body: {
         'customer_id': customerId,
@@ -378,7 +379,7 @@ class StaffRepository {
     required double amount,
     required String idempotencyKey,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnRedeemBalance,
       body: {
         'customer_id': customerId,
@@ -397,7 +398,7 @@ class StaffRepository {
     required String planId,
     required String idempotencyKey,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnAddSubscription,
       body: {
         'customer_id': customerId,
@@ -414,7 +415,7 @@ class StaffRepository {
     required String transactionId,
     required String staffId,
   }) async {
-    final res = await _client.functions.invoke(
+    final res = await SecureFunctions.invoke(
       kFnUndoTransaction,
       body: {
         'transaction_id': transactionId,

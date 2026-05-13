@@ -70,6 +70,11 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
   bool _hasValidPersistedSession = false;
   String _biometricLoginAsset = AppAssets.fingerprintLoginIcon;
 
+  /// Rate limiting: max 5 OTP requests per 10-minute window.
+  static const _maxAttempts = 5;
+  static const _rateLimitWindow = Duration(minutes: 10);
+  final List<DateTime> _loginAttempts = [];
+
   bool get _isAr => Localizations.localeOf(context).languageCode == 'ar';
 
   bool _validNine(String d) =>
@@ -222,6 +227,12 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
 
   /// Persists [kLoginModePrefKey] from the **current** tab ([_asStaff]) immediately before OTP,
   /// so a fast tap on Sign in cannot race the async Store/Customer segment handlers.
+  bool _isRateLimited() {
+    final now = DateTime.now();
+    _loginAttempts.removeWhere((t) => now.difference(t) > _rateLimitWindow);
+    return _loginAttempts.length >= _maxAttempts;
+  }
+
   Future<void> _submitPhoneOtp() async {
     final digits = _controller.text.trim();
     if (!_validNine(digits)) {
@@ -239,6 +250,20 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       );
       return;
     }
+    if (_isRateLimited()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _isAr
+                ? 'محاولات كثيرة. حاول مرة أخرى بعد قليل.'
+                : 'Too many attempts. Please try again later.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+    _loginAttempts.add(DateTime.now());
     setState(() => _loading = true);
     try {
       final phone = '+966$digits';
@@ -247,9 +272,6 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
         kLoginModePrefKey,
         _asStaff ? kLoginModeStaff : kLoginModeCustomer,
       );
-      debugPrint(
-        '[PhoneScreen] persisted login_mode=${_asStaff ? kLoginModeStaff : kLoginModeCustomer} (before OTP send)',
-      );
       await ref.read(authRepositoryProvider).signInWithPhoneOtp(phone);
       if (!mounted) return;
       context.pushReplacement('/auth/otp', extra: phone);
@@ -257,7 +279,7 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('${_isAr ? AppStrings.errorGenericAr : AppStrings.errorGenericEn}: $e'),
+          content: Text(_isAr ? AppStrings.errorGenericAr : AppStrings.errorGenericEn),
           backgroundColor: AppColors.error,
         ),
       );
@@ -349,9 +371,6 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                               kLoginModePrefKey,
                                               kLoginModeCustomer,
                                             );
-                                            debugPrint(
-                                              '[PhoneScreen] persisted login_mode=$kLoginModeCustomer (tab=customer)',
-                                            );
                                           });
                                         },
                                       ),
@@ -369,9 +388,6 @@ class _PhoneScreenState extends ConsumerState<PhoneScreen> {
                                             await p.setString(
                                               kLoginModePrefKey,
                                               kLoginModeStaff,
-                                            );
-                                            debugPrint(
-                                              '[PhoneScreen] persisted login_mode=$kLoginModeStaff (tab=store)',
                                             );
                                           });
                                         },

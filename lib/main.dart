@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:ui' show PlatformDispatcher;
 
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -13,6 +14,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'app.dart';
 import 'firebase_options.dart';
 import 'core/config/env.dart';
+import 'core/services/app_security_service.dart';
 import 'core/services/notification_service.dart';
 import 'core/services/supabase_service.dart';
 
@@ -58,10 +60,24 @@ Future<void> main() async {
       }
 
       try {
-        await Hive.initFlutter();
-        debugPrint('[BOOT] step 4: Hive OK');
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode
+              ? AppleProvider.debug
+              : AppleProvider.deviceCheck,
+        );
+        debugPrint('[BOOT] step 4: App Check OK');
       } catch (e) {
         debugPrint('[BOOT] step 4 FAILED: $e');
+      }
+
+      try {
+        await Hive.initFlutter();
+        debugPrint('[BOOT] step 5: Hive OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 5 FAILED: $e');
       }
 
       try {
@@ -70,22 +86,33 @@ Future<void> main() async {
             url: Env.supabaseUrl.trim(),
             anonKey: Env.supabaseAnonKey.trim(),
           );
-          debugPrint('[BOOT] step 5: Supabase OK');
+          debugPrint('[BOOT] step 6: Supabase OK');
         } else {
-          debugPrint('[BOOT] step 5: Supabase SKIPPED');
+          debugPrint('[BOOT] step 6: Supabase SKIPPED');
         }
-      } catch (e) {
-        debugPrint('[BOOT] step 5 FAILED: $e');
-      }
-
-      try {
-        await NotificationService.initialize();
-        debugPrint('[BOOT] step 6: Notifications OK');
       } catch (e) {
         debugPrint('[BOOT] step 6 FAILED: $e');
       }
 
-      debugPrint('[BOOT] step 7: starting runApp');
+      try {
+        await NotificationService.initialize();
+        debugPrint('[BOOT] step 7: Notifications OK');
+      } catch (e) {
+        debugPrint('[BOOT] step 7 FAILED: $e');
+      }
+
+      try {
+        final compromised = await AppSecurityService.isDeviceCompromised();
+        if (compromised) {
+          debugPrint('[BOOT] step 8: DEVICE COMPROMISED — root/jailbreak detected');
+        } else {
+          debugPrint('[BOOT] step 8: Device integrity OK');
+        }
+      } catch (e) {
+        debugPrint('[BOOT] step 8 FAILED: $e');
+      }
+
+      debugPrint('[BOOT] step 9: starting runApp');
       runApp(const ProviderScope(child: LaundryProApp()));
     },
     (error, stack) {

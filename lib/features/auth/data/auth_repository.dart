@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/config/env.dart';
 import '../../../core/constants/app_constants.dart';
+import '../../../core/services/secure_function_invoker.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../core/constants/supabase_constants.dart';
 
@@ -34,11 +35,11 @@ class AuthRepository {
       _client.auth.onAuthStateChange;
 
   Future<void> signInWithPhoneOtp(String e164Phone) async {
-    debugPrint('[AUTH] signInWithPhoneOtp called: $e164Phone (iOS=$_isIOS)');
+    debugPrint('[AUTH] signInWithPhoneOtp called: ***${e164Phone.substring(e164Phone.length - 3)} (iOS=$_isIOS)');
 
     if (_isIOS) {
       await _client.auth.signInWithOtp(phone: e164Phone);
-      debugPrint('[AUTH] Supabase OTP sent to $e164Phone');
+      debugPrint('[AUTH] Supabase OTP sent to ***${e164Phone.substring(e164Phone.length - 3)}');
       return;
     }
 
@@ -103,7 +104,7 @@ class AuthRepository {
     }
 
     if (_isIOS) {
-      debugPrint('[AUTH] verifyOTP via Supabase phone=$phone');
+      debugPrint('[AUTH] verifyOTP via Supabase phone=***${phone.substring(phone.length - 3)}');
       return _client.auth.verifyOTP(
         phone: phone,
         token: token,
@@ -146,7 +147,7 @@ class AuthRepository {
     }
 
     try {
-      final response = await _client.functions.invoke(
+      final response = await SecureFunctions.invoke(
         'firebase-auth',
         body: {'idToken': idToken, 'phone': phone},
       );

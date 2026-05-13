@@ -196,7 +196,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       if (kDebugMode) {
         debugPrintStack(stackTrace: st, label: '[Splash]');
       }
-      setState(() => _error = '$e');
+      setState(() => _error = 'حدث خطأ أثناء التحميل. حاول مرة أخرى.');
     }
   }
 

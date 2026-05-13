@@ -21,10 +21,12 @@
         script: |
           # CFBundleVersion must always increase on App Store Connect.
           # Codemagic PROJECT_BUILD_NUMBER increments per build (avoids stale pubspec on clone).
+          # SUPABASE_URL and SUPABASE_ANON_KEY must be set in Codemagic environment variables (encrypted).
           flutter build ios --release \
             --build-number=$PROJECT_BUILD_NUMBER \
-            --dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co \
-            --dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k
+            --obfuscate --split-debug-info=build/debug-info \
+            --dart-define=SUPABASE_URL=$SUPABASE_URL \
+            --dart-define=SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
       - name: Build IPA
         script: |
           xcode-project build-ipa \

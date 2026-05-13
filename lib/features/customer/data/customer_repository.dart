@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../../core/constants/supabase_constants.dart';
+import '../../../core/services/secure_function_invoker.dart';
 import '../../../core/services/supabase_service.dart';
 import '../../../shared/models/customer_model.dart';
 import '../../../shared/models/subscription_plan_model.dart';
@@ -132,11 +133,9 @@ class CustomerRepository {
               final model =
                   TransactionModel.fromJson(Map<String, dynamic>.from(e as Map));
               return model;
-            } catch (err, stack) {
+            } catch (err) {
               if (kDebugMode) {
                 debugPrint('[TX PARSE ERROR] $err');
-                debugPrint('[TX RAW ROW] ${Map<String, dynamic>.from(e as Map)}');
-                debugPrint('[TX STACK] $stack');
               }
               return null;
             }
@@ -188,7 +187,7 @@ class CustomerRepository {
   Future<QrTokenData> invokeGenerateQrToken() async {
     late final FunctionResponse res;
     try {
-      res = await _client.functions.invoke(
+      res = await SecureFunctions.invoke(
         kFnGenerateQrToken,
         method: HttpMethod.post,
       );
@@ -244,7 +243,7 @@ class CustomerRepository {
   Future<String> invokeGenerateGoogleWalletUrl() async {
     late final FunctionResponse res;
     try {
-      res = await _client.functions.invoke(
+      res = await SecureFunctions.invoke(
         kFnGenerateGoogleWalletUrl,
         method: HttpMethod.post,
       );
@@ -272,7 +271,7 @@ class CustomerRepository {
   Future<Map<String, dynamic>> invokeGeneratePasskitWalletUrls() async {
     late final FunctionResponse res;
     try {
-      res = await _client.functions.invoke(
+      res = await SecureFunctions.invoke(
         kFnGeneratePasskitWalletUrl,
         method: HttpMethod.post,
       );

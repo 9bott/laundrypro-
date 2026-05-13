@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       if (!upd.ok) {
         console.error("passkit_update_failed", upd.status, upd.body);
       } else {
-        console.log("passkit_update_ok", passId, JSON.stringify(memberData));
+        console.log("passkit_update_ok", passId);
       }
     } else if (existing.status === 404 ||
                (existing.status === 401 && existing.body?.includes('could not find a user record'))) {

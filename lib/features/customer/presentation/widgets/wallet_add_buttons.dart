@@ -44,7 +44,7 @@ class _WalletAddButtonsState extends ConsumerState<WalletAddButtons> {
     try {
       final map =
           await ref.read(customerRepositoryProvider).invokeGeneratePasskitWalletUrls();
-      debugPrint('PassKit response: $map');
+      debugPrint('PassKit response received');
       final landingUrl = map['landingUrl'] as String?;
       if (landingUrl == null || landingUrl.isEmpty) {
         throw Exception('passkit_landing_url_missing');

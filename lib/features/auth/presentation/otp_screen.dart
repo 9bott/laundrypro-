@@ -16,7 +16,8 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/constants/supabase_constants.dart';
-import '../../../core/services/supabase_service.dart';
+import '../../../core/services/app_security_service.dart';
+import '../../../core/services/secure_function_invoker.dart';
 import '../../../shared/widgets/offline_banner.dart';
 import '../../customer/presentation/providers/customer_providers.dart';
 import '../../staff/data/staff_repository.dart';
@@ -98,6 +99,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
   @override
   void initState() {
     super.initState();
+    AppSecurityService.enableScreenshotPrevention();
     _shake = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
@@ -193,6 +195,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
 
   @override
   void dispose() {
+    AppSecurityService.disableScreenshotPrevention();
     _shake.dispose();
     _resendTimer?.cancel();
     _otpController.removeListener(_onOtpChanged);
@@ -443,7 +446,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen>
     }
 
     try {
-      await SupabaseService.client.functions.invoke(
+      await SecureFunctions.invoke(
         'add-welcome-bonus',
         method: HttpMethod.post,
       );

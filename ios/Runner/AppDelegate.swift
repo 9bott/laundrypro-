@@ -2,39 +2,28 @@ import Flutter
 import UIKit
 import FirebaseAuth
 import FirebaseMessaging
-import PushNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, MessagingDelegate {
-  let pushNotifications = PushNotifications.shared
 
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     Messaging.messaging().delegate = self
-    self.pushNotifications.start(instanceId: "1ae09655-a129-4f6c-b1a7-d943f815b992")
-    self.pushNotifications.registerForRemoteNotifications()
     GeneratedPluginRegistrant.register(with: self)
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  // MARK: - Firebase Phone Auth (required when FirebaseAppDelegateProxyEnabled = false)
-
-  /// Forward the APNs device token to Firebase Auth so it can use silent push
-  /// verification instead of falling back to reCAPTCHA (which crashes on iOS 18
-  /// due to a nil keyWindow force-unwrap in the Swift async presentation path).
   override func application(
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
     Auth.auth().setAPNSToken(deviceToken, type: .prod)
     Messaging.messaging().apnsToken = deviceToken
-    self.pushNotifications.registerDeviceToken(deviceToken)
     super.application(application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
   }
 
-  /// Forward silent push notifications to Firebase Auth for phone verification.
   override func application(
     _ application: UIApplication,
     didReceiveRemoteNotification userInfo: [AnyHashable: Any],
@@ -44,24 +33,19 @@ import PushNotifications
       completionHandler(.noData)
       return
     }
-    self.pushNotifications.handleNotification(userInfo: userInfo)
     super.application(application, didReceiveRemoteNotification: userInfo, fetchCompletionHandler: completionHandler)
   }
 
-  /// Handle reCAPTCHA redirect URL (fallback path if silent push is unavailable).
   override func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey: Any] = [:]
   ) -> Bool {
-    if Auth.auth().canHandle(url) {
-      return true
-    }
+    if Auth.auth().canHandle(url) { return true }
     return super.application(app, open: url, options: options)
   }
 
-  // MARK: - MessagingDelegate
   func messaging(_ messaging: Messaging, didReceiveRegistrationToken fcmToken: String?) {
-    debugPrint("FCM token: \(fcmToken ?? "nil")")
+    debugPrint("FCM token received: \(fcmToken != nil ? "yes" : "nil")")
   }
 }

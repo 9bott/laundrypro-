@@ -55,8 +55,8 @@ android {
         targetSdk = targetSdkVersion
         // Required when a script variable is named targetSdkVersion (otherwise Groovy calls the Integer).
         it.targetSdkVersion(targetSdkVersion)
-        versionCode flutterVersionCode.toInteger()
-        versionName flutterVersionName
+        versionCode 47
+        versionName "1.0.47"
     }
 
     signingConfigs {

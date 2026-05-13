@@ -7,8 +7,7 @@
       "type": "dart",
       "program": "lib/main.dart",
       "args": [
-        "--dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co",
-        "--dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k"
+        "--dart-define-from-file=.env"
       ]
     },
     {
@@ -17,8 +16,7 @@
       "type": "dart",
       "program": "lib/main.dart",
       "args": [
-        "--dart-define=SUPABASE_URL=https://qakcxkcbpxsknephtszo.supabase.co",
-        "--dart-define=SUPABASE_ANON_KEY=sb_publishable_PcpNy_iX93e_RqSS0atdHA_O6w6Fr7k",
+        "--dart-define-from-file=.env",
         "--release"
       ]
     }

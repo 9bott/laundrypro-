@@ -67,7 +67,6 @@ async function getGoogleAccessToken(sa: ServiceAccount): Promise<string> {
   const tokenJson = JSON.parse(tokenText);
 
   console.error("[FCM] OAuth status:", tokenResponse.status);
-  console.error("[FCM] OAuth response:", tokenText.substring(0, 200));
 
   if (!tokenResponse.ok) {
     throw new Error(`[FCM] oauth_failed ${tokenResponse.status}: ${tokenText}`);
@@ -89,12 +88,7 @@ export async function sendFCMNotification(input: {
   const raw = Deno.env.get("FIREBASE_SERVICE_ACCOUNT_JSON");
   if (!raw) throw new Error("[FCM] missing secret: FIREBASE_SERVICE_ACCOUNT_JSON");
 
-  console.error("[FCM] secret length:", raw.length);
-
   const sa = JSON.parse(raw) as Partial<ServiceAccount>;
-
-  console.error("[FCM] project_id:", sa.project_id);
-  console.error("[FCM] client_email:", sa.client_email);
 
   if (!sa.project_id || !sa.client_email || !sa.private_key) {
     throw new Error("[FCM] invalid FIREBASE_SERVICE_ACCOUNT_JSON");
@@ -116,7 +110,11 @@ export async function sendFCMNotification(input: {
           notification: { title: input.title, body: input.body },
           data: input.data ?? {},
           apns: {
-            payload: { aps: { sound: "default", badge: 1 } },
+            headers: {
+              "apns-push-type": "alert",
+              "apns-priority": "10",
+            },
+            payload: { aps: { sound: "default", badge: 1, "content-available": 1 } },
           },
           android: { priority: "high" },
         },
@@ -125,10 +123,10 @@ export async function sendFCMNotification(input: {
   );
 
   const result = await fcmResponse.json();
-  console.error("[FCM] result:", JSON.stringify(result));
+  console.error("[FCM] status:", fcmResponse.status);
 
   if (!fcmResponse.ok) {
-    throw new Error(`[FCM] send_failed ${fcmResponse.status}: ${JSON.stringify(result)}`);
+    throw new Error(`[FCM] send_failed ${fcmResponse.status}`);
   }
 
   return result;
